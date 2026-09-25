@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/prettierrc",
+  "printWidth": 130,
+  "tabWidth": 2,
+  "useTabs": false,
+  "endOfLine": "auto",
+  "proseWrap": "preserve",
+  "overrides": [
+    {
+      "files": ["*.md"],
+      "options": { "printWidth": 130 }
+    }
+  ]
+}

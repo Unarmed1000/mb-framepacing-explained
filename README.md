@@ -1,0 +1,111 @@
+# mb-framepacing-explained
+
+Material for explaining **frame pacing and animation error** on the web: short looping 8 s, 1280×720 videos where boxes timed
+perfectly move next to boxes timed the way a game's naive wall-clock timer does it, under system load or with a ±N ms jitter, so the
+difference can be seen rather than described. Side by side: a slow and a quicker pan of a single box, and interface scrolling (a
+row of boxes scrolling right to left like a list). A follow camera, after Unity's Time.deltaTime demo, holds the perfect box still
+between two lines so a timing error is the only thing that moves, at real speed and 10 times slower. The scene can be drawn on a
+coarser virtual pixel grid (2×2, 4×4, …), so small errors move more screen pixels.
+
+The generators live here now; a slide-style web page that explains the topics with these videos live, including a blind test,
+comes later.
+
+It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
+display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
+[Gamers Nexus animation error methodology](https://gamersnexus.net/gpus-gn-extras-cpus/problem-gpu-benchmarks-reality-vs-numbers-animation-error-methodology-white).
+
+| Tool                                                   | What it does                                                                                                               |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| [`tools/frame_pacing_video`](tools/frame_pacing_video) | Generates the comparison videos (lossless H.264 through FFmpeg) in folders by scene and speed, each with a `manifest.json` |
+| [`tools/timing_diagrams`](tools/timing_diagrams)       | Generates the timing diagrams and example charts of the docs (`doc/images/*.svg`; `--png` for bitmaps)                     |
+
+Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), optionally with `--ffmpeg <path>`. It creates the
+`.venv` and the machine-local `local.toml`.
+
+## Frame pacing in one minute
+
+Every frame a game shows is a picture of one moment of game time, its **animation time**, and it stays on screen for some
+**display time**. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of the game stays on screen
+for 16.7 ms. **Animation error** is how far they disagree, per frame, in milliseconds, as PresentMon measures it. A high average
+frame rate says nothing about it.
+
+![Perfect timer: every frame shows the moment it is displayed, so the animation error is 0](doc/images/timing-perfect-timer.svg)
+
+Each diagram follows the two clocks at a 10 Hz display (a slowed-down 60 Hz). In the **render** row each box is one frame, as
+wide as it takes to render and labelled with the animation time it shows; the **arrow** under it is where the game presents it:
+the frame is done and waits for the next vsync. The **display** row shows which frame is on screen at each refresh, and the rows
+below compute the animation error the way PresentMon does. Gamers Nexus explain the two ways it goes wrong with a flipbook:
+
+| Case                                                                                  | Flipbook                                        | Typical cause                                                                                  |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Frames reach the screen evenly, but the **animation time** advances unevenly          | Unevenly drawn pages, flipped at a steady tempo | Delta time jitter: the engine reads its wall clock at an uneven point after each flip          |
+| The animation time advances evenly, but frames reach the screen unevenly (**pacing**) | Evenly drawn pages, flipped at an uneven tempo  | A frame over its budget shows a refresh late (a hitch); one submitted too early shows too soon |
+
+![Timer jitter: frames reach the screen on time, but each shows a moment a little off](doc/images/timing-timer-jitter.svg)
+
+**Timer jitter is invisible to the usual numbers.** Frame rate, frametime, display time and a frame-time graph are identical to
+the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
+animation error shows why, because only it looks at the moment each frame shows:
+
+![Same frame rate, same frametimes, different motion: only the animation error differs](doc/images/timing-perfect-vs-jitter.svg)
+
+![Slow frames: the previous frame is held, the late frame shows a past moment and the next one jumps ahead](doc/images/timing-slow-frames.svg)
+
+How frames reach the screen, and how fast input gets there, depends on vsync, VRR and the frame queue: see
+[display sync](doc/display-sync.md) and [input latency](doc/input-latency.md).
+
+## Quick vocabulary
+
+The terms used here and in mb-framepacing, in one line each. The [full vocabulary](doc/vocabulary.md) maps them to PresentMon,
+Gamers Nexus, Digital Foundry, Unity, Unreal, Android and VR, with sources and the video modes.
+
+| Term                    | In one line                                                                       | Also called                                                            |
+| ----------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Animation error**     | Animation time step minus display time. Positive: shown too soon; negative: late. | `MsAnimationError` (PresentMon), simulation time error                 |
+| **Animation time**      | The moment of game time a frame shows.                                            | Simulation time, game time                                             |
+| **Animation time step** | How far the animation time advanced from one shown frame to the next.             | Delta time, `Time.deltaTime`                                           |
+| **Display time**        | How long the previous frame stayed on screen.                                     | `MsBetweenDisplayChange`, display delta; "frame time" in overlays      |
+| **Frametime**           | CPU start to CPU start: the application side.                                     | `MsBetweenPresents`, `MsBetweenAppStart`, CPU frame time               |
+| **Frame pacing**        | How evenly frames reach the screen.                                               | Frame delivery, cadence; "bad frame-pacing" (Digital Foundry)          |
+| **Stutter**             | Motion that suddenly speeds up or slows down: what the eye sees.                  | Judder, jerkiness                                                      |
+| **Hitch**               | A single, severe frametime spike.                                                 | Spike; shader compilation stutter, traversal stutter (Digital Foundry) |
+| **Delta time jitter**   | The measured delta time wobbles while frames reach the screen evenly.             | Timestep jitter                                                        |
+| **Microstutter**        | Uneven delivery while the average frame rate looks fine.                          | Micro stuttering; from multi-GPU, with its runt frames                 |
+| **Judder**              | Uneven display durations for constant motion.                                     | Pulldown judder (film), stale frames (VR)                              |
+| **Dropped frame**       | Rendered but never shown.                                                         | Skipped frame                                                          |
+| **Swap interval**       | How many vsyncs a frame stays on screen: 1, 2, 3 for 60, 30, 20 fps at 60 Hz.     | Present interval, `SyncInterval`                                       |
+| **Tearing**             | Vsync off: one refresh shows parts of two frames.                                 | Screen tearing                                                         |
+| **VRR**                 | The display refreshes when the frame is ready.                                    | G-SYNC, FreeSync, Adaptive-Sync, HDMI VRR                              |
+| **Input lag**           | From input to its result on screen.                                               | End-to-end latency, click-to-photon, button to pixel (Digital Foundry) |
+
+## What this covers so far
+
+The videos simulate a game loop on a plain vsync display: every frame makes its vsync, and the game only reads its own clock.
+
+| Modes                                                               | What they show                                                                                          | Terms                              |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `60`, `30`, `20` (ideal timer)                                      | Perfect: each frame shows exactly its display time; 30 and 20 hold each frame 2 or 3 refreshes          | The reference; swap interval       |
+| `60-naive-light` / `-typical` / `-heavy` (also `30-`, `-realistic`) | The game's wall clock read a little late or early after the flip, as under system load                  | Delta time jitter, animation error |
+| `60-naive-1ms` … `-4ms`, `60-naive-synthetic`                       | A ±N ms window, or a made-up pattern for teaching the metric; alternating errors look like microstutter | Delta time jitter, microstutter    |
+
+Not simulated yet: late frames (hitches, short and long frames), dropped and runt frames, tearing, VRR and input lag. The
+[tool's README](tools/frame_pacing_video/README.md) has the modes, scenes and options; [charts](doc/charts.md) has how to draw the
+`manifest.json` data next to the videos.
+
+## Documentation
+
+- [Vocabulary](doc/vocabulary.md): every term, its other names (including Digital Foundry's), where it comes from, and the video
+  modes that show it
+- [Vsync, VRR and frame rate targets](doc/display-sync.md): vsync and present modes, G-SYNC and FreeSync, what VRR does not fix,
+  fixed or adaptive frame rates
+- [Input latency](doc/input-latency.md): how it is measured, where it comes from, Reflex, Anti-Lag 2, XeLL and frame generation
+- [Charts](doc/charts.md): how Gamers Nexus, PC Perspective, CapFrameX, Digital Foundry and mb-framepacing chart pacing, and what
+  to draw here
+- [Further reading](doc/further-reading.md): the articles and videos, grouped by subject
+
+## License
+
+(c) 2026 Mana Battery ApS. Everything here (documentation, diagrams, videos and tools) is licensed under
+[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) ([full text](LICENSE)): you may share it unchanged, with
+credit, for non-commercial purposes. Commercial use and sharing adapted versions need written permission from Mana Battery ApS.
+It is provided as is, without warranty or liability. Quotations from third-party articles and videos remain their owners'.

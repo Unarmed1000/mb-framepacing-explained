@@ -1,0 +1,8 @@
+# Machine-local settings for the tools in this repository.
+# Copy this file to local.toml (git-ignored) and edit it; setup.cmd / ./setup.sh create local.toml for you.
+
+[ffmpeg]
+# Full path of ffmpeg (ffmpeg.exe on Windows), or the folder that holds it (a bin subfolder is also checked).
+# ffprobe is expected next to it. Remove the line to use the MB_FFMPEG environment variable or PATH instead.
+# Use single quotes so backslashes are kept as they are.
+# path = 'C:\ffmpeg\bin\ffmpeg.exe'

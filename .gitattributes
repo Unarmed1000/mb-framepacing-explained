@@ -1,0 +1,12 @@
+# Line endings: stored as LF in the repository, native in checkouts (CRLF on Windows, LF elsewhere)
+* text=auto
+
+# Scripts keep the line endings their shell needs, on every OS
+*.sh   text eol=lf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Binary files: never convert line endings or show text diffs
+*.png  binary
+*.pgm  binary
+*.mbfc binary

@@ -1,0 +1,47 @@
+# Ruff: lint and format rules for the repository's Python scripts (tools/).
+# See https://docs.astral.sh/ruff/configuration/. Versions are pinned in pyproject.toml (dependency group dev); run in the .venv:
+#   ruff check .
+#   ruff format --check .
+# Type checking is done by basedpyright (pyrightconfig.json).
+
+# Ruff's default excludes (.git, build, dist, node_modules, .venv, ...) stay in place; out/ holds generated output
+extend-exclude = [
+    "out",
+]
+
+# First-party import roots: the repository and each tool folder (the tests import their tool as a top-level module)
+src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams"]
+
+line-length = 160
+
+# The project requires Python 3.14 (pyproject.toml)
+target-version = "py314"
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+ignore = [
+    "E501",   # Line too long (the formatter wraps code; long strings and comments are fine)
+    "SIM102", # Nested if (readability preference, not a bug)
+    "SIM108", # Ternary operator (readability preference, not a bug)
+    "SIM116", # Dict instead of if-chain (readability preference)
+]
+
+fixable = ["ALL"]
+unfixable = []
+
+[format]
+quote-style = "double"
+indent-style = "space"
+# Keep each file's line endings (LF in the repository, native in checkouts; see .gitattributes)
+line-ending = "auto"

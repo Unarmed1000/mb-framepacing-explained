@@ -1,0 +1,838 @@
+"""Tests of generate_videos.py. Run from the repository root (in the .venv):
+  python -m unittest discover -s tools/frame_pacing_video -v
+The encode test needs FFmpeg (found like the generator finds it) and is skipped without it.
+"""
+
+import contextlib
+import io
+import itertools
+import json
+import os
+import re
+import subprocess
+import tempfile
+import unittest
+from fractions import Fraction
+from pathlib import Path
+from typing import cast
+from unittest import mock
+
+from PIL import Image
+
+import generate_videos as gv
+from frame_timing import parse_mode
+
+SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
+MODE = parse_mode
+
+# Most tests use a 640 x 360 video on the native grid (box 48, spacing 96, travel 384, gap 24, divider 2 px) so their numbers stay
+# small; explicit arguments override it. VirtualPixelTests covers the default, 1280 x 720 on a 2 x 2 grid. Names get _px1 on the
+# native grid, so the tests of names use the default grid (plain_settings).
+NATIVE = ("--pixel-size", "1")
+SMALL = ("--width", "640", "--height", "360", *NATIVE)
+
+
+def settings_for(*argv: str) -> gv.Settings:
+    return gv.parse_arguments([*SMALL, *argv])[1]
+
+
+def settings_for_unvalidated(*argv: str) -> gv.Settings:
+    return gv.settings_from_arguments(gv.build_parser().parse_args([*SMALL, *argv], namespace=gv.Arguments()))
+
+
+def blocky(image: Image.Image, pixel: int) -> Image.Image:
+    """The image shrunk to one pixel per pixel x pixel block and enlarged again: unchanged only if it is made of uniform blocks."""
+    small = image.resize((image.width // pixel, image.height // pixel), Image.Resampling.NEAREST)  # pyright: ignore[reportUnknownMemberType]
+    return small.resize(image.size, Image.Resampling.NEAREST)  # pyright: ignore[reportUnknownMemberType]
+
+
+def default_settings(*argv: str) -> gv.Settings:
+    """Settings at the default 1280 x 720 video size, on the native grid."""
+    return gv.parse_arguments([*NATIVE, *argv])[1]
+
+
+def plain_settings(*argv: str) -> gv.Settings:
+    """Settings from the given arguments alone: 1280 x 720 on the default 2 x 2 grid, so names carry no px suffix."""
+    return gv.parse_arguments(list(argv))[1]
+
+
+def runs(values: list[Fraction]) -> list[int]:
+    """Lengths of the runs of equal consecutive values."""
+    lengths: list[int] = []
+    previous: Fraction | None = None
+    for value in values:
+        if lengths and value == previous:
+            lengths[-1] += 1
+        else:
+            lengths.append(1)
+        previous = value
+    return lengths
+
+
+CLIP_FRAMES = 480  # every clip is 8 s at 60 fps
+REST = 0.0  # Row offset at rest
+PAGED = -384.0  # Row offset after one page to the left: 4 boxes of 96 px
+
+
+class PlanTests(unittest.TestCase):
+    def test_default_is_every_pair_at_every_speed(self) -> None:
+        # The ideal timer at 60, 30 and 20 Hz, the naive timer under the three loads at 60 and 30 Hz: 9 x 9 pairs at six speeds
+        jobs = gv.plan_videos(plain_settings())
+        self.assertEqual([speed.name for speed in plain_settings().speeds], ["normal", "fast", "ui-192", "ui-288", "ui-384", "ui-768"])
+        self.assertEqual(len(jobs), 486)
+        self.assertEqual(len({job.filename for job in jobs}), 486)
+        pattern = re.compile(
+            r"^(normal|fast|row_ui-192|row_ui-288|row_ui-384|row_ui-768)_top-(20|60|30|(60|30)-naive-(light|typical|heavy))_bottom-(20|60|30|(60|30)-naive-(light|typical|heavy))\.mp4$"
+        )
+        for job in jobs:
+            self.assertRegex(job.filename, pattern)
+
+    def test_one_speed_gives_81(self) -> None:
+        # 9 x 9 pairs: 60, 30, 20 with the ideal timer, 60 and 30 with the naive timer under each load (20 Hz loads and windows opt-in)
+        for speed, prefix in (("normal", "normal_"), ("fast", "fast_"), ("ui-384", "row_ui-384_")):
+            jobs = gv.plan_videos(settings_for("--speed", speed))
+            self.assertEqual(len(jobs), 81)
+            self.assertTrue(all(job.filename.startswith(prefix) for job in jobs))
+        # ui: every ui speed
+        self.assertEqual(len(gv.plan_videos(settings_for("--speed", "ui"))), 4 * 81)
+
+    def test_speed_selection(self) -> None:
+        def names(*argv: str) -> list[str]:
+            return [speed.name for speed in settings_for(*argv).speeds]
+
+        self.assertEqual(names("--speed", "ui-768", "fast", "ui"), ["ui-768", "fast", "ui-192", "ui-288", "ui-384"])
+        self.assertEqual(names("--speed", "ui", "--ui-scroll", "480", "96"), ["ui-480", "ui-96"])
+        with contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
+            _ = gv.parse_arguments([*SMALL, "--speed", "ui-100"])
+        self.assertIn("unknown speed 'ui-100'", error.getvalue())
+
+    def test_groups_are_folders_by_scene_and_speed(self) -> None:
+        def groups(*argv: str) -> list[str]:
+            return sorted({job.group.as_posix() for job in gv.plan_videos(plain_settings(*argv))})
+
+        # The ui speeds always scroll a row
+        self.assertEqual(groups(), ["box/fast", "box/normal", "row/ui-192", "row/ui-288", "row/ui-384", "row/ui-768"])
+        self.assertEqual(groups("--speed", "fast", "--labels"), ["box-labels/fast"])
+        self.assertEqual(groups("--speed", "ui-384", "normal", "--scene", "row"), ["row/normal", "row/ui-384"])
+
+    def test_matrix_override(self) -> None:
+        jobs = gv.plan_videos(plain_settings("--top", "60", "--bottom", "20-naive-heavy", "30", "--speed", "normal"))
+        self.assertEqual([job.filename for job in jobs], ["normal_top-60_bottom-20-naive-heavy.mp4", "normal_top-60_bottom-30.mp4"])
+        with contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
+            _ = gv.parse_arguments([*SMALL, "--top", "60-late"])
+        self.assertIn("'60-late' is not a mode", error.getvalue())
+
+    def test_manifest(self) -> None:
+        settings = plain_settings("--top", "60", "--bottom", "30-naive-heavy")
+        manifest = cast(dict[str, object], json.loads(json.dumps(gv.build_manifest(settings, gv.plan_videos(settings)))))
+        videos = cast(list[dict[str, object]], manifest["videos"])
+        self.assertEqual(
+            [video["file"] for video in videos][:3],
+            ["normal_top-60_bottom-30-naive-heavy.mp4", "fast_top-60_bottom-30-naive-heavy.mp4", "row_ui-192_top-60_bottom-30-naive-heavy.mp4"],
+        )
+        normal, fast, ui = videos[0], videos[1], videos[-1]
+        # ui-768: a row scrolling 768 px/s for the whole 8 s, never resting
+        self.assertEqual(
+            (ui["scene"], ui["scrollVirtualPixelsPerSecond"], ui["moveSeconds"], ui["settleSeconds"], ui["durationSeconds"], ui["frameCount"]),
+            ("row", 768, 8, 0, 8, CLIP_FRAMES),
+        )
+        self.assertEqual((normal["scene"], normal["scrollVirtualPixelsPerSecond"]), ("box", None))
+        # Every clip is 8 s: 2 round trips of 4 s at normal (1.9 s per move), 4 of 2 s at fast (0.9 s), each with 0.1 s rests
+        self.assertEqual((normal["durationSeconds"], normal["frameCount"], normal["roundTrips"], normal["roundTripSeconds"]), (8, CLIP_FRAMES, 2, 4))
+        self.assertEqual((fast["roundTrips"], fast["roundTripSeconds"], fast["moveSeconds"], ui["roundTrips"]), (4, 2, 0.9, None))
+        bottom = cast(dict[str, object], normal["bottom"])
+        self.assertEqual(
+            {key: bottom[key] for key in ("mode", "rate", "timer", "noise", "label")},
+            {"mode": "30-naive-heavy", "rate": 30, "timer": "naive", "noise": "heavy", "label": "30 Hz naive timer, heavy load"},
+        )
+        frames = cast(dict[str, list[float]], bottom["frames"])
+        self.assertEqual(frames["refresh"][:3], [0, 2, 4])
+        self.assertEqual([len(frames[key]) for key in ("sampleMs", "dtMs", "animationErrorMs")], [240, 240, 240])
+        # The dts add up to the clip (each is rounded to a microsecond in the manifest)
+        self.assertAlmostEqual(sum(frames["dtMs"]), 8000, delta=0.1)
+        # The naive loop reads the clock a little after the previous flip: frame 1 after the flip at 0 ms (the usual 2 ms of work,
+        # up to 2 ms sooner or 8 ms later)
+        self.assertTrue(0 <= frames["sampleMs"][1] <= 10)
+        top_frames = cast(dict[str, list[float]], cast(dict[str, object], normal["top"])["frames"])
+        self.assertEqual(set(top_frames["animationErrorMs"]), {0})
+        settings_entry = cast(dict[str, object], manifest["settings"])
+        self.assertEqual((settings_entry["width"], settings_entry["height"], settings_entry["fps"], settings_entry["travel"]), (1280, 720, 60, 384))
+        self.assertEqual((settings_entry["clipSeconds"], settings_entry["settleSeconds"], settings_entry["frameCost"]), (8, 0.1, 0.3))
+        self.assertEqual((settings_entry["wakeNoiseMs"], settings_entry["easing"]), ([0, 0.3], True))
+        self.assertEqual((settings_entry["background"], settings_entry["boxColor"]), ("#303030", "#D0D0D0"))
+
+
+class TimingTests(unittest.TestCase):
+    def shown(self, name: str, *argv: str) -> list[Fraction]:
+        """Animation time of each output frame of a normal clip."""
+        settings = settings_for(*argv)
+        return [gv.content_time(settings, MODE(name), SPEEDS["normal"], frame) for frame in range(CLIP_FRAMES)]
+
+    def test_ideal_modes_hold_each_frame_evenly_and_show_its_display_time(self) -> None:
+        for name, hold in (("60", 1), ("30", 2), ("20", 3)):
+            self.assertEqual(set(runs(self.shown(name))), {hold}, name)
+            self.assertEqual(self.shown(name)[hold], Fraction(1, 60 // hold), name)
+            errors = gv.animation_errors(settings_for(), MODE(name), SPEEDS["normal"])
+            self.assertEqual(set(errors), {0}, name)
+
+    def test_the_naive_timer_changes_on_the_same_frames_but_shows_the_wall_clock(self) -> None:
+        # Rendering always fits: nothing late, repeated or skipped, only the animation time is off
+        for rate in (60, 30, 20):
+            ideal = self.shown(str(rate))
+            for noise in ("typical", "heavy", "1ms"):
+                naive = self.shown(f"{rate}-naive-{noise}")
+                self.assertEqual(runs(naive), runs(ideal), (rate, noise))
+                errors = [a - b for a, b in zip(naive, ideal, strict=True)]
+                self.assertTrue(any(error > 0 for error in errors) and any(error < 0 for error in errors), (rate, noise))
+                # Off by how much sooner or later than usual the loop read the clock: up to about 2 ms under typical load
+                if noise == "typical":
+                    self.assertTrue(all(abs(error) < Fraction(25, 10_000) for error in errors), rate)
+
+    def test_heavy_load_makes_millisecond_spikes(self) -> None:
+        errors = gv.animation_errors(settings_for(), MODE("60-naive-heavy"), SPEEDS["normal"])
+        self.assertGreater(max(abs(error) for error in errors), Fraction(3, 1000))
+
+    def test_noise_options(self) -> None:
+        settings = settings_for("--noise-ms", "0.2", "0.4", "--frame-cost", "0.25")
+        self.assertEqual((settings.timing.noise, settings.timing.frame_cost), ((Fraction(2, 10_000), Fraction(4, 10_000)), Fraction(1, 4)))
+        with contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
+            _ = gv.parse_arguments([*SMALL, "--frame-cost", "0.9", "--top", "60-naive-heavy"])
+        self.assertIn("would miss a vsync", error.getvalue())
+
+    def test_labels(self) -> None:
+        settings = settings_for()
+        self.assertEqual(settings.label(MODE("60")), "60 Hz ideal timer")
+        self.assertEqual(settings.label(MODE("20-naive-typical")), "20 Hz naive timer, typical load")
+        self.assertEqual(settings.label(MODE("60-naive-4ms")), "60 Hz naive timer, ±4 ms mixed")
+        self.assertEqual(settings_for("--jitter-ms", "0.5").label(MODE("60-naive-synthetic")), "60 Hz naive timer, synthetic ±0.5 ms mixed")
+
+    def test_row_scene_file_names(self) -> None:
+        jobs = gv.plan_videos(plain_settings("--scene", "row", "--top", "60", "--bottom", "60-naive-heavy", "--speed", "normal"))
+        self.assertEqual([job.filename for job in jobs], ["row_normal_top-60_bottom-60-naive-heavy.mp4"])
+        # A single synthetic pattern shows in the name only when a synthetic mode uses it
+        jobs = gv.plan_videos(plain_settings("--top", "60", "--bottom", "60-naive-synthetic", "--speed", "normal", "--jitter-pattern", "random"))
+        self.assertEqual(jobs[0].filename, "normal_top-60_bottom-60-naive-synthetic_random.mp4")
+        jobs = gv.plan_videos(plain_settings("--top", "60", "--bottom", "60", "--speed", "normal", "--jitter-pattern", "random"))
+        self.assertEqual(jobs[0].filename, "normal_top-60_bottom-60.mp4")
+
+
+class MotionTests(unittest.TestCase):
+    def offsets(self, *argv: str, mode: str = "60", speed: str = "normal") -> list[float]:
+        settings = settings_for(*argv)
+        return [gv.row_offset(settings, MODE(mode), SPEEDS[speed], frame) for frame in range(settings.frame_count(SPEEDS[speed]))]
+
+    def test_the_row_rests_at_both_ends(self) -> None:
+        offsets = self.offsets()
+        # Normal: two round trips of 4 s. A clip starts and ends in the middle of the 0.1 s rest: rest (frames 0-3), 1.9 s paging
+        # left (3-117), rest (117-123), 1.9 s back (123-237), rest (237-243), and the same again from 240
+        self.assertEqual(set(offsets[0:4] + offsets[237:244] + offsets[477:480]), {REST})
+        self.assertEqual(set(offsets[117:124] + offsets[357:364]), {PAGED})
+        moving = offsets[4:117] + offsets[124:237] + offsets[244:357] + offsets[364:477]
+        self.assertTrue(all(PAGED < offset < REST for offset in moving))
+
+    def test_one_page_is_four_boxes(self) -> None:
+        settings = settings_for()
+        self.assertEqual((settings.resolved_spacing, settings.resolved_travel), (96, 384))
+        self.assertEqual((min(self.offsets()), max(self.offsets())), (PAGED, REST))
+        self.assertEqual(settings_for("--box-spacing", "80", "--speed", "normal").resolved_travel, 320)
+
+    def test_eased_motion_starts_and_stops_gently(self) -> None:
+        steps = [a - b for a, b in itertools.pairwise(self.offsets()[3:118])]
+        self.assertLess(steps[0], 0.1)
+        self.assertLess(steps[-1], 0.1)
+        peak = steps.index(max(steps))
+        self.assertTrue(55 <= peak <= 58, peak)
+        self.assertEqual(steps[: peak + 1], sorted(steps[: peak + 1]))
+        self.assertEqual(steps[peak:], sorted(steps[peak:], reverse=True))
+
+    def test_without_easing_the_speed_is_constant(self) -> None:
+        steps = {round(a - b, 9) for a, b in itertools.pairwise(self.offsets("--no-easing")[3:118])}
+        self.assertEqual(steps, {round(384 / 114, 9)})
+
+    def test_sub_pixel_positions(self) -> None:
+        self.assertTrue(any(offset != int(offset) for offset in self.offsets()))
+
+    def test_heavy_load_moves_the_box_off_its_perfect_position(self) -> None:
+        differences = [abs(a - b) for a, b in zip(self.offsets(), self.offsets(mode="60-naive-heavy"), strict=True)]
+        self.assertGreater(max(differences), 0.3)
+        # Never more than the largest wake-up difference times the fastest speed (384 px in 1.9 s, eased: pi / 2 times the average)
+        self.assertLess(max(differences), 0.010 * 384 / 1.9 * 1.5708 + 1e-9)
+
+
+class ClipLengthTests(unittest.TestCase):
+    def test_every_clip_is_8_seconds(self) -> None:
+        settings = settings_for()
+        self.assertEqual([settings.frame_count(speed) for speed in settings.speeds], [CLIP_FRAMES] * 6)
+        # The eased speeds fit whole round trips in it, with 0.1 s rests: normal 2 round trips (1.9 s per move), fast 4 (0.9 s)
+        self.assertEqual([(settings.period(speed), settings.move_time(speed)) for speed in settings.speeds[:2]], [(4, Fraction(19, 10)), (2, Fraction(9, 10))])
+
+    def test_ui_speeds_scroll_a_row_right_to_left_at_constant_speed(self) -> None:
+        settings = settings_for("--speed", "ui")
+        for speed, scroll in zip(settings.speeds, (192, 288, 384, 768), strict=True):
+            self.assertEqual((settings.scene_for(speed), settings.settle_for(speed)), ("row", 0))
+            # The row's shift within one box spacing (the row repeats every 96 px)
+            xs = [gv.row_offset(settings, MODE("60"), speed, frame) for frame in range(settings.frame_count(speed))]
+            self.assertTrue(all(-96 < x <= 0 for x in xs))
+            # Every step moves the row left by exactly scroll / 60 px (modulo the spacing)
+            steps = {round((a - b) % 96, 9) for a, b in itertools.pairwise(xs)}
+            self.assertEqual(steps, {round(scroll / 60, 9)}, speed.name)
+            # A perfect 20 Hz row holds each position for 3 frames and moves 3 times as far
+            xs = [gv.row_offset(settings, MODE("20"), speed, frame) for frame in range(settings.frame_count(speed))]
+            self.assertEqual({round((a - b) % 96, 9) for a, b in itertools.pairwise(xs[::3])}, {round(scroll / 20, 9)})
+        # The --scene option applies to normal and fast only
+        self.assertEqual([job.scene for job in gv.plan_videos(settings_for("--top", "60", "--bottom", "60"))], ["box", "box", "row", "row", "row", "row"])
+        settings = settings_for("--speed", "ui", "--ui-scroll", "480", "--seconds", "1")
+        self.assertEqual([speed.name for speed in settings.speeds], ["ui-480"])
+        self.assertEqual(settings.frame_count(settings.speeds[0]), 60)
+
+    def test_a_ui_scroll_must_loop(self) -> None:
+        with self.assertRaisesRegex(ValueError, "ui-100 scrolls 800 virtual px per clip, which must be a whole number of box spacings"):
+            gv.validate(settings_for_unvalidated("--speed", "ui", "--ui-scroll", "100"))
+
+    def test_overrides(self) -> None:
+        settings = settings_for("--normal-round-trips", "1", "--fast-round-trips", "8")
+        self.assertEqual([(settings.period(speed), settings.move_time(speed)) for speed in settings.speeds[:2]], [(8, Fraction(39, 10)), (1, Fraction(2, 5))])
+        settings = settings_for("--seconds", "4")
+        self.assertEqual([settings.frame_count(speed) for speed in settings.speeds], [240] * 6)
+        self.assertEqual(settings.move_time(settings.speeds[0]), Fraction(9, 10))
+        # 40 round trips of 0.2 s leave no time to move between the 0.1 s rests
+        with self.assertRaisesRegex(ValueError, "fast speed's round trips must fit the clip"):
+            gv.validate(settings_for_unvalidated("--fast-round-trips", "40"))
+
+    def test_each_clip_is_whole_round_trips(self) -> None:
+        settings = settings_for()
+        self.assertEqual([settings.duration(speed) / settings.period(speed) for speed in settings.speeds[:2]], [2, 4])
+
+
+class LoopTests(unittest.TestCase):
+    def test_every_mode_and_speed_loops_seamlessly(self) -> None:
+        settings = settings_for()
+        for speed in settings.speeds:
+            frames = settings.frame_count(speed)
+            for mode in (*gv.MODES, MODE("60-naive-synthetic"), MODE("30-naive-synthetic")):
+                first = [gv.row_offset(settings, mode, speed, frame) for frame in range(frames)]
+                second = [gv.row_offset(settings, mode, speed, frame) for frame in range(frames, 2 * frames)]
+                self.assertEqual(first, second, f"{mode.name} at {speed.name}")
+
+
+class ValidationTests(unittest.TestCase):
+    def assert_rejected(self, *argv: str, message: str) -> None:
+        with self.assertRaises(ValueError) as caught:
+            gv.validate(settings_for_unvalidated(*argv))
+        self.assertIn(message, str(caught.exception))
+
+    def test_fps_must_be_a_multiple_of_the_rates(self) -> None:
+        self.assert_rejected("--fps", "50", message="not a whole multiple of 60 Hz")
+        self.assert_rejected("--fps", "50", "--top", "60-naive-heavy", "--bottom", "60-naive-heavy", message="not a whole multiple of 60 Hz")
+        # 120 fps suits 60, 30 and 20 Hz; 100 fps suits 20 Hz only
+        gv.validate(settings_for("--fps", "120"))
+        gv.validate(settings_for("--fps", "100", "--top", "20", "--bottom", "20-naive-heavy", "--speed", "normal"))
+
+    def test_synthetic_jitter_must_stay_below_half_a_frame(self) -> None:
+        self.assert_rejected("--jitter-ms", "9", "--top", "60-naive-synthetic", message="less than half the 60 Hz frame time")
+        gv.validate(settings_for("--jitter-ms", "9", "--top", "30-naive-synthetic", "--bottom", "20"))
+
+    def test_any_whole_number_of_updates_works_with_the_naive_timer(self) -> None:
+        # 4.5 s at 30 Hz is 135 frames: the noise is drawn per clip, so no cycle length has to fit (the eased speeds only: a ui
+        # scroll must move whole box spacings per clip)
+        gv.validate(settings_for("--top", "30-naive-heavy", "--bottom", "20-naive-4ms", "--seconds", "4.5", "--settle", "0", "--speed", "normal", "fast"))
+
+    def test_clip_must_be_whole_frames(self) -> None:
+        self.assert_rejected("--seconds", "1/7", "--scene", "follow", "--follow-boxes", "60", message="not a whole number of frames")
+
+    def test_modes_need_whole_updates_per_clip(self) -> None:
+        self.assert_rejected("--seconds", "1/60", "--scene", "follow", "--follow-boxes", "20", message="whole number of updates")
+
+    def test_box_must_fit(self) -> None:
+        self.assert_rejected("--box-size", "200", message="does not fit in the height 360")
+        self.assert_rejected("--box-spacing", "48", message="the box spacing 48 must be larger than the box size 48")
+        self.assert_rejected("--travel", "600", message="does not fit in the width 640")
+        gv.validate(settings_for("--travel", "600", "--scene", "row"))
+        gv.validate(settings_for("--travel", "600", "--speed", "ui"))
+
+    def test_command_line_reports_invalid_settings(self) -> None:
+        with contextlib.redirect_stderr(io.StringIO()) as stderr, self.assertRaises(SystemExit) as caught:
+            _ = gv.parse_arguments(["--fps", "50"])
+        self.assertEqual(caught.exception.code, 2)
+        self.assertIn("not a whole multiple of 60 Hz", stderr.getvalue())
+
+
+class RenderTests(unittest.TestCase):
+    def test_one_box_by_default(self) -> None:
+        settings = settings_for("--top", "60", "--bottom", "30", "--no-divider")
+        renderer = gv.FrameRenderer(settings, gv.plan_videos(settings)[0])
+        # The box's path is centred: 104 at rest, 488 after the move to the right
+        self.assertEqual(renderer.box_lefts(0), [104])
+        self.assertEqual(renderer.box_lefts(-384), [488])
+        image = renderer.render(0, -384)
+        colors = {color for _, color in cast(list[tuple[int, tuple[int, int, int]]], image.getcolors())}
+        self.assertEqual(colors, {settings.background, settings.box_color})
+        top_y, bottom_y = settings.box_rows
+        self.assertEqual(image.getpixel((104, top_y)), settings.box_color)
+        self.assertEqual(image.getpixel((200, top_y)), settings.background)
+        self.assertEqual(image.getpixel((488, bottom_y)), settings.box_color)
+        self.assertEqual(image.getpixel((104, bottom_y)), settings.background)
+
+    def test_rows_of_boxes(self) -> None:
+        settings = settings_for("--top", "60", "--bottom", "30", "--no-divider", "--scene", "row")
+        job = gv.plan_videos(settings)[0]
+        renderer = gv.FrameRenderer(settings, job)
+        # At rest one box is centred (296) and the others follow every 96 px, past both frame edges
+        self.assertEqual(renderer.box_lefts(0), [8, 104, 200, 296, 392, 488, 584])
+        self.assertEqual(renderer.box_lefts(-48)[:2], [-40, 56])
+        image = renderer.render(0, -48)
+        # Away from the faded edges, only background and boxes
+        inner = image.crop((64, 0, 576, settings.height))
+        colors = {color for _, color in cast(list[tuple[int, tuple[int, int, int]]], inner.getcolors())}
+        self.assertEqual(colors, {settings.background, settings.box_color})
+        top_y, bottom_y = settings.box_rows
+        for x, expected in ((103, settings.background), (104, settings.box_color), (151, settings.box_color), (152, settings.background)):
+            self.assertEqual(image.getpixel((x, top_y)), expected, x)
+        # The bottom row is shifted half a spacing to the left
+        self.assertEqual(image.getpixel((248, bottom_y)), settings.box_color)
+        self.assertEqual(image.getpixel((296, bottom_y)), settings.background)
+
+    def test_default_colours_are_neutral_grays_with_clear_contrast(self) -> None:
+        settings = settings_for()
+
+        def luminance(color: tuple[int, int, int]) -> float:
+            """Relative luminance (WCAG) of a gray."""
+            value = color[0] / 255
+            return value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+
+        # Neutral, and away from black and white: inside video range (16-235), so nothing clips in re-encoded web video
+        for color in (settings.background, settings.box_color, settings.divider_color, settings.label_color):
+            self.assertEqual(len(set(color)), 1)
+            self.assertTrue(16 < color[0] < 235)
+        self.assertLess(settings.background[0], settings.divider_color[0])
+        self.assertLess(settings.divider_color[0], settings.box_color[0])
+        # Boxes on the background: about 8.5:1
+        contrast = (luminance(settings.box_color) + 0.05) / (luminance(settings.background) + 0.05)
+        self.assertTrue(8 < contrast < 9, contrast)
+
+    def test_a_box_between_pixels_blends_its_edge_columns(self) -> None:
+        settings = settings_for("--no-divider", "--scene", "row")
+        image = gv.FrameRenderer(settings, gv.plan_videos(settings)[0]).render(0.25, 0)
+        top_y = settings.box_rows[0]
+        # 48 background, 208 box: the centred box now starts at 296.25; its first column is 3/4 covered, the column after it 1/4
+        self.assertEqual(image.getpixel((296, top_y)), (168, 168, 168))
+        self.assertEqual(image.getpixel((297, top_y)), settings.box_color)
+        self.assertEqual(image.getpixel((343, top_y)), settings.box_color)
+        self.assertEqual(image.getpixel((344, top_y)), (88, 88, 88))
+        self.assertEqual(image.getpixel((345, top_y)), settings.background)
+
+    def test_boxes_fade_at_the_frame_edges(self) -> None:
+        settings = settings_for("--no-divider", "--scene", "row")
+        image = gv.FrameRenderer(settings, gv.plan_videos(settings)[0]).render(0, 0)
+        top_y = settings.box_rows[0]
+        row = [cast(tuple[int, int, int], image.getpixel((x, top_y)))[0] for x in range(settings.width)]
+        # Symmetric (one box is centred), the outermost boxes faded to within a sixteenth of the contrast of the background, the
+        # inner boxes untouched
+        self.assertEqual(row, row[::-1])
+        self.assertLessEqual(row[8] - settings.background[0], (settings.box_color[0] - settings.background[0]) / 16)
+        self.assertEqual(row[104], settings.box_color[0])
+        self.assertEqual(row[8:56], sorted(row[8:56]))
+
+    def test_boxes_sit_next_to_the_divider(self) -> None:
+        settings = settings_for()
+        first, thickness = settings.divider_rows
+        top_y, bottom_y = settings.box_rows
+        self.assertEqual((first, thickness), (179, 2))
+        # 24 px (half a box) between each box and the divider, and the same space above and below the pair
+        self.assertEqual(first - (top_y + settings.band_height), 24)
+        self.assertEqual(bottom_y - (first + thickness), 24)
+        self.assertEqual(top_y, settings.height - (bottom_y + settings.band_height))
+        with self.assertRaisesRegex(ValueError, "does not fit in the height"):
+            gv.validate(settings_for_unvalidated("--box-gap", "200"))
+
+    def test_divider_fades_in_at_both_ends(self) -> None:
+        settings = settings_for()
+        image = gv.FrameRenderer(settings, gv.plan_videos(settings)[0]).render(0, 0)
+        first, thickness = settings.divider_rows
+        row = [cast(tuple[int, int, int], image.getpixel((x, first)))[0] for x in range(settings.width)]
+        self.assertEqual(row, [cast(tuple[int, int, int], image.getpixel((x, first + thickness - 1)))[0] for x in range(settings.width)])
+        fade = settings.width // 10
+        self.assertEqual(row[settings.width // 2], settings.divider_color[0])
+        self.assertEqual(row[fade:-fade], [settings.divider_color[0]] * (settings.width - 2 * fade))
+        self.assertLess(row[0] - settings.background[0], 2)
+        self.assertEqual(row, row[::-1])
+        self.assertEqual(row[: fade + 1], sorted(row[: fade + 1]))
+        self.assertEqual(image.getpixel((settings.width // 2, first - 1)), settings.background)
+        self.assertEqual(image.getpixel((settings.width // 2, first + thickness)), settings.background)
+
+    def test_labels_sit_next_to_the_boxes(self) -> None:
+        settings = settings_for("--top", "60", "--bottom", "30-naive-heavy", "--labels")
+        job = gv.plan_videos(settings)[0]
+        image = gv.FrameRenderer(settings, job).render(0, 0)
+        top_y, bottom_y = settings.box_rows
+
+        def text_pixels(first: int, last: int) -> list[tuple[int, int]]:
+            return [(x, y) for y in range(first, last) for x in range(settings.width) if image.getpixel((x, y)) == settings.label_color]
+
+        def rows_with_text(first: int, last: int) -> list[int]:
+            return sorted({y for _, y in text_pixels(first, last)})
+
+        # Above the top box's path (within 40 px of it) and below the bottom box's path, never overlapping the boxes' rows
+        above = rows_with_text(0, top_y)
+        below = rows_with_text(bottom_y + settings.band_height, settings.height)
+        self.assertTrue(above and top_y - 40 < min(above) and max(above) < top_y)
+        self.assertTrue(below and bottom_y + settings.band_height < min(below) and max(below) < bottom_y + settings.band_height + 40)
+        self.assertEqual(rows_with_text(top_y, top_y + settings.band_height) + rows_with_text(bottom_y, bottom_y + settings.band_height), [])
+        # Centred horizontally
+        for first, last in ((0, top_y), (bottom_y + settings.band_height, settings.height)):
+            xs = [x for x, _ in text_pixels(first, last)]
+            self.assertLess(abs((min(xs) + max(xs)) / 2 - settings.width / 2), 3)
+
+    def test_frames_are_raw_rgb(self) -> None:
+        settings = settings_for("--top", "60", "--bottom", "20", "--speed", "fast")
+        frames = list(gv.clip_frames(settings, gv.plan_videos(settings)[0]))
+        self.assertEqual(len(frames), CLIP_FRAMES)
+        self.assertTrue(all(len(frame) == 640 * 360 * 3 for frame in frames))
+
+
+class VirtualPixelTests(unittest.TestCase):
+    def test_default_is_1280_by_720_on_a_2_by_2_grid(self) -> None:
+        settings = plain_settings()
+        self.assertEqual((settings.width, settings.height, settings.pixel_size, settings.canvas), (1280, 720, 2, (640, 360)))
+        # In virtual pixels; the divider in video pixels
+        layout = (settings.resolved_box_size, settings.resolved_spacing, settings.resolved_travel, settings.resolved_box_gap)
+        self.assertEqual(layout, (48, 96, 384, 24))
+        self.assertEqual(settings.divider_rows, (358, 4))
+
+    def test_the_layout_follows_the_canvas(self) -> None:
+        # Box = 2/15 of the canvas height, in whole virtual pixels; a band is always about the same height in video pixels
+        for pixel, canvas, box in ((2, (640, 360), 48), (3, (427, 240), 32), (4, (320, 180), 24)):
+            settings = default_settings("--pixel-size", str(pixel))
+            self.assertEqual((settings.canvas, settings.resolved_box_size, settings.resolved_spacing), (canvas, box, 2 * box), pixel)
+            self.assertEqual(settings.band_height, 96, pixel)
+        self.assertEqual(default_settings("--pixel-size", "4", "--box-size", "32").resolved_spacing, 64)
+        # A scroll that does not move whole spacings per clip is rejected (box 19, spacing 38 at pixel size 5)
+        with self.assertRaisesRegex(ValueError, "ui-192 scrolls 1536 virtual px per clip, which must be a whole number of box spacings \\(38"):
+            gv.validate(gv.settings_from_arguments(gv.build_parser().parse_args(["--pixel-size", "5"], namespace=gv.Arguments())))
+
+    def render(self, pixel: int, offset: float = -10.3) -> tuple[gv.Settings, Image.Image]:
+        settings = default_settings("--pixel-size", str(pixel), "--speed", "ui-384", "--top", "60", "--bottom", "60", "--labels")
+        return settings, gv.FrameRenderer(settings, gv.plan_videos(settings)[0]).render(offset, offset)
+
+    def test_rows_are_drawn_on_the_virtual_pixel_grid(self) -> None:
+        for pixel in (1, 2, 3, 4):
+            settings, image = self.render(pixel)
+            self.assertEqual(image.size, (1280, 720), pixel)
+            top_y, _ = settings.box_rows
+            band = image.crop((0, top_y, 1280, top_y + settings.band_height))
+            # Every virtual pixel is a uniform block: shrinking and enlarging again changes nothing (pixel size 3 is cropped by one
+            # video pixel at the right)
+            blocks = band.crop((0, 0, 1280 // pixel * pixel, band.height))
+            self.assertEqual(blocky(blocks, pixel).tobytes(), blocks.tobytes(), pixel)
+            # The box edges are blended per virtual pixel
+            colors = {color for _, color in cast(list[tuple[int, tuple[int, int, int]]], band.getcolors(1 << 16))}
+            self.assertGreater(len(colors - {settings.background, settings.box_color}), 0, pixel)
+
+    def test_divider_and_labels_are_native(self) -> None:
+        settings, image = self.render(4)
+        first, thickness = settings.divider_rows
+        # 4 video pixels thick, starting off the 4 x 4 grid
+        column = [image.getpixel((640, y)) for y in range(first - 1, first + thickness + 1)]
+        self.assertEqual(column, [settings.background, *[settings.divider_color] * 4, settings.background])
+        self.assertNotEqual(first % 4, 0)
+        # The label text is drawn at video resolution, so it is not made of 4 x 4 blocks
+        top_y, _ = settings.box_rows
+        label = image.crop((0, 0, 1280, top_y))
+        self.assertNotEqual(blocky(label, 4).tobytes(), label.tobytes())
+
+    def test_a_coarser_grid_moves_more_video_pixels_for_the_same_speed(self) -> None:
+        # ui speeds are in virtual pixels per second: every step (and so every timing error) is the same in virtual pixels, so at
+        # pixel size 4 it covers 4 times as many video pixels
+        mode, speed = MODE("60-naive-heavy"), SPEEDS["ui-384"]
+
+        def steps(settings: gv.Settings) -> list[float]:
+            offsets = [gv.row_offset(settings, mode, speed, frame) for frame in range(121)]
+            return [round((a - b) % settings.resolved_spacing, 9) for a, b in itertools.pairwise(offsets)]
+
+        native, coarse = steps(default_settings()), steps(default_settings("--pixel-size", "4"))
+        self.assertEqual(native, coarse)
+        self.assertLess(abs(sum(native) / len(native) - 384 / 60), 0.01)
+
+    def test_names_and_manifest(self) -> None:
+        settings = default_settings("--pixel-size", "4", "--speed", "ui-384", "--top", "60", "--bottom", "30", "--labels")
+        [job] = gv.plan_videos(settings)
+        self.assertEqual((job.group.as_posix(), job.filename), ("row-labels-px4/ui-384", "row_ui-384_top-60_bottom-30_px4.mp4"))
+        # The native grid is not the default either
+        [job] = gv.plan_videos(default_settings("--speed", "ui-384", "--top", "60", "--bottom", "30"))
+        self.assertEqual((job.group.as_posix(), job.filename), ("row-px1/ui-384", "row_ui-384_top-60_bottom-30_px1.mp4"))
+        entry = cast(dict[str, object], gv.build_manifest(settings, [job])["settings"])
+        self.assertEqual((entry["pixelSize"], entry["canvas"], entry["boxSize"], entry["width"]), (4, [320, 180], 24, 1280))
+
+
+class FollowTests(unittest.TestCase):
+    def settings(self, *argv: str) -> gv.Settings:
+        return default_settings("--scene", "follow", *argv)
+
+    def test_three_videos_at_real_speed(self) -> None:
+        jobs = gv.plan_videos(plain_settings("--scene", "follow", "--labels"))
+        self.assertEqual(
+            [(job.group.as_posix(), job.filename) for job in jobs],
+            [
+                ("follow-labels/eighth-width-per-frame", "follow_eighth-width-per-frame.mp4"),
+                ("follow-labels/eighth-width-per-frame", "follow-realistic_eighth-width-per-frame.mp4"),
+                ("follow-labels/eighth-width-per-frame", "follow-extreme_eighth-width-per-frame.mp4"),
+            ],
+        )
+        # --slow-motion adds slowed down copies, in their own folders
+        slowed = gv.plan_videos(plain_settings("--scene", "follow", "--labels", "--slow-motion", "1", "10"))
+        self.assertEqual(
+            [(job.group.as_posix(), job.filename) for job in slowed[3:]],
+            [
+                ("follow-labels-slow10/eighth-width-per-frame", "follow_eighth-width-per-frame_slow10.mp4"),
+                ("follow-labels-slow10/eighth-width-per-frame", "follow-realistic_eighth-width-per-frame_slow10.mp4"),
+                ("follow-labels-slow10/eighth-width-per-frame", "follow-extreme_eighth-width-per-frame_slow10.mp4"),
+            ],
+        )
+        # The loads (the demo profile), the realistic loads, and the extreme cases
+        self.assertEqual([box.name for box in jobs[0].boxes], ["60", "60-naive-light", "60-naive-typical", "60-naive-heavy"])
+        self.assertEqual([box.name for box in jobs[1].boxes], ["60", "60-naive-light-realistic", "60-naive-typical-realistic", "60-naive-heavy-realistic"])
+        self.assertEqual([box.name for box in jobs[2].boxes], ["60", "60-naive-1ms", "60-naive-2ms", "60-naive-3ms", "60-naive-4ms"])
+        # An eighth of the width per frame (80 virtual px, 160 video px at 60 Hz), 8 s
+        settings = plain_settings("--scene", "follow")
+        self.assertEqual((jobs[0].speed.scroll, settings.frame_count(jobs[0].speed)), (4800, CLIP_FRAMES))
+        # --follow-boxes makes one video with that stack; --slow-motion picks the factors
+        custom = self.settings("--follow-boxes", "30", "30-naive-heavy", "30-naive-synthetic", "--slow-motion", "1")
+        self.assertEqual([(name, [box.name for box in stack]) for name, stack in custom.follow_stacks], [("", ["30", "30-naive-heavy", "30-naive-synthetic"])])
+        self.assertEqual(len(gv.plan_videos(custom)), 1)
+
+    def test_one_rate_per_video_and_the_stack_must_fit(self) -> None:
+        # One rate per video, like a game: its camera is updated at that rate
+        with self.assertRaisesRegex(ValueError, "all boxes need the same rate \\(got 60, 30 Hz\\)"):
+            gv.validate(gv.settings_from_arguments(gv.build_parser().parse_args(["--scene", "follow", "--follow-boxes", "60", "30"], namespace=gv.Arguments())))
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            _ = gv.parse_arguments(["--scene", "follow", "--follow-boxes", "60-wobbly"])
+        with self.assertRaisesRegex(ValueError, "8 boxes of 48 do not fit above each other in the height 360"):
+            gv.validate(
+                gv.settings_from_arguments(gv.build_parser().parse_args(["--scene", "follow", "--follow-boxes", *["60"] * 8], namespace=gv.Arguments()))
+            )
+
+    def test_only_the_timing_error_moves_a_box(self) -> None:
+        settings = self.settings()
+        loads, realistic, extreme = gv.plan_videos(settings)[:3]
+        per_ms = float(loads.speed.scroll or 0) / 1000  # 9.6 px per ms of timing error
+        for job in (loads, realistic):
+            positions = [gv.follow_positions(settings, job, frame) for frame in range(CLIP_FRAMES)]
+            # The camera follows the perfect motion: the 60 Hz reference never moves
+            self.assertEqual({values[0] for values in positions}, {0.0})
+            # Each load moves its box both ways; heavy load's spikes (up to 8 ms late) the furthest
+            for index in (1, 2, 3):
+                errors = [values[index] for values in positions]
+                self.assertTrue(min(errors) < -per_ms / 2 and max(errors) > per_ms / 2, (job.filename, index))
+            self.assertGreater(max(values[3] for values in positions), 4 * per_ms)
+        # The demo profile: off by more than half a millisecond in most frames
+        positions = [gv.follow_positions(settings, loads, frame) for frame in range(CLIP_FRAMES)]
+        for index in (1, 2, 3):
+            self.assertGreater(sum(abs(values[index]) > per_ms / 2 for values in positions), CLIP_FRAMES * 3 // 4, index)
+        # The windows: up to +-1 ... +-4 ms, the same pattern scaled
+        positions = [gv.follow_positions(settings, extreme, frame) for frame in range(CLIP_FRAMES)]
+        for index, window in ((1, 1), (2, 2), (3, 3), (4, 4)):
+            errors = [values[index] for values in positions]
+            self.assertAlmostEqual(max(errors) - min(errors), 2 * window * per_ms, delta=0.01)
+        # A 30 Hz stack: the camera is updated at 30 Hz too, so the ideal box stays on the lines
+        settings_30 = self.settings("--follow-boxes", "30", "30-naive-typical")
+        [job_30] = [job for job in gv.plan_videos(settings_30) if job.slow_motion == 1]
+        positions_30 = [gv.follow_positions(settings_30, job_30, frame) for frame in range(CLIP_FRAMES)]
+        self.assertEqual({values[0] for values in positions_30}, {0.0})
+        self.assertTrue(any(values[1] for values in positions_30))
+
+    def test_every_video_loops_seamlessly(self) -> None:
+        settings = self.settings("--slow-motion", "1")
+        for job in gv.plan_videos(settings):
+            first = [gv.follow_positions(settings, job, frame) for frame in range(CLIP_FRAMES)]
+            second = [gv.follow_positions(settings, job, frame) for frame in range(CLIP_FRAMES, 2 * CLIP_FRAMES)]
+            for a, b in zip(first, second, strict=True):
+                self.assertEqual([round(value, 6) for value in a], [round(value, 6) for value in b], job.filename)
+
+    def test_boxes_in_front_of_the_lines_and_labels_clear_of_them(self) -> None:
+        settings = self.settings("--labels", "--no-divider")
+        job = gv.plan_videos(settings)[2]
+        renderer = gv.FollowRenderer(settings, job)
+        # Box 96 at 592-687, lines of 2 video pixels just outside it, the 5 boxes (gap 24) centred: tops at 72, 192, ...
+        image = renderer.draw(tuple(0.0 for _ in job.boxes))
+        self.assertEqual(image.size, (1280, 720))
+        self.assertEqual([image.getpixel((x, 5)) for x in (590, 591, 688, 689)], [settings.line_color] * 4)
+        self.assertEqual([image.getpixel((x, 72 + 48)) for x in (589, 592, 687, 690)], [settings.background, *[settings.box_color] * 2, settings.background])
+        # A box over a line hides it: the lines are behind the boxes
+        image = renderer.draw(tuple(10.0 for _ in job.boxes))
+        self.assertEqual(image.getpixel((688, 72 + 48)), settings.box_color)
+        self.assertEqual(image.getpixel((688, 5)), settings.line_color)
+        # The labels start right of the furthest any box swings (the 4 ms box: about 38 px)
+        swing = max(offset for frame in range(CLIP_FRAMES) for offset in gv.follow_positions(settings, job, frame))
+        text = [x for x in range(640, 1280) for y in range(60, 180) if image.getpixel((x, y)) == settings.label_color]
+        self.assertGreater(min(text), 690 + swing)
+
+    def test_slow_motion_repeats_every_refresh(self) -> None:
+        settings = plain_settings("--scene", "follow", "--slow-motion", "3", "--follow-boxes", "60-naive-typical", "--seconds", "2")
+        [job] = gv.plan_videos(settings)
+        self.assertEqual(job.filename, "follow_eighth-width-per-frame_slow3.mp4")
+        frames = list(gv.clip_frames(settings, job))
+        self.assertEqual(len(frames), 3 * 120)
+        self.assertEqual(settings.video_frame_count(job), 360)
+        self.assertTrue(all(frames[index] == frames[index - index % 3] for index in range(len(frames))))
+
+    def test_manifest_lists_the_stack(self) -> None:
+        settings = self.settings("--slow-motion", "1")
+        video = cast(list[dict[str, object]], gv.build_manifest(settings, gv.plan_videos(settings))["videos"])[2]
+        boxes = cast(list[dict[str, object]], video["boxes"])
+        self.assertEqual([box["mode"] for box in boxes], ["60", "60-naive-1ms", "60-naive-2ms", "60-naive-3ms", "60-naive-4ms"])
+        self.assertEqual((boxes[1]["label"], boxes[1]["noiseWindowMs"]), ("60 Hz naive timer, ±1 ms mixed", 1))
+        self.assertEqual(set(cast(dict[str, list[float]], boxes[0]["frames"])["animationErrorMs"]), {0})
+        errors = cast(dict[str, list[float]], boxes[4]["frames"])["animationErrorMs"]
+        self.assertEqual(max(map(abs, errors)), 8)
+        self.assertNotIn("top", video)
+
+
+class FfmpegLookupTests(unittest.TestCase):
+    @property
+    def folder(self) -> Path:
+        """A temporary folder, one per test."""
+        if self._folder is None:
+            self._folder = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        return self._folder
+
+    _folder: Path | None = None
+
+    @property
+    def missing_config(self) -> Path:
+        return self.folder / "no-such-local.toml"
+
+    def make_ffmpeg(self, folder: Path) -> Path:
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+        _ = path.write_bytes(b"")
+        return path
+
+    def find(self, explicit: str | None = None, config: Path | None = None, environ: dict[str, str] | None = None) -> gv.FfmpegLocation:
+        return gv.find_ffmpeg(explicit, config, environ=environ or {}, default_config=self.missing_config)
+
+    def test_explicit_file_or_folder(self) -> None:
+        ffmpeg = self.make_ffmpeg(self.folder / "a" / "bin")
+        for given in (ffmpeg, ffmpeg.parent, self.folder / "a"):
+            self.assertEqual(self.find(str(given)).path, ffmpeg.resolve())
+
+    def test_order_explicit_environment_config_path(self) -> None:
+        explicit = self.make_ffmpeg(self.folder / "explicit")
+        environment = self.make_ffmpeg(self.folder / "environment")
+        configured = self.make_ffmpeg(self.folder / "configured")
+        config = self.folder / "local.toml"
+        _ = config.write_text("[ffmpeg]\npath = 'configured'\n", encoding="utf-8")
+        environ = {gv.FFMPEG_ENVIRONMENT_VARIABLE: str(environment)}
+        with mock.patch("generate_videos.shutil.which", return_value=str(self.folder / "on-path" / "ffmpeg")):
+            self.assertEqual(self.find(str(explicit), config, environ).source, "--ffmpeg")
+            self.assertEqual(self.find(None, config, environ).source, gv.FFMPEG_ENVIRONMENT_VARIABLE)
+            found = self.find(None, config)
+            self.assertEqual((found.path, found.source), (configured.resolve(), str(config)))
+            self.assertEqual(self.find().source, "PATH")
+
+    def test_default_config_is_used(self) -> None:
+        configured = self.make_ffmpeg(self.folder / "tools")
+        config = self.folder / "local.toml"
+        _ = config.write_text(f"[ffmpeg]\npath = '{configured.parent}'\n", encoding="utf-8")
+        self.assertEqual(gv.find_ffmpeg(environ={}, default_config=config).path, configured.resolve())
+
+    def test_config_without_path_falls_through_to_path(self) -> None:
+        config = self.folder / "local.toml"
+        _ = config.write_text("[ffmpeg]\n# path = 'C:\\ffmpeg'\n", encoding="utf-8")
+        with mock.patch("generate_videos.shutil.which", return_value="ffmpeg-on-path"):
+            self.assertEqual(self.find(None, config).source, "PATH")
+
+    def test_set_but_wrong_is_an_error(self) -> None:
+        with self.assertRaisesRegex(gv.FfmpegError, "--ffmpeg"):
+            _ = self.find(str(self.folder / "nothing"))
+        with self.assertRaisesRegex(gv.FfmpegError, gv.FFMPEG_ENVIRONMENT_VARIABLE):
+            _ = self.find(environ={gv.FFMPEG_ENVIRONMENT_VARIABLE: str(self.folder / "nothing")})
+        config = self.folder / "local.toml"
+        _ = config.write_text("[ffmpeg]\npath = 'nothing'\n", encoding="utf-8")
+        with self.assertRaisesRegex(gv.FfmpegError, "local.toml"):
+            _ = self.find(None, config)
+        with self.assertRaisesRegex(gv.FfmpegError, "--config"):
+            _ = self.find(None, self.missing_config)
+
+    def test_not_found(self) -> None:
+        with mock.patch("generate_videos.shutil.which", return_value=None), self.assertRaisesRegex(gv.FfmpegError, "not found"):
+            _ = self.find()
+
+    def test_lossless_encoder_is_required(self) -> None:
+        with_encoder = " V....D libx264              libx264 H.264\n V....D h264_nvenc           NVIDIA NVENC H.264 encoder\n"
+        gv.require_lossless_encoder(with_encoder, Path("ffmpeg"))
+        # libx264rgb alone is not enough: the videos are YUV
+        without = " V....D libx264rgb           libx264 H.264 RGB\n V....D h264_nvenc           NVIDIA NVENC H.264 encoder\n"
+        with self.assertRaisesRegex(gv.FfmpegError, "no lossy fallback"):
+            gv.require_lossless_encoder(without, Path("ffmpeg"))
+
+
+def _installed_ffmpeg() -> tuple[Path, Path] | None:
+    try:
+        ffmpeg = gv.find_ffmpeg().path
+    except gv.FfmpegError:
+        return None
+    ffprobe = gv.find_ffprobe(ffmpeg)
+    return (ffmpeg, ffprobe) if ffprobe else None
+
+
+INSTALLED = _installed_ffmpeg()
+# Convert back to RGB the way the video is tagged (BT.709, limited range)
+DECODE_FILTER = "scale=in_color_matrix=bt709:in_range=tv:flags=accurate_rnd+full_chroma_int"
+
+
+@unittest.skipIf(INSTALLED is None, "FFmpeg and ffprobe not found (see README.md)")
+class EncodeTests(unittest.TestCase):
+    def test_small_clip_is_lossless_h264(self) -> None:
+        assert INSTALLED is not None
+        ffmpeg, ffprobe = INSTALLED
+        folder = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        argv = ["--output-dir", str(folder), "--ffmpeg", str(ffmpeg), "--top", "60", "--bottom", "20-naive-heavy", "--speed", "fast"]
+        # On the default 2 x 2 grid: a 4 x 4 box (8 x 8 video pixels) on a 32 x 16 canvas
+        argv += ["--seconds", "3/2", "--fast-round-trips", "1", "--width", "64", "--height", "32", "--box-size", "4", "--travel", "20", "--labels"]
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gv.main(argv), 0)
+
+        # Labelled box scene at fast speed: box-labels/fast
+        self.assertEqual([path.name for path in folder.iterdir()], ["box-labels"])
+        group = folder / "box-labels" / "fast"
+        video = group / "fast_top-60_bottom-20-naive-heavy.mp4"
+        self.assertEqual(sorted(path.name for path in group.iterdir()), [video.name, gv.MANIFEST_NAME])
+        manifest = cast(dict[str, list[dict[str, object]]], json.loads((group / gv.MANIFEST_NAME).read_text(encoding="utf-8")))
+        self.assertEqual(manifest["videos"][0]["frameCount"], 90)
+
+        probe = subprocess.run(
+            [str(ffprobe), "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_streams", "-of", "json", str(video)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        stream = cast(dict[str, list[dict[str, object]]], json.loads(probe.stdout))["streams"][0]
+        self.assertEqual(stream["codec_name"], "h264")
+        self.assertEqual(stream["profile"], "High 4:4:4 Predictive")
+        self.assertEqual((stream["pix_fmt"], stream["color_space"], stream["color_range"]), ("yuv444p", "bt709", "tv"))
+        self.assertEqual((stream["width"], stream["height"]), (64, 32))
+        self.assertEqual(stream["r_frame_rate"], "60/1")
+        self.assertEqual(stream["nb_read_frames"], "90")
+
+        decoded = subprocess.run(
+            [str(ffmpeg), "-v", "error", "-i", str(video), "-vf", DECODE_FILTER, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+            capture_output=True,
+            check=True,
+        ).stdout
+        settings = gv.parse_arguments(argv)[1]
+        expected = b"".join(gv.clip_frames(settings, gv.plan_videos(settings)[0]))
+        self.assertEqual(len(decoded), len(expected))
+        # H.264 at -qp 0 is lossless; only the RGB <-> YUV conversion around it may move an in-between gray (anti-aliased text,
+        # the divider's fade) by one step. The designed colours (background, boxes) come back exactly.
+        exact = {settings.background, settings.box_color}
+        for index in range(0, len(expected), 3):
+            rendered = (expected[index], expected[index + 1], expected[index + 2])
+            got = (decoded[index], decoded[index + 1], decoded[index + 2])
+            if rendered in exact:
+                self.assertEqual(got, rendered, f"pixel {index // 3}")
+            else:
+                self.assertLessEqual(max(abs(a - b) for a, b in zip(got, rendered, strict=True)), 1, f"pixel {index // 3}")
+
+
+if __name__ == "__main__":
+    _ = unittest.main()

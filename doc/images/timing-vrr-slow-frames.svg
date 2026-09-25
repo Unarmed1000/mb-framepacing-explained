@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="464" viewBox="0 0 1120 464" role="img" aria-label="VRR with the same slow frames">
+<title>VRR with the same slow frames</title>
+<style>
+  text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+         font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
+  .card { fill: #1f242b; fill-opacity: 0.94; stroke: #8b949e; stroke-opacity: 0.25; stroke-width: 1; }
+  .title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { fill: #8b949e; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
+  .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
+  .axis { font-size: 12px; fill: #c9d1d9; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.16; stroke-width: 1; stroke-dasharray: 3 4; }
+  .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
+  .frame { font-size: 14px; font-weight: 700; }
+  .box-time { fill: #b1bac4; font-size: 12px; }
+  .arrow { stroke: #8b949e; stroke-width: 1.2; }
+  .arrowhead { fill: #8b949e; }
+  .ok { fill: #2ea043; }
+  .hold { fill: #2ea043; fill-opacity: 0.45; }
+  .again { fill: #d29922; }
+  .off { fill: #e5534b; }
+  .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
+  .dark-text { fill: #1c1f24; }
+  .zero { fill: #6e7681; }
+  .err { fill: #ff7b72; font-weight: 600; }
+  .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .neutral { fill: #3d444d; }
+  .lane { font-size: 15px; font-weight: 600; }
+  .same { fill: #7ee787; font-weight: 600; }
+</style>
+<rect class="card" x="0.5" y="0.5" width="1119" height="463" rx="14"/>
+<text x="20.0" y="30.0" text-anchor="start" class="title">VRR with the same slow frames</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">The display refreshes as soon as a frame is presented (at most every 100 ms). B and E appear when they are done instead</text>
+<text x="20.0" y="73.0" text-anchor="start" class="sub">of at the next vsync, so the errors shrink, but a slow frame is still late: VRR does not remove the hitch.</text>
+<line class="vsync" x1="180.0" y1="104" x2="180.0" y2="243"/>
+<text x="180.0" y="258.0" text-anchor="middle" class="axis">−100 ms</text>
+<line class="vsync" x1="300.0" y1="104" x2="300.0" y2="243"/>
+<text x="300.0" y="258.0" text-anchor="middle" class="axis">0 ms</text>
+<text x="300.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 1</text>
+<line class="vsync" x1="450.0" y1="104" x2="450.0" y2="243"/>
+<text x="450.0" y="258.0" text-anchor="middle" class="axis">125 ms</text>
+<text x="450.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 2</text>
+<line class="vsync" x1="570.0" y1="104" x2="570.0" y2="243"/>
+<text x="570.0" y="258.0" text-anchor="middle" class="axis">225 ms</text>
+<text x="570.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 3</text>
+<line class="vsync" x1="690.0" y1="104" x2="690.0" y2="243"/>
+<text x="690.0" y="258.0" text-anchor="middle" class="axis">325 ms</text>
+<text x="690.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 4</text>
+<line class="vsync" x1="840.0" y1="104" x2="840.0" y2="243"/>
+<text x="840.0" y="258.0" text-anchor="middle" class="axis">450 ms</text>
+<text x="840.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 5</text>
+<line class="vsync" x1="960.0" y1="104" x2="960.0" y2="243"/>
+<text x="960.0" y="258.0" text-anchor="middle" class="axis">550 ms</text>
+<text x="960.0" y="98.0" text-anchor="middle" class="vsync-n">refresh 6</text>
+<line class="vsync" x1="1080.0" y1="104" x2="1080.0" y2="243"/>
+<text x="1080.0" y="258.0" text-anchor="middle" class="axis">650 ms</text>
+<text x="20.0" y="131.0" text-anchor="start" class="label">RENDER</text>
+<text x="20.0" y="147.0" text-anchor="start" class="vsync-n">animation time</text>
+<text x="20.0" y="222.0" text-anchor="start" class="label">DISPLAY</text>
+<text x="20.0" y="294.0" text-anchor="start" class="label">ANIMATION TIME STEP</text>
+<text x="20.0" y="320.0" text-anchor="start" class="label">DISPLAY TIME</text>
+<text x="20.0" y="346.0" text-anchor="start" class="label">ANIMATION ERROR</text>
+<rect class="box" x="210.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="249.0" y="131.0" text-anchor="middle" class="frame">A</text>
+<text x="249.0" y="148.0" text-anchor="middle" class="box-time">0 ms</text>
+<line class="arrow" x1="294.0" y1="164" x2="294.0" y2="186"/>
+<path class="arrowhead" d="M289.0,185 L299.0,185 L294.0,194 z"/>
+<rect class="box" x="306.0" y="112" width="138.0" height="44" rx="8"/>
+<text x="375.0" y="131.0" text-anchor="middle" class="frame">B</text>
+<text x="375.0" y="148.0" text-anchor="middle" class="box-time">100 ms</text>
+<line class="arrow" x1="450.0" y1="164" x2="450.0" y2="186"/>
+<path class="arrowhead" d="M445.0,185 L455.0,185 L450.0,194 z"/>
+<rect class="box" x="456.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="495.0" y="131.0" text-anchor="middle" class="frame">C</text>
+<text x="495.0" y="148.0" text-anchor="middle" class="box-time">225 ms</text>
+<line class="arrow" x1="540.0" y1="164" x2="540.0" y2="186"/>
+<path class="arrowhead" d="M535.0,185 L545.0,185 L540.0,194 z"/>
+<rect class="box" x="576.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="615.0" y="131.0" text-anchor="middle" class="frame">D</text>
+<text x="615.0" y="148.0" text-anchor="middle" class="box-time">325 ms</text>
+<line class="arrow" x1="660.0" y1="164" x2="660.0" y2="186"/>
+<path class="arrowhead" d="M655.0,185 L665.0,185 L660.0,194 z"/>
+<rect class="box" x="696.0" y="112" width="138.0" height="44" rx="8"/>
+<text x="765.0" y="131.0" text-anchor="middle" class="frame">E</text>
+<text x="765.0" y="148.0" text-anchor="middle" class="box-time">425 ms</text>
+<line class="arrow" x1="840.0" y1="164" x2="840.0" y2="186"/>
+<path class="arrowhead" d="M835.0,185 L845.0,185 L840.0,194 z"/>
+<rect class="box" x="846.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="885.0" y="131.0" text-anchor="middle" class="frame">F</text>
+<text x="885.0" y="148.0" text-anchor="middle" class="box-time">550 ms</text>
+<line class="arrow" x1="930.0" y1="164" x2="930.0" y2="186"/>
+<path class="arrowhead" d="M925.0,185 L935.0,185 L930.0,194 z"/>
+<rect class="ok" x="302.0" y="198" width="146.0" height="40" rx="6"/>
+<text x="375.0" y="223.0" text-anchor="middle" class="cell-text">A</text>
+<text x="375.0" y="294.0" text-anchor="middle">–</text>
+<text x="375.0" y="320.0" text-anchor="middle">–</text>
+<text x="375.0" y="346.0" text-anchor="middle" class="zero">–</text>
+<rect class="off" x="452.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="510.0" y="223.0" text-anchor="middle" class="cell-text">B</text>
+<text x="510.0" y="294.0" text-anchor="middle">100 ms</text>
+<text x="510.0" y="320.0" text-anchor="middle">125 ms</text>
+<rect class="err-pill" x="478.8" y="331" width="62.4" height="21" rx="10.5"/>
+<text x="510.0" y="346.0" text-anchor="middle" class="err">−25 ms</text>
+<rect class="ok" x="572.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="630.0" y="223.0" text-anchor="middle" class="cell-text">C</text>
+<text x="630.0" y="294.0" text-anchor="middle">125 ms</text>
+<text x="630.0" y="320.0" text-anchor="middle">100 ms</text>
+<rect class="err-pill" x="598.8" y="331" width="62.4" height="21" rx="10.5"/>
+<text x="630.0" y="346.0" text-anchor="middle" class="err">+25 ms</text>
+<rect class="ok" x="692.0" y="198" width="146.0" height="40" rx="6"/>
+<text x="765.0" y="223.0" text-anchor="middle" class="cell-text">D</text>
+<text x="765.0" y="294.0" text-anchor="middle">100 ms</text>
+<text x="765.0" y="320.0" text-anchor="middle">100 ms</text>
+<text x="765.0" y="346.0" text-anchor="middle" class="zero">0 ms</text>
+<rect class="off" x="842.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="900.0" y="223.0" text-anchor="middle" class="cell-text">E</text>
+<text x="900.0" y="294.0" text-anchor="middle">100 ms</text>
+<text x="900.0" y="320.0" text-anchor="middle">125 ms</text>
+<rect class="err-pill" x="868.8" y="331" width="62.4" height="21" rx="10.5"/>
+<text x="900.0" y="346.0" text-anchor="middle" class="err">−25 ms</text>
+<rect class="ok" x="962.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="1020.0" y="223.0" text-anchor="middle" class="cell-text">F</text>
+<text x="1020.0" y="294.0" text-anchor="middle">125 ms</text>
+<text x="1020.0" y="320.0" text-anchor="middle">100 ms</text>
+<rect class="err-pill" x="988.8" y="331" width="62.4" height="21" rx="10.5"/>
+<text x="1020.0" y="346.0" text-anchor="middle" class="err">+25 ms</text>
+<rect class="box" x="20" y="382" width="30" height="16" rx="4"/>
+<text x="58.0" y="395.0" text-anchor="start" class="sub">render: as wide as the frame takes, labelled with the animation time it shows</text>
+<line class="arrow" x1="578.0" y1="381" x2="578.0" y2="392"/>
+<path class="arrowhead" d="M574.0,391 L582.0,391 L578.0,398 z"/>
+<text x="592.0" y="395.0" text-anchor="start" class="sub">present: the frame is done and handed to the display, which shows it at once</text>
+<rect class="ok" x="20.0" y="409" width="14" height="14" rx="4"/>
+<text x="42.0" y="421.0" text-anchor="start" class="sub">shows the moment of its refresh</text>
+<rect class="off" x="283.9" y="409" width="14" height="14" rx="4"/>
+<text x="305.9" y="421.0" text-anchor="start" class="sub">shows another moment</text>
+<text x="20.0" y="446.0" text-anchor="start" class="sub">Animation error = animation time step − display time: + shown too soon, − shown too late</text>
+</svg>

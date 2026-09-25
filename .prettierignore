@@ -1,0 +1,19 @@
+# Generated, vendored or third-party content: never reformat
+node_modules/
+**/bin/
+**/obj/
+**/build/
+**/publish/
+**/TestResults/
+marker/cpp/third_party/
+test-data/
+licenses/*.txt
+package-lock.json
+doc/images/
+
+# clang tool configs (clang-tidy accepts YAML that Prettier rejects)
+marker/cpp/.clang-format
+**/.clang-tidy
+
+# Rewritten by Dependabot in its own JSON style on every update
+.config/dotnet-tools.json

@@ -1,0 +1,19 @@
+# Generated output (videos, frames, manifests)
+/out/
+
+# Machine-local settings (see local.example.toml)
+local.toml
+
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/
+.venv/
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

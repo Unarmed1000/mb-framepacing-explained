@@ -1,0 +1,328 @@
+# Frame pacing comparison videos
+
+`generate_videos.py` makes short looping 1280×720 videos that show what animation error looks like. Every video is 8 s long.
+Two kinds of scene:
+
+- **Side by side** (`box`, `row`): the **top** half is updated with one timing mode, the **bottom** half with another, and a thin
+  divider with faded ends separates them. At the `normal` and `fast` speeds each half shows a box that moves side to side along
+  the same eased path; at the `ui` speeds each half is a row of identical boxes, like a list in an interface, that scrolls right to
+  left at constant speed, fading in and out at the frame edges. With `--scene row` the `normal` and `fast` clips show a row too,
+  paging one page (4 boxes) to the left and back.
+- **Follow camera** (`--scene follow`): a stack of boxes, each with its own mode, between two fixed lines, with a camera that
+  follows the ideal motion, so a timing error is the only thing that moves a box. See [Follow camera](#follow-camera).
+
+The moving scene is drawn in [virtual pixels](#virtual-pixels), so it can be shown on a coarser pixel grid. The terms follow Intel
+PresentMon and the Gamers Nexus animation error methodology; the [repository README](../../README.md#vocabulary) maps them to their
+other names.
+
+## How timing is simulated
+
+The timing comes from [`frame_timing.py`](frame_timing.py), which simulates a game's frame loop on a **plain vsync display**, the
+old-school way: there are no presentation timestamps and no API that says when a frame was shown. The game blocks in `Present`
+and reads its own clock:
+
+```text
+loop:
+    Present(previous frame)   blocks until that frame is flipped on screen at a vsync (double buffering)
+    (work: input, OS messages)
+    now = wall clock          a high-precision timer, read when the thread gets there: a little after the flip
+    dt  = now - last          the naive timer
+    x  += speed * dt          move the animation
+    render                    always fits in the frame time here: every frame makes its vsync
+    Present(frame)            shown at the next allowed vsync, every 1, 2 or 3 refreshes (60, 30, 20 Hz at 60 fps)
+```
+
+Every frame is shown at an exact **display time** (a vsync). What differs is the **animation time** it shows, which depends on the
+timer:
+
+- **Ideal** (`60`, `30`, `20`): the animation time is exactly the display time, what a perfect, display-matched timer would give.
+  The reference; its animation error is always 0.
+- **Naive** (`60-naive-…`): the animation time is the wall clock reading. A constant delay after the flip is only latency and cannot
+  be seen, so each frame is off by how much sooner or later than usual its clock was read, ahead or behind. `dt = now − last` is
+  the frame time plus the difference between two of those delays. Moving by `x += speed * dt` gives exactly the same positions as
+  `x = speed × animation time`: the errors do not build up, because every dt ends where the next one starts.
+
+How much sooner or later than usual the naive loop reads the clock:
+
+| Mode                           | Clock read                                                                                                             | Label                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `60-naive-light` …             | **System load**, as a demo: a timing error in 95 % of the frames (`--demo-load-share`), all about 1 ms sooner or later | 60 Hz naive timer, light load               |
+| `60-naive-typical` …           | Half about 1 ms, half up to 2 ms                                                                                       | 60 Hz naive timer, typical load             |
+| `60-naive-heavy` …             | 60 % about 1 ms, 30 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                   | 60 Hz naive timer, heavy load               |
+| `60-naive-light-realistic` …   | **Realistic** system load, an idle system: in 3 % of the frames about 1 ms, in 1 % up to 2 ms                          | 60 Hz naive timer, light load (realistic)   |
+| `60-naive-typical-realistic` … | A normal gaming PC: 7 % about 1 ms, 2 % up to 2 ms                                                                     | 60 Hz naive timer, typical load (realistic) |
+| `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)   |
+| `60-naive-1ms` … `-4ms` …      | **A ±N ms window** (any size, e.g. `60-naive-2.5ms`), following the jitter pattern (`--jitter-pattern`)                | 60 Hz naive timer, ±1 ms mixed              |
+| `60-naive-synthetic` …         | The jitter pattern within ±1 ms (`--jitter-ms`), for teaching the metric                                               | 60 Hz naive timer, synthetic ±1 ms mixed    |
+
+- **System load:** the clock is read after the frame's first work (input, OS messages), usually about 2 ms plus 0–0.3 ms of noise
+  (`--noise-ms`); that constant part is latency. How late the thread gets there depends on what else runs: background work,
+  driver interrupts, power states. The ~1 ms and ~2 ms reads go either way (the work can also be shorter than usual); the heavy
+  spikes are always late, as CPU contention only delays. In the **first half** of a clip every frame is drawn on its own, so a
+  longer read is a single frame; in the **second half** they come in **spells** of 3–10 frames in a row, while something else
+  keeps using the CPU. Both halves have the same share of longer reads. Unity measured 6.854, 7.423 and 6.691 ms at a steady
+  144 Hz, whose frames are 6.944 ms.
+- **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
+  video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
+  really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also
+  up to 2 ms, heavy also the 4–8 ms spikes. `-realistic` (e.g. `60-naive-heavy-realistic`) gives the realistic rates.
+- **Jitter patterns** (the ±N ms windows and synthetic): `mixed` (default) goes through `alternating`, `runs`, `random`, `runs`, a
+  quarter of the clip each; `alternating` flips between +N and −N every frame (the largest animation error: twice N on every
+  frame); `runs` stays on one side for 4–10 frames, then on the other; `random` is anywhere in ±N. Consecutive errors always
+  differ, so no step is exactly the frame time, and the largest is exactly ±N. The windows share one pattern, scaled.
+- **Rendering always fits** (`--frame-cost`, the rendering work as a share of the frame time, 0.3): together with the latest clock
+  read it must fit in the frame time, so every frame makes its vsync. Late frames, catch-up, frame limiters and other timers (fixed
+  dt, dt smoothing, dt snapping, a fixed-step accumulator) are not simulated yet; the timer module is built so they can be added.
+- **Deterministic:** the random draws come from our own generator, [`pcg32.py`](pcg32.py) (PCG32, the XSH RR 64/32 generator of
+  [pcg-random.org](https://www.pcg-random.org)), seeded from the SHA-256 of a text naming the mode and clip length. The same clip
+  always gets the same timing, in any Python version, and the draws can be reproduced in any language. Every clip loops: the frame
+  after the last is the first frame of the next loop.
+- **Sub-pixel motion:** the edge columns of each box are blended by how much the box covers them (per virtual pixel), so even small
+  errors show and a perfect box is not made uneven by rounding to whole pixels.
+
+Sources: [Fixing Time.deltaTime in Unity 2020.2](https://unity.com/blog/engine-platform/fixing-time-deltatime-in-unity-2020-2-for-smoother-gameplay)
+(Unity), [The Elusive Frame Timing](https://medium.com/@alen.ladavac/the-elusive-frame-timing-168f899aec92) (Alen Ladavac,
+Croteam, [GDC 2018](https://www.gdcvault.com/play/1025407/Advanced-Graphics-Techniques-Tutorial-The)),
+[Frame Pacing library](https://developer.android.com/games/sdk/frame-pacing) (Android),
+[Swapchains and frame pacing](https://raphlinus.github.io/ui/graphics/gpu/2021/10/22/swapchain-frame-pacing.html) (Raph Levien).
+For the timers to come: [How to make your game run at 60fps](https://medium.com/@tglaiel/how-to-make-your-game-run-at-60fps-24c61210fe75)
+(Tyler Glaiel, dt snapping), [Fix Your Timestep!](https://gafferongames.com/post/fix_your_timestep/) (Gaffer On Games),
+[Time Delta Smoothing](https://frankforce.com/frame-rate-delta-buffering/) (Frank Force).
+
+## Speeds
+
+Every clip is 8 s (480 frames at 60 fps, `--seconds`), so every video shows the jitter profiles the same way: 2 s per part of the
+mixed pattern, 4 s each of single longer reads and spells.
+
+| Speed    | Scene | Motion                                                                       | Like                                                |
+| -------- | ----- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| `normal` | box   | 2 round trips of 4 s: 4 box spacings in 1.9 s, eased, 0.1 s rest at each end | A slow pan: subtle effects are easiest to follow    |
+| `fast`   | box   | 4 round trips of 2 s: 4 box spacings in 0.9 s                                | A quicker pan: more pixel error for the same timing |
+| `ui-192` | row   | Scrolls right to left at a constant 192 virtual px/s                         | A slow drag                                         |
+| `ui-288` | row   | 288 virtual px/s                                                             | Scrolling a list                                    |
+| `ui-384` | row   | 384 virtual px/s                                                             | Holding a key in a list                             |
+| `ui-768` | row   | 768 virtual px/s                                                             | A fast fling                                        |
+
+- **`normal` and `fast`** fit whole round trips (there and back) in the clip (`--normal-round-trips`, `--fast-round-trips`), eased
+  in and out (sine) at both ends. A clip starts and ends in the middle of the first rest, so it loops seamlessly.
+- **The ui speeds** show interface motion: the row never stops, so every timing error is visible for the whole clip, and there is
+  no easing to hide it. Their speed is in virtual pixels per second, so 1 ms of timing error moves the row 0.19, 0.29, 0.38 or
+  0.77 virtual px. A clip loops seamlessly because the row repeats every box spacing and scrolls a whole number of spacings per clip.
+  `--ui-scroll` picks other speeds.
+- **The default run** makes every top/bottom pair of the nine modes `60`, `30`, `20` (the ideal timer) and `60`, `30` with the
+  loads `-naive-light`, `-naive-typical` and `-naive-heavy`, at all six speeds: **486 videos** (81 per speed). The
+  realistic loads, 20 Hz under load, the ±N ms windows and `-naive-synthetic` are opt-in with `--top` / `--bottom`.
+
+## Virtual pixels
+
+`--pixel-size N` lays out and draws the moving scene in **virtual pixels** of N×N video pixels, on a fixed grid: **2×2 by default**,
+so a timing error moves a box in steps a viewer on a large screen can see. The video stays 1280×720; the scene's canvas is 1280/N × 720/N virtual pixels (rounded up; a partial virtual pixel at the sides is cropped, so any
+N works).
+
+- **The layout follows the canvas**, so the scene keeps its proportions at every grid size: the box is 2/15 of the canvas height,
+  the spacing twice the box, the travel 4 spacings and the gap to the divider half a box. `--box-size`, `--box-spacing`,
+  `--travel` and `--box-gap` override them, in virtual pixels.
+- **Motion is in virtual pixels**, with sub-pixel blending per virtual pixel. The ui scroll speeds are in virtual px/s, so on a
+  coarser grid the same speed moves N times as many video pixels, and so does every timing error: 1 ms at `ui-384` moves the row
+  0.38 video px at N = 1, 0.77 at N = 2 and 1.5 at N = 4. (`normal` and `fast` are timed per round trip, so they move the same share of
+  the canvas at every N.)
+- **The divider, labels and follow lines are drawn at native 1:1 video pixels**, so they stay sharp on any grid.
+
+| `--pixel-size` | Canvas   | Box | Spacing | `ui-384` in video px/s    |
+| -------------- | -------- | --- | ------- | ------------------------- |
+| 1              | 1280×720 | 96  | 192     | 384 (2 items per second)  |
+| 2 (default)    | 640×360  | 48  | 96      | 768 (4 items per second)  |
+| 4              | 320×180  | 24  | 48      | 1536 (8 items per second) |
+
+## Follow camera
+
+`--scene follow` is a different setup, after the slow motion demo in Unity's
+[Fixing Time.deltaTime in Unity 2020.2 for smoother gameplay](https://unity.com/blog/engine-platform/fixing-time-deltatime-in-unity-2020-2-for-smoother-gameplay):
+a stack of boxes in the middle of the screen, each with its own mode, between two fixed red lines that mark where a perfectly
+timed box stays. The camera follows the ideal motion, so the ideal box stands completely still and a timing error is the only
+thing that moves a box: it leaves the lines, ahead or behind.
+
+- **Three videos by default**, each 8 s:
+  - `follow_eighth-width-per-frame.mp4`: the system loads, `60` (ideal), `60-naive-light`, `60-naive-typical`, `60-naive-heavy`;
+  - `follow-realistic_eighth-width-per-frame.mp4`: the realistic loads, `60`, `60-naive-light-realistic`, `-typical-realistic`,
+    `-heavy-realistic`;
+  - `follow-extreme_eighth-width-per-frame.mp4`: the extreme cases, `60`, `60-naive-1ms`, `-2ms`, `-3ms`, `-4ms`, too much to watch
+    for most people next to the others.
+
+  `--follow-boxes MODE…` makes one video with that stack instead.
+
+- **Speed:** the boxes move an eighth of the width per frame (160 px at 1280 wide, 9600 px/s), an illustration speed that makes
+  1 ms of timing error about 10 px (3.75 times the speed of Unity's demo, which moves twice the width per second). `--speed`
+  picks another speed.
+- **Real speed.** `--slow-motion N [N …]` adds slowed down copies, in every scene (e.g. `--slow-motion 1 10`: real speed and 10
+  times slower, in `follow-labels-slow10/…`), so each step can be followed by eye. The timing data in the manifest stays in real time.
+- **One rate per video**, like a game: the camera is updated at the stack's rate, following the ideal motion at that rate, so an
+  ideal box always stands still. Boxes of different rates are rejected: against a camera moving at another rate, a perfect box
+  would judder.
+- **Drawing:** the boxes in virtual pixels (`--pixel-size`), in front of the lines; the lines and labels at native 1:1 video pixels.
+  The labels start right of the furthest any box swings.
+
+## Setup
+
+From the repository root:
+
+```powershell
+setup.cmd --ffmpeg D:\path\to\ffmpeg          # Windows
+./setup.sh --ffmpeg /path/to/ffmpeg           # Linux, macOS
+```
+
+This creates `.venv` with Python 3.14, installs Pillow, Ruff and basedpyright, writes `local.toml` and checks FFmpeg. It is safe
+to run again; `--ffmpeg` is optional.
+
+Manual equivalent, run from the repository root:
+
+```powershell
+py -3.14 -m venv .venv
+.venv\Scripts\python -m pip install --upgrade pip
+.venv\Scripts\python -m pip install --group dev
+copy local.example.toml local.toml               # then set [ffmpeg] path
+```
+
+### FFmpeg
+
+FFmpeg is an external program; it is never bundled. The build needs the `libx264` encoder: the Gyan builds have it
+(`winget install Gyan.FFmpeg`), as do most Linux and Homebrew packages.
+
+The tool looks for FFmpeg in this order, the same as [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing):
+
+1. `--ffmpeg <file or folder>`
+2. the `MB_FFMPEG` environment variable
+3. `local.toml` in the repository root (or `--config <file>`), under `[ffmpeg] path`. The value can be `ffmpeg.exe` itself or a
+   folder that holds it directly or in `bin`:
+   ```toml
+   [ffmpeg]
+   path = 'D:\win_apps\ffmpeg-2026-03-15-git-6ba0b59d8b-full_build'
+   ```
+4. `PATH`
+
+A source that is set but does not point to FFmpeg is an error, not skipped. `--check-ffmpeg` shows which FFmpeg is used and whether
+it can encode lossless H.264. `ffprobe` is only needed by the tests and is taken from the same folder.
+
+## Usage
+
+Run in the `.venv`:
+
+```powershell
+python tools/frame_pacing_video/generate_videos.py                       # all 486 side by side videos
+python tools/frame_pacing_video/generate_videos.py --speed normal        # 81 videos
+python tools/frame_pacing_video/generate_videos.py --speed ui            # 324 videos: every ui scroll speed
+python tools/frame_pacing_video/generate_videos.py --top 60 --bottom 60-naive-typical 60-naive-1ms --speed ui-384 normal --labels
+python tools/frame_pacing_video/generate_videos.py --scene follow --labels                 # the two follow videos, 1x and 10x slower
+python tools/frame_pacing_video/generate_videos.py --scene row --speed normal             # rows of boxes paging
+python tools/frame_pacing_video/generate_videos.py --pixel-size 4 --speed ui-384 --labels  # on a 4 × 4 virtual pixel grid
+```
+
+| Option                   | Default                   | Meaning                                                                                                                                          |
+| ------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--output-dir DIR`       | `out/frame_pacing_video`  | Where the group folders go (see [Output](#output)). `out/` is git-ignored.                                                                       |
+| `--top MODE…`            | the nine default modes    | Modes of the top box or row: `RATE` (ideal timer) or `RATE-naive-NOISE`, NOISE `light`, `typical`, `heavy`, a window like `1ms`, or `synthetic`. |
+| `--bottom MODE…`         | the nine default modes    | Modes of the bottom box or row.                                                                                                                  |
+| `--speed SPEED…`         | `all`                     | `normal`, `fast`, a ui speed (`ui-384`), `ui` (every ui speed) or `all`. The follow scene's default is its own speed.                            |
+| `--labels`               | off                       | Writes each box's mode next to it ("60 Hz naive timer, typical load").                                                                           |
+| `--width`, `--height`    | 1280 × 720                | Video size in video pixels.                                                                                                                      |
+| `--pixel-size`           | 2                         | Virtual pixel size: the moving scene is laid out and drawn in N×N blocks (see [Virtual pixels](#virtual-pixels)).                                |
+| `--fps`                  | 60                        | Output frame rate: a whole multiple of every selected rate. Numbers like `120` or `60000/1001`.                                                  |
+| `--seconds`              | 8                         | Every clip's length; the jitter profiles are laid out over it.                                                                                   |
+| `--normal-round-trips`   | 2                         | Round trips per clip of the `normal` videos (more is faster).                                                                                    |
+| `--fast-round-trips`     | 4                         | Round trips per clip of the `fast` videos.                                                                                                       |
+| `--settle`               | 0.25                      | Seconds the box rests at each end, at `normal` and `fast`.                                                                                       |
+| `--no-easing`            | off                       | Constant speed instead of the sine ease-in-out.                                                                                                  |
+| `--ui-scroll VPX_PER_S…` | 192 384 768               | Virtual pixels per second of each ui scroll speed; each is named by it (`480` makes `ui-480`).                                                   |
+| `--noise-ms FROM TO`     | 0 0.3                     | Naive timer under system load: the usual noise on the clock read (ms).                                                                           |
+| `--frame-cost`           | 0.3                       | Rendering work as a share of the frame time; with the latest clock read it must fit, so every frame makes its vsync.                             |
+| `--demo-load-share`      | 0.95                      | The loads' demo profile: the share of frames that read the clock late or early (`-realistic`: 0.04, 0.09, 0.2).                                  |
+| `--jitter-pattern`       | `mixed`                   | The jitter pattern of the ±N ms windows and synthetic noise: `mixed`, `alternating`, `runs` or `random`.                                         |
+| `--jitter-ms`            | 1                         | Synthetic noise (`RATE-naive-synthetic`): the amount (±). Must stay below half a frame.                                                          |
+| `--scene`                | `box`                     | At `normal` and `fast`: `box` or `row`; the ui speeds always scroll a row. `follow`: the [follow camera](#follow-camera).                        |
+| `--follow-boxes MODE…`   | the two default videos    | Follow scene: one video with this stack of boxes, top to bottom, all of one rate.                                                                |
+| `--slow-motion N…`       | 1                         | Shows every refresh for N video frames, one video per factor.                                                                                    |
+| `--box-size`             | 2/15 of the canvas height | Box width and height in virtual pixels (96 at pixel size 1, 24 at 4).                                                                            |
+| `--box-spacing`          | twice the box size        | Virtual pixels from one box of a row to the next.                                                                                                |
+| `--travel`               | 4 × the spacing           | Virtual pixels the box travels (its path is centred), or a row moves per page, at `normal` and `fast`.                                           |
+| `--box-gap`              | half the box size         | Virtual pixels between each box or row and the divider.                                                                                          |
+| `--background`           | `#585858`                 | Background colour: a name or `#RRGGBB`.                                                                                                          |
+| `--box-color`            | `#A8A8A8`                 | Box colour.                                                                                                                                      |
+| `--no-divider`           | off                       | Leaves out the divider line.                                                                                                                     |
+| `--divider-color`        | `#707070`                 | Divider colour; it fades in from the background over the first and last tenth of the width.                                                      |
+| `--label-color`          | `#C8C8C8`                 | Label text colour.                                                                                                                               |
+| `--line-color`           | `#D04848`                 | Follow scene: the lines marking where a perfectly timed box stays.                                                                               |
+| `--ffmpeg PATH`          |                           | FFmpeg executable or its folder (see [FFmpeg](#ffmpeg)).                                                                                         |
+| `--config FILE`          | `local.toml`              | Machine-local settings file.                                                                                                                     |
+| `--preview-png`          | off                       | Also saves each video's first frame as a PNG.                                                                                                    |
+| `--check-ffmpeg`         |                           | Only reports which FFmpeg is used and whether it can encode lossless H.264.                                                                      |
+
+### Colours
+
+The defaults are neutral grays: background 48, box 208, divider 80, labels 200. They are chosen to look the same on LCD
+(IPS, TN, VA) and OLED displays:
+
+- **Neutral gray** carries no colour information, so the edges stay clean when the clips are later converted to web video with
+  half-resolution colour (4:2:0).
+- **Away from black and white.** LCD overdrive cannot push a transition past 0 or 255, near-black transitions are the slowest on
+  VA panels (black smear), and some OLEDs smear or flicker near black; 48 and 208 leave room at both ends. They also stay inside
+  the 16–235 range of re-encoded web video, so nothing clips.
+- **Clear contrast** (about 8.5:1), so the box edges are crisp and a one or two pixel error is easy to see. On OLED a dark
+  background with small bright boxes also avoids the automatic dimming of large bright areas.
+
+### Settings that are rejected
+
+Settings that would break the loop or the pacing are rejected with an error; nothing is silently adjusted:
+
+- every clip must be a whole number of output frames and of updates for every selected mode;
+- the frame rate must be a whole multiple of every selected rate, so every mode is evenly paced;
+- every frame must make its vsync: the latest clock read plus the rendering work (`--frame-cost`) must fit in the frame time;
+- synthetic noise must stay below half a frame interval;
+- the round trips must fit the clip with the rest at both ends;
+- a ui scroll must move a whole number of box spacings per clip;
+- a follow video's boxes must share one rate and fit above each other;
+- the boxes must fit the height, a single box and its travel the canvas width, and the box spacing must be larger than the box
+  size.
+
+## Output
+
+- **Folders**: every run writes into group folders, `{scene}/{speed}/` under the output folder, with `-labels` added to the scene
+  when `--labels` is used, `-px4` on a 4×4 virtual pixel grid, `-slow10` in slow motion and `-alternating` / `-runs` / `-random`
+  for a single synthetic pattern: `box/fast/`, `row/ui-384/`, `follow-labels-slow10/eighth-width-per-frame/`. Runs with other
+  settings of these do not overwrite each other.
+- **Videos**: `{speed}_top-{mode}_bottom-{mode}.mp4`, for example `box/fast/fast_top-60_bottom-30-naive-4ms.mp4`; `row_…` for a
+  row; `follow_{speed}.mp4`, `follow-realistic_{speed}.mp4` and `follow-extreme_{speed}.mp4` in the follow scene; the same variants as the folder at the end
+  (`_px4`, `_slow10`, …). Names stay unique when the folders are merged.
+- **`manifest.json`**, one per folder: the settings (including the clip length, `pixelSize`, the `canvas` and the layout in virtual
+  pixels) and, for each video in the folder:
+  - file name, scene, speed (round trips, or scroll speed in virtual px/s), move and rest time, round trip, duration, fps, frame
+    count, slow motion factor and video frame count, and size;
+  - for the top and the bottom half (or each box of the follow stack): the mode, its timer, noise and window, its label, and
+    **every frame of the clip**: the output refresh it is flipped on (`frames.refresh`), when the naive loop read the clock
+    (`frames.sampleMs`, the first frame is shown at 0), the dt its animation advanced by (`frames.dtMs`) and its **animation
+    error** in ms (`frames.animationErrorMs`), computed like PresentMon's `MsAnimationError`: positive = shown too soon,
+    negative = shown too late. The first frame follows the last one of the previous loop. A web page can draw the dt and error
+    graphs next to the video from it.
+- **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
+  than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
+  RGB-to-YUV conversion reproduces the background and boxes exactly and moves in-between grays (edges, text) by at most one step.
+  If FFmpeg is missing, lacks the encoder or fails, the tool stops with an error; it never falls back to lossy encoding.
+
+**Viewing:** browsers and many default players cannot play lossless H.264. Use `ffplay -loop 0 <file>` (next to `ffmpeg`), VLC or
+mpv. A later tool will convert the clips for the web. **Show them at native size** (1:1 pixels): scaling blurs the steps the
+videos are meant to show.
+
+## Tests
+
+```powershell
+.venv\Scripts\python -m unittest discover -s tools/frame_pacing_video -v
+```
+
+- `test_pcg32.py`: the generator against PCG32's reference output, seeding from a text, even `randint`, `random` and `choice`.
+- `test_frame_timing.py`: the ideal and naive timers, every frame making its vsync, `x += speed * dt` matching the positions, the
+  system loads (shares of longer reads in both halves, both directions, spikes only late, single frames then spells), the windows
+  and synthetic noise, the jitter patterns at every clip length, determinism and validation.
+- `test_generate_videos.py`: the video plan, the timing of every mode, the 8 s clips and seamless loops, the easing and rest, the ui
+  speeds, validation, rendering (rows, sub-pixel edges, edge fade, divider, labels, colours, virtual pixel grids and the layout per
+  grid size), the follow scene (videos, one rate, boxes in front of the lines, labels clear of the swing, slow motion, loops) and
+  the FFmpeg lookup. An encode test (skipped without FFmpeg) makes a small clip and checks with ffprobe that it is H.264 High
+  4:4:4 Predictive at 60 fps with the right size and frame count, and that its decoded frames match the rendered ones.

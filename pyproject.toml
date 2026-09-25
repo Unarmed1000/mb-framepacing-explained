@@ -1,0 +1,25 @@
+# Project metadata and Python dependencies. The tools are scripts, not an installable package.
+# Set up the .venv with one command: setup.cmd (Windows) or ./setup.sh (Linux, macOS); see tools/setup_venv.py.
+
+[project]
+name = "mb-framepacing-explained"
+version = "0.1.0"
+description = "Frame pacing and animation error, explained: generated comparison videos, timing diagrams and charts, for a slide-style web page with a blind test."
+requires-python = ">=3.14"
+license = "CC-BY-NC-ND-4.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Mana Battery ApS" }]
+dependencies = [
+    "Pillow>=12",
+]
+
+[dependency-groups]
+# Everything the .venv needs: the runtime dependencies above plus the lint and type check tools (pinned, so every machine agrees).
+dev = [
+    "Pillow>=12",
+    "basedpyright==1.40.1",
+    "ruff==0.16.8",
+]
+
+[tool.uv]
+package = false

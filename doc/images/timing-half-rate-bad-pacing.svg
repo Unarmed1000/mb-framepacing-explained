@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="464" viewBox="0 0 1420 464" role="img" aria-label="Half rate, bad frame pacing">
+<title>Half rate, bad frame pacing</title>
+<style>
+  text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+         font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
+  .card { fill: #1f242b; fill-opacity: 0.94; stroke: #8b949e; stroke-opacity: 0.25; stroke-width: 1; }
+  .title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { fill: #8b949e; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
+  .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
+  .axis { font-size: 12px; fill: #c9d1d9; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.16; stroke-width: 1; stroke-dasharray: 3 4; }
+  .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
+  .frame { font-size: 14px; font-weight: 700; }
+  .box-time { fill: #b1bac4; font-size: 12px; }
+  .arrow { stroke: #8b949e; stroke-width: 1.2; }
+  .arrowhead { fill: #8b949e; }
+  .ok { fill: #2ea043; }
+  .hold { fill: #2ea043; fill-opacity: 0.45; }
+  .again { fill: #d29922; }
+  .off { fill: #e5534b; }
+  .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
+  .dark-text { fill: #1c1f24; }
+  .zero { fill: #6e7681; }
+  .err { fill: #ff7b72; font-weight: 600; }
+  .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .neutral { fill: #3d444d; }
+  .lane { font-size: 15px; font-weight: 600; }
+  .same { fill: #7ee787; font-weight: 600; }
+</style>
+<rect class="card" x="0.5" y="0.5" width="1419" height="463" rx="14"/>
+<text x="20.0" y="30.0" text-anchor="start" class="title">Half rate, bad frame pacing</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">The game steps its animation 200 ms per frame, but the frames are shown for 1 and 3 refreshes instead of 2 each:</text>
+<text x="20.0" y="73.0" text-anchor="start" class="sub">Digital Foundry's bad 30 fps frame pacing (16.7 and 50 ms frames on 60 Hz). The average frame rate is still half.</text>
+<line class="vsync" x1="180.0" y1="104" x2="180.0" y2="243"/>
+<text x="180.0" y="258.0" text-anchor="middle" class="axis">−100 ms</text>
+<line class="vsync" x1="300.0" y1="104" x2="300.0" y2="243"/>
+<text x="300.0" y="258.0" text-anchor="middle" class="axis">0 ms</text>
+<text x="300.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 1</text>
+<line class="vsync" x1="420.0" y1="104" x2="420.0" y2="243"/>
+<text x="420.0" y="258.0" text-anchor="middle" class="axis">100 ms</text>
+<text x="420.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 2</text>
+<line class="vsync" x1="540.0" y1="104" x2="540.0" y2="243"/>
+<text x="540.0" y="258.0" text-anchor="middle" class="axis">200 ms</text>
+<text x="540.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 3</text>
+<line class="vsync" x1="660.0" y1="104" x2="660.0" y2="243"/>
+<text x="660.0" y="258.0" text-anchor="middle" class="axis">300 ms</text>
+<text x="660.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 4</text>
+<line class="vsync" x1="780.0" y1="104" x2="780.0" y2="243"/>
+<text x="780.0" y="258.0" text-anchor="middle" class="axis">400 ms</text>
+<text x="780.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 5</text>
+<line class="vsync" x1="900.0" y1="104" x2="900.0" y2="243"/>
+<text x="900.0" y="258.0" text-anchor="middle" class="axis">500 ms</text>
+<text x="900.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 6</text>
+<line class="vsync" x1="1020.0" y1="104" x2="1020.0" y2="243"/>
+<text x="1020.0" y="258.0" text-anchor="middle" class="axis">600 ms</text>
+<text x="1020.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 7</text>
+<line class="vsync" x1="1140.0" y1="104" x2="1140.0" y2="243"/>
+<text x="1140.0" y="258.0" text-anchor="middle" class="axis">700 ms</text>
+<text x="1140.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 8</text>
+<line class="vsync" x1="1260.0" y1="104" x2="1260.0" y2="243"/>
+<text x="1260.0" y="258.0" text-anchor="middle" class="axis">800 ms</text>
+<text x="1260.0" y="98.0" text-anchor="middle" class="vsync-n">vsync 9</text>
+<line class="vsync" x1="1380.0" y1="104" x2="1380.0" y2="243"/>
+<text x="1380.0" y="258.0" text-anchor="middle" class="axis">900 ms</text>
+<text x="20.0" y="131.0" text-anchor="start" class="label">RENDER</text>
+<text x="20.0" y="147.0" text-anchor="start" class="vsync-n">animation time</text>
+<text x="20.0" y="222.0" text-anchor="start" class="label">DISPLAY</text>
+<text x="20.0" y="294.0" text-anchor="start" class="label">ANIMATION TIME STEP</text>
+<text x="20.0" y="320.0" text-anchor="start" class="label">DISPLAY TIME</text>
+<text x="20.0" y="346.0" text-anchor="start" class="label">ANIMATION ERROR</text>
+<rect class="box" x="210.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="249.0" y="131.0" text-anchor="middle" class="frame">A</text>
+<text x="249.0" y="148.0" text-anchor="middle" class="box-time">0 ms</text>
+<line class="arrow" x1="294.0" y1="164" x2="294.0" y2="186"/>
+<path class="arrowhead" d="M289.0,185 L299.0,185 L294.0,194 z"/>
+<rect class="box" x="306.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="345.0" y="131.0" text-anchor="middle" class="frame">B</text>
+<text x="345.0" y="148.0" text-anchor="middle" class="box-time">200 ms</text>
+<line class="arrow" x1="390.0" y1="164" x2="390.0" y2="186"/>
+<path class="arrowhead" d="M385.0,185 L395.0,185 L390.0,194 z"/>
+<rect class="box" x="426.0" y="112" width="288.0" height="44" rx="8"/>
+<text x="570.0" y="131.0" text-anchor="middle" class="frame">C</text>
+<text x="570.0" y="148.0" text-anchor="middle" class="box-time">400 ms</text>
+<line class="arrow" x1="720.0" y1="164" x2="720.0" y2="186"/>
+<path class="arrowhead" d="M715.0,185 L725.0,185 L720.0,194 z"/>
+<rect class="box" x="786.0" y="112" width="78.0" height="44" rx="8"/>
+<text x="825.0" y="131.0" text-anchor="middle" class="frame">D</text>
+<text x="825.0" y="148.0" text-anchor="middle" class="box-time">600 ms</text>
+<line class="arrow" x1="870.0" y1="164" x2="870.0" y2="186"/>
+<path class="arrowhead" d="M865.0,185 L875.0,185 L870.0,194 z"/>
+<rect class="box" x="906.0" y="112" width="288.0" height="44" rx="8"/>
+<text x="1050.0" y="131.0" text-anchor="middle" class="frame">E</text>
+<text x="1050.0" y="148.0" text-anchor="middle" class="box-time">800 ms</text>
+<line class="arrow" x1="1200.0" y1="164" x2="1200.0" y2="186"/>
+<path class="arrowhead" d="M1195.0,185 L1205.0,185 L1200.0,194 z"/>
+<rect class="ok" x="302.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="360.0" y="223.0" text-anchor="middle" class="cell-text">A</text>
+<text x="360.0" y="294.0" text-anchor="middle">–</text>
+<text x="360.0" y="320.0" text-anchor="middle">–</text>
+<text x="360.0" y="346.0" text-anchor="middle" class="zero">–</text>
+<rect class="off" x="422.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="480.0" y="223.0" text-anchor="middle" class="cell-text">B</text>
+<text x="480.0" y="294.0" text-anchor="middle">200 ms</text>
+<text x="480.0" y="320.0" text-anchor="middle">100 ms</text>
+<rect class="err-pill" x="445.1" y="331" width="69.8" height="21" rx="10.5"/>
+<text x="480.0" y="346.0" text-anchor="middle" class="err">+100 ms</text>
+<rect class="ok" x="542.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="600.0" y="223.0" text-anchor="middle" class="cell-text">B</text>
+<rect class="again" x="662.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="720.0" y="223.0" text-anchor="middle" class="cell-text dark-text">B</text>
+<rect class="ok" x="782.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="840.0" y="223.0" text-anchor="middle" class="cell-text">C</text>
+<text x="840.0" y="294.0" text-anchor="middle">200 ms</text>
+<text x="840.0" y="320.0" text-anchor="middle">300 ms</text>
+<rect class="err-pill" x="805.1" y="331" width="69.8" height="21" rx="10.5"/>
+<text x="840.0" y="346.0" text-anchor="middle" class="err">−100 ms</text>
+<rect class="off" x="902.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="960.0" y="223.0" text-anchor="middle" class="cell-text">D</text>
+<text x="960.0" y="294.0" text-anchor="middle">200 ms</text>
+<text x="960.0" y="320.0" text-anchor="middle">100 ms</text>
+<rect class="err-pill" x="925.1" y="331" width="69.8" height="21" rx="10.5"/>
+<text x="960.0" y="346.0" text-anchor="middle" class="err">+100 ms</text>
+<rect class="ok" x="1022.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="1080.0" y="223.0" text-anchor="middle" class="cell-text">D</text>
+<rect class="again" x="1142.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="1200.0" y="223.0" text-anchor="middle" class="cell-text dark-text">D</text>
+<rect class="ok" x="1262.0" y="198" width="116.0" height="40" rx="6"/>
+<text x="1320.0" y="223.0" text-anchor="middle" class="cell-text">E</text>
+<text x="1320.0" y="294.0" text-anchor="middle">200 ms</text>
+<text x="1320.0" y="320.0" text-anchor="middle">300 ms</text>
+<rect class="err-pill" x="1285.1" y="331" width="69.8" height="21" rx="10.5"/>
+<text x="1320.0" y="346.0" text-anchor="middle" class="err">−100 ms</text>
+<rect class="box" x="20" y="382" width="30" height="16" rx="4"/>
+<text x="58.0" y="395.0" text-anchor="start" class="sub">render: as wide as the frame takes, labelled with the animation time it shows</text>
+<line class="arrow" x1="578.0" y1="381" x2="578.0" y2="392"/>
+<path class="arrowhead" d="M574.0,391 L582.0,391 L578.0,398 z"/>
+<text x="592.0" y="395.0" text-anchor="start" class="sub">present: the frame is done and waits for the next vsync to be shown</text>
+<rect class="ok" x="20.0" y="409" width="14" height="14" rx="4"/>
+<text x="42.0" y="421.0" text-anchor="start" class="sub">shows the moment of its refresh</text>
+<rect class="again" x="283.9" y="409" width="14" height="14" rx="4"/>
+<text x="305.9" y="421.0" text-anchor="start" class="sub">held: the next frame is not ready</text>
+<rect class="off" x="561.6" y="409" width="14" height="14" rx="4"/>
+<text x="583.6" y="421.0" text-anchor="start" class="sub">shows another moment</text>
+<text x="20.0" y="446.0" text-anchor="start" class="sub">Animation error = animation time step − display time: + shown too soon, − shown too late</text>
+</svg>
