@@ -8,7 +8,7 @@ between two lines so a timing error is the only thing that moves, at real speed 
 coarser virtual pixel grid (2×2, 4×4, …), so small errors move more screen pixels.
 
 A slide-style [web page](doc/web-page.md) in [`web/`](web) explains the topics with these videos playing live, starting with
-a blind test (work in progress).
+a blind test: **[see it live](https://unarmed1000.github.io/mb-framepacing-explained/)** (a very early draft).
 
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
 display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the

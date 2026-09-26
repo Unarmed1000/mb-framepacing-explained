@@ -15,8 +15,8 @@ the topics interactively. Notes: [the web page](web-page.md).
       clicking a row folds it out to show that trial's video again, which box was which, and its animation error chart.
 - [ ] Phase 3 (built, in review): the explanation slides after the blind test, including "measure it yourself" with
       mb-framepacing. Review the wording.
-- [ ] Phase 4 (built, not run yet): the GitHub Pages workflow (generate and web-encode the clips, build, deploy). Enable Pages
-      with GitHub Actions as the source, then merge to `master`.
+- [x] Phase 4: the GitHub Pages workflow (generate and web-encode the clips, build, deploy), live at
+      <https://unarmed1000.github.io/mb-framepacing-explained/>.
 - [ ] Remove the "Unfinished work in progress" notice from the first slide (`.wip` in `web/src/main.ts` and `styles.css`) when the page is ready.
 - [x] Video tool: a `--web` encoding (H.264 4:2:0) and generating an exact list of pairs (`--pairs`).
 - [ ] Later: central collection of the anonymised results (opt-in submit), a shareable result link, a canvas renderer for extra

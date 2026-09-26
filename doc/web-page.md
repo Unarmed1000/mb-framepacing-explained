@@ -1,7 +1,7 @@
 # The web page
 
 A self-guided, slide-style page in [`web/`](../web) (TypeScript and Vite, no framework) that explains frame pacing with the videos
-playing live, and starts with a blind test. It is still work in progress; the [roadmap](roadmap.md) tracks what is left.
+playing live, and starts with a blind test. It is a very early draft, live at <https://unarmed1000.github.io/mb-framepacing-explained/>; the [roadmap](roadmap.md) tracks what is left.
 
 ## The slides
 
