@@ -765,3 +765,37 @@ code {
   font-size: 13px;
   text-decoration: none;
 }
+
+/* The ways to measure animation error, side by side */
+.ways {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ways th,
+.ways td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--card-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ways th {
+  border-top: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.ways td {
+  color: var(--muted);
+}
+
+.ways td:first-child {
+  color: var(--text);
+}
+
+.section-title {
+  margin: 28px 0 0;
+}

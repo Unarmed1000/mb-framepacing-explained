@@ -329,18 +329,58 @@ const inputLatency: Slide = {
     ),
 };
 
+const PRESENTMON = "https://github.com/GameTechDev/PresentMon";
+
 const measure: Slide = {
   id: "measure",
-  title: "Measure it yourself",
+  title: "Measuring it",
   render: () =>
     body(
-      "The sister project",
-      "Measure it on a real display: mb-framepacing",
-      `The videos here are simulated. <a href="${SISTER}" target="_blank" rel="noopener">mb-framepacing</a> measures animation error
-      on the real display output, frame by frame, with the goal of making it easy to measure. It is a cooperative tool: the
-      application writes its frame index and exact animation time into every frame, so neither clock is estimated.
-      <a href="#/two-clocks">What animation error is</a>.`,
-      `<div class="guide">
+      "Measure it yourself",
+      "How to measure animation error",
+      `<a href="#/two-clocks">Animation error</a> needs two clocks for every frame: the moment it shows (its animation time) and
+      when it reached the screen (its display time). The ways to measure it differ in where they get each, and so in what they
+      can catch.`,
+      `<div class="card">
+        <table class="ways">
+          <thead>
+            <tr><th>Way</th><th>Needs</th><th>Animation time</th><th>Display time</th><th>Catches</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="${PRESENTMON}" target="_blank" rel="noopener"><strong>PresentMon</strong></a>, also as Intel's overlay</td>
+              <td>Any game on Windows, nothing changed</td>
+              <td>Estimated: when the CPU starts the frame; exact when the game sends Reflex, XeLL or Anti-Lag 2 markers</td>
+              <td>Estimated from software events</td>
+              <td>Both causes, approximately</td>
+            </tr>
+            <tr>
+              <td><strong>The game's own log</strong></td>
+              <td>The source code, and the platform's presentation feedback</td>
+              <td>Exact: the game knows it</td>
+              <td>As the platform reports it (DXGI frame statistics, Vulkan present timing, Android's Choreographer, Wayland
+                presentation-time, Metal)</td>
+              <td>Both causes</td>
+            </tr>
+            <tr>
+              <td><a href="${SISTER}" target="_blank" rel="noopener"><strong>mb-framepacing</strong></a></td>
+              <td>The source code (a marker drawn into every frame) and a capture card</td>
+              <td>Exact: written into the frame</td>
+              <td>Measured on the display signal</td>
+              <td>Both causes, on the real output</td>
+            </tr>
+            <tr>
+              <td><strong>Capture or camera only</strong>: an FCAT-style overlay, a high-speed camera</td>
+              <td>Any game</td>
+              <td>None</td>
+              <td>Measured</td>
+              <td>Late and uneven frames only: blind to delta time jitter</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 class="section-title">mb-framepacing: measured on the display</h2>
+      <div class="guide">
         <div class="card">
           <h2>How it works</h2>
           <ol class="points">
@@ -362,10 +402,10 @@ const measure: Slide = {
         </figure>
       </div>
       <p class="more">
-        <a href="${SISTER}#readme" target="_blank" rel="noopener">README ↗</a>
+        <a href="${PRESENTMON}/blob/main/README-ConsoleApplication.md#csv-columns" target="_blank" rel="noopener">PresentMon's columns ↗</a>
+        <a href="${SISTER}#readme" target="_blank" rel="noopener">mb-framepacing ↗</a>
         <a href="${SISTER}/blob/master/doc/integrating.md" target="_blank" rel="noopener">Integrating the marker ↗</a>
-        <a href="${SISTER}/blob/master/doc/unity.md" target="_blank" rel="noopener">Unity ↗</a>
-        <a href="${SISTER}/blob/master/doc/usage.md" target="_blank" rel="noopener">Using mb-framepacing ↗</a>
+        <a href="${doc("doc/measured-errors.md")}" target="_blank" rel="noopener">Measured in real games ↗</a>
       </p>`,
     ),
 };
@@ -451,7 +491,7 @@ const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }
     slides: [slowFramesSlide, halfRate, switching, recovery],
   },
   { name: "Display and input", about: "What VRR changes, and how pacing meets input latency.", slides: [vrr, inputLatency] },
-  { name: "Go further", about: "Measure it on a real display, and where to read more.", slides: [measure, furtherReading] },
+  { name: "Go further", about: "How to measure animation error, and where to read more.", slides: [measure, furtherReading] },
 ];
 
 const topics: Slide = {
