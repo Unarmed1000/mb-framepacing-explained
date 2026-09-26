@@ -121,8 +121,9 @@ const invisible: Slide = {
         "normal",
         "60",
         "60-naive-4ms",
-        "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh. Only the animation error, " +
-          "in the chart, shows why the bottom one stutters.",
+        "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one " +
+          "stutters.",
+        false,
       ),
     );
     return element;

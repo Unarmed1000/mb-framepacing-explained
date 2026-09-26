@@ -11,7 +11,8 @@ export function findClip(videos: readonly VideoEntry[], top: string, bottom: str
   return videos.find((video) => video.scene === "box" && video.top.mode === top && video.bottom.mode === bottom);
 }
 
-export function liveComparison(motion: string, top: string, bottom: string, caption: string): HTMLElement {
+/** A clip at 1:1 device pixels with a caption and, unless `chart` is false, its animation error chart following it. */
+export function liveComparison(motion: string, top: string, bottom: string, caption: string, chart = true): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live";
   const folder = folderFor(motion);
@@ -20,22 +21,24 @@ export function liveComparison(motion: string, top: string, bottom: string, capt
       const video = findClip(manifest.videos, top, bottom);
       if (!video) throw new Error(`${folder}: no clip with ${top} on top and ${bottom} below`);
       const player = new PixelVideo(`${folder}/${video.file}`, { width: video.width, height: video.height }, video.fps);
-      const chart = errorChart(
-        [
-          { title: "Top", mode: video.top },
-          { title: "Bottom", mode: video.bottom },
-        ],
-        video.frameCount,
-        video.fps,
-      );
-      player.onFrame = (mediaTime) => chart.setTime(mediaTime);
       const text = document.createElement("p");
       text.className = "live-caption";
       text.textContent = caption;
-      const card = document.createElement("div");
-      card.className = "card chart-card";
-      card.append(chart.svg);
-      holder.replaceChildren(player.element, text, card, player.readout);
+      if (chart) {
+        const errors = errorChart(
+          [
+            { title: "Top", mode: video.top },
+            { title: "Bottom", mode: video.bottom },
+          ],
+          video.frameCount,
+          video.fps,
+        );
+        player.onFrame = (mediaTime) => errors.setTime(mediaTime);
+        const card = document.createElement("div");
+        card.className = "card chart-card";
+        card.append(errors.svg);
+        holder.replaceChildren(player.element, text, card, player.readout);
+      } else holder.replaceChildren(player.element, text, player.readout);
       player.play();
     })
     .catch((error: unknown) => holder.replaceChildren(missingClips(error)));
