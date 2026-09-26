@@ -103,9 +103,9 @@ const timerJitterSlide: Slide = {
         singleBox(
           "fast",
           "60",
-          "60-naive-4ms",
+          "60-naive-5ms",
           "bottom",
-          "60 fps with a naive timer that reads the clock up to 4 ms early or late: every frame on screen on time, but showing a " +
+          "60 fps with a naive timer that reads the clock up to 5 ms early or late: every frame on screen on time, but showing a " +
             "moment a little off. The chart shows each frame's animation error, following the video.",
           true,
         ),
@@ -130,7 +130,7 @@ const invisible: Slide = {
       liveComparison(
         "fast",
         "60",
-        "60-naive-4ms",
+        "60-naive-5ms",
         "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one " +
           "stutters.",
         false,
