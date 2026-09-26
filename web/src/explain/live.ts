@@ -53,8 +53,16 @@ export function halfRows(height: number, half: "top" | "bottom"): { from: number
   return half === "top" ? { from: 0, to: divider } : { from: divider + thickness + 1, to: height };
 }
 
-/** One box alone, at 1:1 device pixels, with a label under it: one half of the clip with `top` above and `bottom` below. */
-export function singleBox(motion: string, top: string, bottom: string, half: "top" | "bottom", label: string): HTMLElement {
+/** One box alone, at 1:1 device pixels, with a label under it: one half of the clip with `top` above and `bottom` below; with
+ * `chart`, its animation error chart follows it. */
+export function singleBox(
+  motion: string,
+  top: string,
+  bottom: string,
+  half: "top" | "bottom",
+  label: string,
+  chart = false,
+): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live single";
   const folder = folderFor(motion);
@@ -69,7 +77,20 @@ export function singleBox(motion: string, top: string, bottom: string, half: "to
       const text = document.createElement("p");
       text.className = "live-caption";
       text.textContent = label;
-      holder.replaceChildren(player.element, text, player.readout);
+      holder.replaceChildren(player.element, text);
+      if (chart) {
+        const errors = errorChart(
+          [{ title: "This box", mode: half === "top" ? video.top : video.bottom }],
+          video.frameCount,
+          video.fps,
+        );
+        player.onFrame = (mediaTime) => errors.setTime(mediaTime);
+        const card = document.createElement("div");
+        card.className = "card chart-card";
+        card.append(errors.svg);
+        holder.append(card);
+      }
+      holder.append(player.readout);
       player.play();
     })
     .catch((error: unknown) => holder.replaceChildren(missingClips(error)));

@@ -93,8 +93,7 @@ const timerJitterSlide: Slide = {
       early or late after each flip, and renders the frame for that reading (<strong>delta time jitter</strong>). Gamers Nexus
       compare it to a flipbook with unevenly drawn pages, flipped at a steady tempo.`,
       `<div class="single-holder"></div>
-      ${figure(timerJitter, "Timer jitter: frames reach the screen on time, but each shows a moment a little off.")}
-      <div class="live-holder"></div>`,
+      ${figure(timerJitter, "Timer jitter: frames reach the screen on time, but each shows a moment a little off.")}`,
     );
     element
       .querySelector(".single-holder")!
@@ -105,18 +104,8 @@ const timerJitterSlide: Slide = {
           "60-naive-4ms",
           "bottom",
           "60 fps with a naive timer that reads the clock up to 4 ms early or late: every frame on screen on time, but showing a " +
-            "moment a little off.",
-        ),
-      );
-    element
-      .querySelector(".live-holder")!
-      .replaceWith(
-        liveComparison(
-          "normal",
-          "60",
-          "60-naive-4ms",
-          "Top: the perfect timer. Bottom: the same 60 fps with a naive timer that reads the clock up to 4 ms early or late. Every frame of both is on " +
-            "screen for exactly one refresh; the chart shows each frame's animation error, following the video.",
+            "moment a little off. The chart shows each frame's animation error, following the video.",
+          true,
         ),
       );
     return element;
