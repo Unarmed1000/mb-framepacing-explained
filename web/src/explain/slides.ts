@@ -12,6 +12,7 @@ import switchingHysteresis from "../../../doc/images/timing-switching-hysteresis
 import switchingNaive from "../../../doc/images/timing-switching-naive.svg?url";
 import timerJitter from "../../../doc/images/timing-timer-jitter.svg?url";
 import vrrSlowFrames from "../../../doc/images/timing-vrr-slow-frames.svg?url";
+import vsyncTimerDiagram from "../../../doc/images/timing-vsync-timer.svg?url";
 import type { Slide } from "../slides";
 import { liveComparison, singleBox } from "./live";
 
@@ -152,7 +153,8 @@ const vsyncTimer: Slide = {
       time only has to advance in whole refreshes. That needs no modern API or extension. It is for vsync on: with VRR or vsync
       off there is no refresh grid to round to, and they need other solutions or the more modern APIs that report when frames
       appear.`,
-      `<div class="guide">
+      `${figure(vsyncTimerDiagram, "The vsync timer: the same uneven clock as with delta time jitter, each measured frame time rounded to whole refreshes, so the animation error is 0.")}
+      <div class="guide">
         <div class="card">
           <h2>The vsync timer</h2>
           <ol class="points">
@@ -512,7 +514,12 @@ const topics: Slide = {
       const card = document.createElement("a");
       card.className = "card topic-card";
       card.href = `#/${topic.slides[0]?.id ?? ""}`;
-      card.innerHTML = `<h2></h2><p></p><span class="topic-start">Start →</span>`;
+      const drafts = topic.slides.filter((slide) => WORK_IN_PROGRESS.has(slide)).length;
+      const mark =
+        drafts === 0
+          ? ""
+          : `<span class="topic-wip">${drafts === topic.slides.length ? "Work in progress" : "Partly work in progress"}</span>`;
+      card.innerHTML = `<h2></h2>${mark}<p></p><span class="topic-start">Start →</span>`;
       card.querySelector("h2")!.textContent = topic.name;
       // Static text of this file, with the causes of stutter marked
       card.querySelector("p")!.innerHTML = topic.about;
@@ -520,6 +527,35 @@ const topics: Slide = {
     }
     return element;
   },
+};
+
+/** The slides that are not ready yet: each carries a work-in-progress notice, and so does its topic's card. */
+const WORK_IN_PROGRESS: ReadonlySet<Slide> = new Set([
+  slowFramesSlide,
+  halfRate,
+  switching,
+  recovery,
+  vrr,
+  inputLatency,
+  furtherReading,
+]);
+
+/** The notice before the slides that are not ready yet: continue anyway, or go to the measuring slide, which is. */
+const notReady: Slide = {
+  id: "not-ready",
+  title: "Work in progress",
+  render: () =>
+    body(
+      "Work in progress",
+      "The rest is not ready yet",
+      `The slides after this one, on frame pacing, VRR, input latency and further reading, are drafts: their text, diagrams and
+      videos are still changing, and some videos are missing. The slide on measuring animation error is ready.`,
+      `<div class="menu-actions">
+        <a class="button" href="#/slow-frames">Continue anyway →</a>
+        <a class="button ghost" href="#/measure">How to measure animation error →</a>
+        <a class="button ghost" href="#/topics">Back to the topics</a>
+      </div>`,
+    ),
 };
 
 /** A topic's slide with a line above its heading: the topic and where in it this slide is, linking back to the topics. */
@@ -533,14 +569,27 @@ function withTopic(slide: Slide, topic: (typeof TOPICS)[number], position: numbe
         href: "#/topics",
         textContent: `‹ ${topic.name} · ${position + 1} of ${topic.slides.length}`,
       });
+      if (WORK_IN_PROGRESS.has(slide)) {
+        const notice = Object.assign(document.createElement("p"), { className: "wip", role: "note" });
+        notice.innerHTML =
+          "<strong>Work in progress.</strong> This slide is a draft: its text, diagrams and videos may still change.";
+        element.prepend(notice);
+      }
       element.prepend(line);
       return element;
     },
   };
 }
 
-/** The explanation slides, in order: the topics first, then every topic's slides. */
+/** The explanation slides, in order: the topics first, then every topic's slides, with the notice before the first one that is
+ * not ready yet. */
+const topicSlides = TOPICS.flatMap((topic) =>
+  topic.slides.map((slide, position) => ({ slide, placed: withTopic(slide, topic, position) })),
+);
+const firstNotReady = topicSlides.findIndex(({ slide }) => WORK_IN_PROGRESS.has(slide));
 export const EXPLANATION_SLIDES: readonly Slide[] = [
   topics,
-  ...TOPICS.flatMap((topic) => topic.slides.map((slide, position) => withTopic(slide, topic, position))),
+  ...topicSlides.slice(0, firstNotReady).map(({ placed }) => placed),
+  notReady,
+  ...topicSlides.slice(firstNotReady).map(({ placed }) => placed),
 ];

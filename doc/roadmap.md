@@ -39,8 +39,10 @@ the topics interactively. Notes: [the web page](web-page.md).
 
 Sample first each time.
 
-- [ ] The vsync timer rounding, and its failure when a wake-up is late by more than half a refresh; also for the web page's
-      vsync timer slide, which has none yet.
+- [x] The vsync timer rounding (`timing-vsync-timer.svg`, on the strategies page and the web page's vsync timer slide).
+- [ ] The vsync timer's failure: a wake-up late by more than half a refresh.
+- [ ] Finish the web page's draft slides (frame pacing, VRR, input latency, further reading), then remove their work-in-progress
+      notices and the notice slide before them.
 - [ ] Drift as a chart: the nominal rate, paying the error back in whole refreshes (a sawtooth), slewing.
 - [ ] Presenting each frame twice on FIFO for half rate.
 - [ ] A refresh rate change mid-run (144 to 60 Hz).

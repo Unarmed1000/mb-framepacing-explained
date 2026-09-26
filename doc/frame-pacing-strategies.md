@@ -29,6 +29,8 @@ time only has to advance in whole refreshes, and that works with plain vsync, wi
    interval.
 3. **Render the frame for its predicted display time**: the previous frame's display time plus the swap interval.
 
+![The vsync timer: the same uneven clock as with delta time jitter, each measured frame time rounded to whole refreshes, so the animation error is 0](images/timing-vsync-timer.svg)
+
 Rounding removes the wake-up jitter of the naive timer, as long as that stays under half a refresh: 8.3 ms at 60 Hz, but only
 2.1 ms at 240 Hz. A missed vsync still costs one late frame, since the game cannot know in advance, but it shows up as a whole extra
 refresh in the next measurement, so the frame after it catches up exactly. This is the timer behind every diagram here (the "perfect

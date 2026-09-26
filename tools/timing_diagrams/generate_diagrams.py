@@ -71,6 +71,8 @@ AXIS_Y = DISPLAY_Y + DISPLAY_H + 20  # the refresh times, just below the display
 ROWS_Y = AXIS_Y + 36
 ROW_STEP = 26
 ROW_LABELS = ("Animation time step", "Display time", "Animation error")
+# The vsync timer's rows above those: what the clock measured since the previous frame, and that rounded to whole refreshes
+VSYNC_TIMER_ROWS = ("Clock reading step", "Rounded to refreshes")
 LEGEND_Y = ROWS_Y + ROW_STEP * len(ROW_LABELS) + 22
 HEIGHT = LEGEND_Y + 96
 
@@ -139,6 +141,17 @@ class Diagram:
     fixed_step: float | None = None
     # Pixels per ms: smaller for the longer timelines
     scale: float = SCALE
+    # The vsync timer: the clock is read as unevenly as the frames' timer errors say, but each measured frame time is rounded to
+    # whole refreshes, so the animation time is the perfect one; two more rows show the reading and the rounding
+    vsync_timer: bool = False
+
+    @property
+    def rows(self) -> tuple[str, ...]:
+        return (*VSYNC_TIMER_ROWS, *ROW_LABELS) if self.vsync_timer else ROW_LABELS
+
+    @property
+    def height(self) -> int:
+        return HEIGHT + ROW_STEP * (len(self.rows) - len(ROW_LABELS))
 
 
 @dataclass(frozen=True)
@@ -150,6 +163,8 @@ class Timed:
     end: float
     animation: float
     shown: float
+    # When the loop read its clock for this frame, as an animation time (the perfect one plus the timer error)
+    reading: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -174,11 +189,14 @@ def simulate(diagram: Diagram) -> list[Timed]:
             shown = max(end, previous_shown + PERIOD)
         else:
             shown = max(math.ceil(end / PERIOD - EPSILON) * PERIOD, previous_shown + frame.interval * PERIOD)
+        reading = previous_shown + frame.interval * PERIOD + frame.timer_error
         if diagram.fixed_step is not None:
             animation = index * diagram.fixed_step
+        elif diagram.vsync_timer:
+            animation = previous_shown + frame.interval * PERIOD
         else:
-            animation = previous_shown + frame.interval * PERIOD + frame.timer_error
-        timed.append(Timed(frame, start, end, animation, shown))
+            animation = reading
+        timed.append(Timed(frame, start, end, animation, shown, reading))
         previous_shown = shown
     return timed
 
@@ -257,14 +275,16 @@ def render(diagram: Diagram, background: str | None) -> str:
         return LEFT + (t - origin) * diagram.scale
 
     width = x_of(refreshes[-1].end) + RIGHT
+    height = diagram.height
+    legend_y = LEGEND_Y + (height - HEIGHT)
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{HEIGHT}" viewBox="0 0 {width:.0f} {HEIGHT}" role="img" aria-label="{escape(diagram.title)}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height}" viewBox="0 0 {width:.0f} {height}" role="img" aria-label="{escape(diagram.title)}">',
         f"<title>{escape(diagram.title)}</title>",
         f"<style>{STYLE}</style>",
     ]
     if background:
         parts.append(f'<rect width="100%" height="100%" fill="{escape(background)}"/>')
-    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{width - 1:.0f}" height="{HEIGHT - 1}" rx="14"/>')
+    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{width - 1:.0f}" height="{height - 1}" rx="14"/>')
     parts.append(text(20, 30, diagram.title, "title", "start"))
     for i, line in enumerate(diagram.description):
         parts.append(text(20, 54 + i * 19, line, "sub", "start"))
@@ -286,7 +306,7 @@ def render(diagram: Diagram, background: str | None) -> str:
     parts.append(text(20, RENDER_Y + RENDER_H / 2 - 3, "RENDER", "label", "start"))
     parts.append(text(20, RENDER_Y + RENDER_H / 2 + 13, "predicted display time", "vsync-n", "start"))
     parts.append(text(20, DISPLAY_Y + DISPLAY_H / 2 + 4, "DISPLAY", "label", "start"))
-    for i, label in enumerate(ROW_LABELS):
+    for i, label in enumerate(diagram.rows):
         parts.append(text(20, ROWS_Y + i * ROW_STEP, label.upper(), "label", "start"))
 
     # Render boxes and present arrows
@@ -310,16 +330,19 @@ def render(diagram: Diagram, background: str | None) -> str:
         parts.append(text(cx, DISPLAY_Y + DISPLAY_H / 2 + 5, cell.timed.frame.name, label_cls))
         if cell.first:
             if previous is None:
-                values = ("\u2013", "\u2013", "\u2013")
+                values = ("\u2013",) * len(diagram.rows)
                 error = 0.0
             else:
                 step = cell.timed.animation - previous.animation
                 display = cell.timed.shown - previous.shown
                 error = step - display
                 values = (f"{ms(step)} ms", f"{ms(display)} ms", f"{ms(error, sign=True)} ms")
+                if diagram.vsync_timer:
+                    measured = cell.timed.reading - previous.reading
+                    values = (f"{ms(measured)} ms", f"{ms(round(measured / PERIOD) * PERIOD)} ms", *values)
             for i, value in enumerate(values):
                 value_cls = ""
-                if i == 2:
+                if i == len(values) - 1:
                     value_cls = "err" if abs(error) > EPSILON else "zero"
                     if value_cls == "err":
                         pill = len(value) * 7.4 + 18
@@ -330,9 +353,9 @@ def render(diagram: Diagram, background: str | None) -> str:
             previous = cell.timed
 
     # Key: what the render boxes and the arrows mean
-    parts.append(f'<rect class="box" x="20" y="{LEGEND_Y - 12}" width="30" height="16" rx="4"/>')
-    parts.append(text(58, LEGEND_Y + 1, "render: as wide as the frame takes, labelled with its predicted display time (its animation time)", "sub", "start"))
-    arrow_x, arrow_y = 35.0, LEGEND_Y + 26
+    parts.append(f'<rect class="box" x="20" y="{legend_y - 12}" width="30" height="16" rx="4"/>')
+    parts.append(text(58, legend_y + 1, "render: as wide as the frame takes, labelled with its predicted display time (its animation time)", "sub", "start"))
+    arrow_x, arrow_y = 35.0, legend_y + 26
     parts.append(f'<line class="arrow" x1="{arrow_x:.1f}" y1="{arrow_y - 13}" x2="{arrow_x:.1f}" y2="{arrow_y - 2}"/>')
     parts.append(f'<path class="arrowhead" d="M{arrow_x - 4:.1f},{arrow_y - 3} L{arrow_x + 4:.1f},{arrow_y - 3} L{arrow_x:.1f},{arrow_y + 4} z"/>')
     if diagram.vrr:
@@ -347,7 +370,7 @@ def render(diagram: Diagram, background: str | None) -> str:
         parts.append(text(key_x + 22, arrow_y + 1, "vsync: bright can be targeted at the frame's rate, faint is skipped", "sub", "start"))
 
     # Legend: only the colours this diagram uses
-    colours_y = LEGEND_Y + 52
+    colours_y = legend_y + 52
     x = 20.0
     used = {cell.kind for cell in refreshes}
     for kind, label in LEGEND.items():
@@ -473,6 +496,9 @@ HITCH = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 75.0), ("E", 75.0), ("F",
 # A busy stretch: every other frame is too slow for one refresh, then it calms down
 BUSY = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 125.0), ("E", 75.0), ("F", 75.0), ("G", 75.0), ("H", 75.0))
 
+# The delta time jitter diagram's frames: every frame on time, the clock read a little off after each flip (ms)
+JITTER = tuple(Frame(name, 75, timer_error=error) for name, error in zip("ABCDEFGH", (0, 0.2, 2.4, -1, 0.8, -1, 0.6, 0.2), strict=True))
+
 SLOW = (Frame("A", 75), Frame("B", 125), Frame("C", 75), Frame("D", 75), Frame("E", 125), Frame("F", 75))
 
 DIAGRAMS = (
@@ -492,7 +518,17 @@ DIAGRAMS = (
             "Frame rate, frametimes and display times are identical to the perfect timer's, but the game's clock is read at an uneven",
             "point after each flip, so each frame shows a moment a little off: delta time jitter. Only the animation error reveals it.",
         ),
-        tuple(Frame(name, 75, timer_error=error) for name, error in zip("ABCDEFGH", (0, 0.2, 2.4, -1, 0.8, -1, 0.6, 0.2), strict=True)),
+        JITTER,
+    ),
+    Diagram(
+        "vsync-timer",
+        "The vsync timer: the same uneven clock, rounded",
+        (
+            "The clock is read as unevenly as with delta time jitter, but each measured frame time is rounded to whole refreshes. Every",
+            "animation time step is then exactly the time the previous frame is on screen, so the animation error is 0 on every frame.",
+        ),
+        JITTER,
+        vsync_timer=True,
     ),
     Diagram(
         "slow-frames",
