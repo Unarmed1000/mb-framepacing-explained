@@ -10,8 +10,8 @@ generated videos. Notes: [the web page](web-page.md).
 
 - [x] Phase 1, vertical slice: the page shell (navigation, one slide, the card look), the viewing check card and the best
       viewing guide, and the warm-up trial with its reveal chart. Stop for review of the look and feel.
-- [ ] Phase 2 (built, in review): the full blind test (warm-up first, 12 trials in random order, categories, score, saved anonymised and versioned
-      result with export). The results list has one row per trial with its verdict ("Correct", "There was a difference", …);
+- [ ] Phase 2 (built, in review): the full blind test (warm-up first, then 23 questions in random order: each pair in each of
+      its movements and with each mode on top; categories, score, saved anonymised and versioned result with export). The results list has one row per trial with its verdict ("Correct", "There was a difference", …);
       clicking a row folds it out to show that trial's video again, which box was which, and its animation error chart.
 - [ ] Phase 3: the explanation slides, including "measure it yourself" with mb-framepacing.
 - [ ] Phase 4: the GitHub Pages workflow (generate and web-encode the clips, build, deploy).
@@ -28,7 +28,8 @@ generated videos. Notes: [the web page](web-page.md).
       by more than half a refresh (where it fails).
 - [ ] Not simulated yet: late frames (hitches, short and long frames), dropped and runt frames, tearing, VRR, input lag.
 - [ ] 40 fps on 120 Hz.
-- [ ] A slow (or very slow) box speed, better suited to 20 Hz, then used for the blind test's 20 Hz question instead of normal.
+- [x] A slow box speed (the normal timing on a quarter of the path), better suited to 20 Hz, used for the blind test's 20 Hz
+      questions instead of normal.
 
 ## Diagrams
 

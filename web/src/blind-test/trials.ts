@@ -14,7 +14,7 @@ export interface TrialDefinition {
   b: string;
   /** The smoother mode, "same" when both are the same clip, or null for a preference (no right answer). */
   smoother: string | null;
-  /** The movements this trial may use (default: all of the test's); 20 Hz is only shown with the slower movement. */
+  /** The movements this trial uses (default: the test's); 20 Hz only uses slow, the normal timing on a shorter path. */
   motions?: string[];
 }
 
@@ -72,7 +72,13 @@ export class ClipLibrary {
 
 export async function loadClips(definitions: Definitions = DEFINITIONS): Promise<ClipLibrary> {
   const library = new ClipLibrary();
-  const motions = [...new Set([...definitions.motions, ...definitions.warmup.motions])];
+  const motions = [
+    ...new Set([
+      ...definitions.motions,
+      ...definitions.trials.flatMap((trial) => trial.motions ?? []),
+      ...definitions.warmup.motions,
+    ]),
+  ];
   for (const motion of motions) {
     const folder = folderFor(motion);
     const { manifest, text } = await loadManifestText(folder);
@@ -134,7 +140,7 @@ export interface Question {
   top: string;
 }
 
-/** Every question after the warm-up: each trial in each of its movements (slow and fast; 20 Hz slow only) and, when its two
+/** Every question after the warm-up: each trial in each of its movements (normal and fast; 20 Hz slow only) and, when its two
  * modes differ, with each of them on top once. */
 export function questions(definitions: Definitions = DEFINITIONS): Question[] {
   return definitions.trials.flatMap((definition) =>

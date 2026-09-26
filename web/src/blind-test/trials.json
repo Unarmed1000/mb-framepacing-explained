@@ -1,5 +1,5 @@
 {
-  "testVersion": 9,
+  "testVersion": 10,
   "clip": {
     "width": 1280,
     "height": 384,
@@ -32,7 +32,7 @@
       "a": "60",
       "b": "20",
       "smoother": "60",
-      "motions": ["normal"]
+      "motions": ["slow"]
     },
     {
       "id": "rate-30-vs-20",
@@ -40,7 +40,7 @@
       "a": "30",
       "b": "20",
       "smoother": "30",
-      "motions": ["normal"]
+      "motions": ["slow"]
     },
     {
       "id": "pref-30-vs-bad-60",
@@ -55,7 +55,7 @@
       "a": "20",
       "b": "30-naive-heavy",
       "smoother": null,
-      "motions": ["normal"]
+      "motions": ["slow"]
     },
     {
       "id": "same-60",
@@ -77,7 +77,7 @@
       "a": "20",
       "b": "20",
       "smoother": "same",
-      "motions": ["normal"]
+      "motions": ["slow"]
     }
   ]
 }

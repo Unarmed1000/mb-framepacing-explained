@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ModeEntry, VideoEntry } from "../manifest";
 import {
   buildRun,
   ClipLibrary,
   DEFINITIONS,
+  loadClips,
   expectedAnswer,
   isCorrect,
   requiredPairs,
@@ -53,16 +54,22 @@ describe("the trial definitions", () => {
     expect([count("identical"), count("pacing"), count("frame-rate"), count("preference")]).toEqual([3, 1, 3, 2]);
   });
 
-  it("show 20 Hz only with the normal movement, never fast", () => {
+  it("show 20 Hz only with the slow movement (a shorter path), and everything else never slow", () => {
     const runs = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => buildRun(library(), seededRandom(seed)));
     const twenty = runs.flat().filter((trial) => [trial.definition.a, trial.definition.b].includes("20"));
     expect(twenty.length).toBeGreaterThan(0);
-    expect(new Set(twenty.map((trial) => trial.motion))).toEqual(new Set(["normal"]));
+    expect(new Set(twenty.map((trial) => trial.motion))).toEqual(new Set(["slow"]));
+    for (const motion of ["normal", "fast"])
+      expect(
+        requiredPairs()
+          .get(motion)
+          ?.some((pair) => pair.includes("20")),
+      ).toBe(false);
     expect(
       requiredPairs()
-        .get("fast")
-        ?.some((pair) => pair.includes("20")),
-    ).toBe(false);
+        .get("slow")
+        ?.every((pair) => pair.includes("20")),
+    ).toBe(true);
   });
 
   it("pair the perfect 20 with every perfect, itself included", () => {
@@ -72,10 +79,10 @@ describe("the trial definitions", () => {
     for (const other of ["20", "30", "60"]) expect(withTwenty).toContain(["20", other].sort().join(":"));
   });
 
-  it("use the bad 30 only against the perfect 20, slow only", () => {
+  it("use the bad 30 only against the perfect 20, at the slow movement only", () => {
     const withBad30 = DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].includes("30-naive-heavy"));
     expect(withBad30.map((trial) => [trial.a, trial.b].sort().join(":"))).toEqual(["20:30-naive-heavy"]);
-    expect(withBad30[0]?.motions).toEqual(["normal"]);
+    expect(withBad30[0]?.motions).toEqual(["slow"]);
   });
 
   it("never compare two bad timers", () => {
@@ -91,8 +98,9 @@ describe("the trial definitions", () => {
 
   it("need identical pairs once and the other pairs in both orders, per motion", () => {
     const pairs = requiredPairs();
-    expect(pairs.get("normal")).toHaveLength(3 + 6 * 2);
+    expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
     expect(pairs.get("fast")).toHaveLength(2 + 3 * 2 + 2);
+    expect(pairs.get("slow")).toHaveLength(1 + 3 * 2);
   });
 });
 
@@ -129,7 +137,7 @@ describe("a run", () => {
     const run = buildRun(library(), seededRandom(3));
     const pacingFast = run.filter((trial) => trial.definition.id === "pacing-60" && trial.motion === "fast");
     expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-heavy"]));
-    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast"]));
+    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast", "slow"]));
   });
 });
 
@@ -156,5 +164,25 @@ describe("scoring", () => {
       identical: { correct: 5, of: 5 },
     });
     expect(score(run.map((trial) => ({ trial, answer: "same" as Answer }))).overall).toEqual({ correct: 5, of: 18 });
+  });
+});
+
+describe("loading the clips", () => {
+  it("fetches the manifest of every movement a trial or the warm-up uses, the slow one included", async () => {
+    const fetched: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      fetched.push(url);
+      return Promise.resolve(new Response(JSON.stringify({ settings: {}, videos: [] })));
+    });
+    try {
+      await loadClips();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(fetched.sort()).toEqual([
+      "videos/box/fast/manifest.json",
+      "videos/box/normal/manifest.json",
+      "videos/box/slow/manifest.json",
+    ]);
   });
 });
