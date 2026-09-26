@@ -97,7 +97,7 @@
 <text x="1080.0" y="166.0" text-anchor="middle" class="box-time">700 ms</text>
 <text x="1080.0" y="198.0" text-anchor="middle" class="same">100 ms</text>
 <text x="1080.0" y="224.0" text-anchor="middle" class="zero">0 ms</text>
-<text x="20.0" y="280.0" text-anchor="start" class="lane">Timer jitter</text>
+<text x="20.0" y="280.0" text-anchor="start" class="lane">Delta time jitter</text>
 <text x="20.0" y="296.0" text-anchor="start" class="vsync-n">10 fps, 100 ms frametimes</text>
 <text x="20.0" y="326.0" text-anchor="start" class="label">DISPLAY TIME</text>
 <text x="20.0" y="352.0" text-anchor="start" class="label">ANIMATION ERROR</text>

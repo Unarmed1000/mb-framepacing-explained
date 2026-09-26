@@ -44,9 +44,9 @@ explain the two ways it goes wrong with a flipbook:
 | Frames reach the screen evenly, but the **animation time** advances unevenly          | Unevenly drawn pages, flipped at a steady tempo | Delta time jitter: the engine reads its wall clock at an uneven point after each flip          |
 | The animation time advances evenly, but frames reach the screen unevenly (**pacing**) | Evenly drawn pages, flipped at an uneven tempo  | A frame over its budget shows a refresh late (a hitch); one submitted too early shows too soon |
 
-![Timer jitter: frames reach the screen on time, but each shows a moment a little off](doc/images/timing-timer-jitter.svg)
+![Delta time jitter: frames reach the screen on time, but each shows a moment a little off](doc/images/timing-timer-jitter.svg)
 
-**Timer jitter is invisible to the usual numbers.** Frame rate, frametime, display time and a frame-time graph are identical to
+**Delta time jitter is invisible to the usual numbers.** Frame rate, frametime, display time and a frame-time graph are identical to
 the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
 animation error shows why, because only it looks at the moment each frame shows:
 
@@ -110,7 +110,7 @@ random late frames and long hitches, dropped and runt frames, tearing, VRR and i
 - [Advanced frame pacing strategies](doc/frame-pacing-strategies.md): holding a frame for two refreshes, switching between full
   and half rate with hysteresis, and recovering from a frame that overshoots its refresh
 - [Input latency](doc/input-latency.md): how it is measured, where it comes from, Reflex, Anti-Lag 2, XeLL and frame generation
-- [Measured in real games](doc/measured-errors.md): how large animation error and timer jitter are in real games and engines,
+- [Measured in real games](doc/measured-errors.md): how large animation error and delta time jitter are in real games and engines,
   with sources, and how the videos' simulated timers compare
 - [Charts](doc/charts.md): how Gamers Nexus, PC Perspective, CapFrameX, Digital Foundry and mb-framepacing chart pacing, and what
   to draw here

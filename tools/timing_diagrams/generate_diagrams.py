@@ -487,7 +487,7 @@ DIAGRAMS = (
     ),
     Diagram(
         "timer-jitter",
-        "Timer jitter: frames on time, animation time off",
+        "Delta time jitter: frames on time, animation time off",
         (
             "Frame rate, frametimes and display times are identical to the perfect timer's, but the game's clock is read at an uneven",
             "point after each flip, so each frame shows a moment a little off: delta time jitter. Only the animation error reveals it.",
@@ -583,7 +583,7 @@ COMPARISONS = (
             "A perfect timer and a jittery one, measured the usual way: 10 fps, every frame on screen for exactly 100 ms, a flat frame-time",
             "graph. Every one of those numbers is identical. Only the animation time inside each frame differs, and only animation error shows it.",
         ),
-        (("Perfect timer", "perfect-timer"), ("Timer jitter", "timer-jitter")),
+        (("Perfect timer", "perfect-timer"), ("Delta time jitter", "timer-jitter")),
         "The eye sees the jittered frames as slightly uneven motion; frame rate and frametime cannot explain why, animation error does.",
     ),
 )

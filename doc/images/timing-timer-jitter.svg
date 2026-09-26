@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="490" viewBox="0 0 1300 490" role="img" aria-label="Timer jitter: frames on time, animation time off">
-<title>Timer jitter: frames on time, animation time off</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="490" viewBox="0 0 1300 490" role="img" aria-label="Delta time jitter: frames on time, animation time off">
+<title>Delta time jitter: frames on time, animation time off</title>
 <style>
   text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
          font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
@@ -32,7 +32,7 @@
   .same { fill: #7ee787; font-weight: 600; }
 </style>
 <rect class="card" x="0.5" y="0.5" width="1299" height="489" rx="14"/>
-<text x="20.0" y="30.0" text-anchor="start" class="title">Timer jitter: frames on time, animation time off</text>
+<text x="20.0" y="30.0" text-anchor="start" class="title">Delta time jitter: frames on time, animation time off</text>
 <text x="20.0" y="54.0" text-anchor="start" class="sub">Frame rate, frametimes and display times are identical to the perfect timer's, but the game's clock is read at an uneven</text>
 <text x="20.0" y="73.0" text-anchor="start" class="sub">point after each flip, so each frame shows a moment a little off: delta time jitter. Only the animation error reveals it.</text>
 <line class="vsync-skip" x1="180.0" y1="104" x2="180.0" y2="243"/>

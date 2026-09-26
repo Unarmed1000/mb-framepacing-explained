@@ -86,7 +86,7 @@ const twoClocks: Slide = {
 
 const timerJitterSlide: Slide = {
   id: "timer-jitter",
-  title: "Timer jitter",
+  title: "Delta time jitter",
   render() {
     const element = body(
       "Two ways it goes wrong · 1",
@@ -95,7 +95,7 @@ const timerJitterSlide: Slide = {
       early or late after each flip, and renders the frame for that reading (<strong>delta time jitter</strong>). Gamers Nexus
       compare it to a flipbook with unevenly drawn pages, flipped at a steady tempo.`,
       `<div class="single-holder"></div>
-      ${figure(timerJitter, "Timer jitter: frames reach the screen on time, but each shows a moment a little off.")}`,
+      ${figure(timerJitter, "Delta time jitter: frames reach the screen on time, but each shows a moment a little off.")}`,
     );
     element
       .querySelector(".single-holder")!
@@ -119,11 +119,11 @@ const invisible: Slide = {
   title: "Invisible to the numbers",
   render() {
     const element = body(
-      "Why frame rate cannot see it",
+      "Delta time jitter",
       "Same frame rate, same frame times, different motion",
-      `Timer jitter is invisible to the usual numbers. Frame rate, frametime, display time and a frame-time graph are identical to
+      `<strong>Delta time jitter</strong> is invisible to the usual numbers. Frame rate, frametime, display time and a frame-time graph are identical to
       the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
-      animation error shows why, because only it looks at the moment each frame shows.`,
+      <strong>animation error</strong> shows why, because only it looks at the moment each frame shows.`,
       `${figure(perfectVsJitter, "Same frame rate, same frametimes, different motion: only the animation error differs.")}`,
     );
     element.append(
@@ -415,7 +415,7 @@ const furtherReading: Slide = {
           [
             "Fixing Time.deltaTime in Unity 2020.2",
             "https://unity.com/blog/engine-platform/fixing-time-deltatime-in-unity-2020-2-for-smoother-gameplay",
-            "Unity: timer jitter, and the fix",
+            "Unity: delta time jitter, and the fix",
           ],
           [
             "Frame Pacing library",
@@ -434,8 +434,8 @@ const furtherReading: Slide = {
 /** The topics, each a group of slides: the page before the first one links to every slide by topic. */
 const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }[] = [
   {
-    name: "Stutter and animation error",
-    about: "The two clocks of every frame, and why a steady frame rate can still stutter.",
+    name: "Animation error and delta time jitter",
+    about: "The two clocks of every frame, and delta time jitter: stutter at a steady frame rate.",
     slides: [twoClocks, timerJitterSlide, invisible],
   },
   { name: "Getting the timer right", about: "Render every frame for the moment it will be shown.", slides: [vsyncTimer] },

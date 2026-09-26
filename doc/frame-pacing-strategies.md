@@ -14,7 +14,7 @@ presents and per-frame targets are improvements for platforms that offer them, n
 
 Every diagram on this page assumes the animation time is already right: each frame is rendered for its predicted display time, the
 moment it is meant to appear, so a frame that does appear then has no animation error. That comes first. A game that renders its
-frames for the wrong moment has animation error on every frame however well it paces them: the timer jitter of the
+frames for the wrong moment has animation error on every frame however well it paces them: the delta time jitter of the
 [overview](../README.md#frame-pacing-in-one-minute), which frame rate and frametime cannot even see.
 
 ### The vsync timer

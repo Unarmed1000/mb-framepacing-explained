@@ -1,6 +1,6 @@
 # Measured in real games
 
-How large animation error and timer jitter are in real games and engines, from published measurements, and how the videos'
+How large animation error and delta time jitter are in real games and engines, from published measurements, and how the videos'
 simulated timers compare. The videos exaggerate on purpose so the difference can be seen; this page says by how much.
 
 Every number below was found on the linked page and its quote checked against it (September 2026), except where a note says
@@ -24,7 +24,7 @@ time step, per frame. Gamers Nexus summarise a run as the average absolute error
 | Crimson Desert                | 11.9 %, and "consistently frames that deviate 30ms or more from zero"                            | GTX 1070                                        | same                                                                                                                                                                |
 | Crimson Desert, worst stretch | "-82ms and +63ms" at a frame-time spike; "-39ms and up to 19ms" at a spike of only 26 ms         | RTX 5060 Ti                                     | same                                                                                                                                                                |
 
-## Timer jitter in engines
+## Delta time jitter in engines
 
 What the naive timer videos simulate: frames reach the screen evenly, but the measured frame time wobbles.
 
