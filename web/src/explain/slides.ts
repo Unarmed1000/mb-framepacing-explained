@@ -86,8 +86,8 @@ const timerJitterSlide: Slide = {
         liveComparison(
           "normal",
           "60",
-          "60-naive-heavy",
-          "Top: the perfect timer. Bottom: the same 60 fps with a naive timer under heavy system load. Every frame of both is on " +
+          "60-naive-4ms",
+          "Top: the perfect timer. Bottom: the same 60 fps with a naive timer that reads the clock up to 4 ms early or late. Every frame of both is on " +
             "screen for exactly one refresh; the chart shows each frame's animation error, following the video.",
         ),
       );
@@ -357,6 +357,7 @@ const furtherReading: Slide = {
             "The vsync timer, half rate, switching, recovery",
           ],
           ["Input latency", doc("doc/input-latency.md"), "Measuring it, Reflex, Anti-Lag 2, frame generation"],
+          ["Measured in real games", doc("doc/measured-errors.md"), "Animation error in real games, next to the videos' timers"],
           ["All the articles and videos", doc("doc/further-reading.md"), "Grouped by subject"],
         ])}
         ${links("Sources to start with", [

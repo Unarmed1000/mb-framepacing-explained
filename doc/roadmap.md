@@ -51,6 +51,9 @@ Sample first each time.
 - [ ] Name the platforms where `wl_surface.frame` misbehaves.
 - [ ] Test whether DWM's `qpcRefreshPeriod` is measured or only nominal.
 - [ ] Check the Glaiel vsync snapping wording against the article (Medium blocked the automated fetch).
+- [ ] [Measured in real games](measured-errors.md): check Digital Foundry's Elden Ring stutter figure (250 ms) and Croteam's
+      Talos numbers on the original pages (only second-hand and a mirror so far); find per-game animation error from Digital
+      Foundry's PresentMon runs and CapFrameX.
 - [ ] Appendix A candidates: Linux KMS/DRM page-flip events and `drmWaitVBlank`; plain EGL, where a blocking `eglSwapBuffers`
       is the only signal.
 

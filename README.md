@@ -109,6 +109,8 @@ Not simulated yet: late frames (hitches, short and long frames), dropped and run
 - [Advanced frame pacing strategies](doc/frame-pacing-strategies.md): holding a frame for two refreshes, switching between full
   and half rate with hysteresis, and recovering from a frame that overshoots its refresh
 - [Input latency](doc/input-latency.md): how it is measured, where it comes from, Reflex, Anti-Lag 2, XeLL and frame generation
+- [Measured in real games](doc/measured-errors.md): how large animation error and timer jitter are in real games and engines,
+  with sources, and how the videos' simulated timers compare
 - [Charts](doc/charts.md): how Gamers Nexus, PC Perspective, CapFrameX, Digital Foundry and mb-framepacing chart pacing, and what
   to draw here
 - [Further reading](doc/further-reading.md): the articles and videos, grouped by subject

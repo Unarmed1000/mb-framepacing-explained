@@ -24,6 +24,12 @@ Wayback Machine copy. The research was AI assisted; see [about the research](../
   [animation error experiment app (issue #580)](https://github.com/GameTechDev/PresentMon/issues/580),
   [Intel PresentMon](https://game.intel.com/story/intel-presentmon/)
 
+Measured values from these and the sources below are collected in [measured in real games](measured-errors.md), among them
+[Crimson Desert](https://gamersnexus.net/gpus-game-benchmarks-graphics-guides/crimson-desert-gpu-benchmarks-bugs-simulation-error-tests)
+(Gamers Nexus, 2026-04-01: simulation time error per GPU) and
+[Dragon's Dogma 2](https://gamersnexus.net/game-benchmarks-graphics-guides/dragons-dogma-2-mess-gpu-cpu-benchmarks-bottlenecks-crashes)
+(Gamers Nexus: frame-time spikes).
+
 ## Digital Foundry
 
 Frame pacing:
