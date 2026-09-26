@@ -2,19 +2,40 @@
 
 import type { ViewingReport } from "../checks/viewing";
 import type { PlaybackHealth } from "../video/pixel-video";
-import { DEFINITIONS, isCorrect, score, type Answer, type Category, type CategoryScore, type Trial } from "./trials";
+import {
+  DEFINITIONS,
+  isCorrect,
+  score,
+  type Answer,
+  type Category,
+  type CategoryScore,
+  type ClipLibrary,
+  type Definitions,
+  type Trial,
+  type TrialDefinition,
+} from "./trials";
 
 /** The result schema's version: bump when the fields change. */
 export const RESULT_FORMAT = 1;
 const HISTORY_KEY = "mb-framepacing-explained.blind-test";
 const HISTORY_LIMIT = 50;
 
+/** The playback of a saved answer: a result keeps only how many video frames were off the rhythm, not which way. */
+export interface SavedPlayback {
+  presented: number;
+  offRhythm: number;
+}
+
 export interface AnsweredTrial {
   trial: Trial;
   answer: Answer;
   answerMs: number;
-  health: PlaybackHealth;
+  health: PlaybackHealth | SavedPlayback;
 }
+
+/** How many video frames were off the 60 fps rhythm: dropped, late or early. */
+export const offRhythm = (health: PlaybackHealth | SavedPlayback): number =>
+  "offRhythm" in health ? health.offRhythm : health.dropped + health.late + health.early;
 
 export interface TrialRecord {
   id: string;
@@ -87,10 +108,45 @@ export function buildRecord(
       answer,
       correct: isCorrect(trial, answer),
       answerMs: Math.round(answerMs),
-      playback: { presented: health.presented, offRhythm: health.dropped + health.late + health.early },
+      playback: { presented: health.presented, offRhythm: offRhythm(health) },
     })),
     score: score(answers),
   };
+}
+
+/** A saved result's answers as questions again, with their clips, to show it like a result just taken; null when a question
+ * no longer matches the trial definitions or its clip is missing (a result of an earlier test version). */
+export function restoreAnswers(
+  record: ResultRecord,
+  library: ClipLibrary,
+  definitions: Definitions = DEFINITIONS,
+): AnsweredTrial[] | null {
+  const answers: AnsweredTrial[] = [];
+  for (const saved of record.trials) {
+    const modes = [saved.top, saved.bottom].sort().join(":");
+    let definition: TrialDefinition | undefined;
+    if (saved.category === "warm-up") {
+      const pair = definitions.warmup.pairs.find((warmup) => [...warmup].sort().join(":") === modes);
+      if (pair)
+        definition = { id: "warm-up", category: "warm-up", a: pair[0], b: pair[1], smoother: definitions.warmup.smoother };
+    } else {
+      definition = definitions.trials.find(
+        (trial) =>
+          trial.category === saved.category &&
+          [trial.a, trial.b].sort().join(":") === modes &&
+          (saved.id === `${trial.id}-${saved.motion}` || saved.id === `${trial.id}-${saved.motion}-top-${saved.top}`),
+      );
+    }
+    const clip = library.find(saved.motion, saved.top, saved.bottom);
+    if (!definition || !clip) return null;
+    answers.push({
+      trial: { definition, id: saved.id, position: saved.position, motion: saved.motion, clip },
+      answer: saved.answer,
+      answerMs: saved.answerMs,
+      health: saved.playback,
+    });
+  }
+  return answers;
 }
 
 /** A short, stable hash of the manifests' text (SHA-256, first 16 hex digits), or "unavailable" outside a secure context. */

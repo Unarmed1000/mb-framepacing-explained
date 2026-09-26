@@ -34,7 +34,7 @@
 <rect class="card" x="0.5" y="0.5" width="1299" height="489" rx="14"/>
 <text x="20.0" y="30.0" text-anchor="start" class="title">Perfect timer, every frame on time</text>
 <text x="20.0" y="54.0" text-anchor="start" class="sub">Each frame shows the moment it is displayed: the animation time step equals the display time, so the animation error is 0.</text>
-<text x="20.0" y="73.0" text-anchor="start" class="sub">A 10 Hz display with vsync (a refresh every 100 ms): a slowed-down 60 Hz.</text>
+<text x="20.0" y="73.0" text-anchor="start" class="sub">A 10 Hz display with vsync, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work with.</text>
 <line class="vsync-skip" x1="180.0" y1="104" x2="180.0" y2="243"/>
 <text x="180.0" y="258.0" text-anchor="middle" class="axis">−100 ms</text>
 <line class="vsync" x1="300.0" y1="104" x2="300.0" y2="243"/>

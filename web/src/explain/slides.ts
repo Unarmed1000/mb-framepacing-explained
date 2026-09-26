@@ -56,7 +56,8 @@ const twoClocks: Slide = {
       <div class="card">
         <h2>Reading the diagrams</h2>
         <ul class="points">
-          <li>A <strong>10 Hz display</strong>: a slowed-down 60 Hz, so the steps are visible.</li>
+          <li>A <strong>10 Hz display</strong>, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work
+            with.</li>
           <li><strong>Render:</strong> each box is one frame, as wide as it takes to render, labelled with its
             <strong>predicted display time</strong>, when the game expects it to be shown. That becomes its animation time.</li>
           <li>The <strong>arrow</strong> is where the game presents it: the frame is done and waits for the next vsync.</li>

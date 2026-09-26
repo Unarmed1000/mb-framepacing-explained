@@ -1,5 +1,5 @@
-// The blind test: an intro, the warm-up then 12 questions in random order, and the results, whose rows fold out to show each
-// trial's video again with its reveal.
+// The blind test: an intro, the warm-up then the questions in random order, and the results, whose rows fold out to show each
+// trial's video again with its reveal; a saved result can be shown the same way.
 
 import { latestViewingReport, overall } from "../checks/viewing";
 import { PixelVideo } from "../video/pixel-video";
@@ -9,6 +9,7 @@ import {
   downloadRecord,
   hashText,
   loadHistory,
+  restoreAnswers,
   saveToHistory,
   type AnsweredTrial,
   type ResultRecord,
@@ -109,8 +110,76 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
     navigator.userAgent,
   );
   saveToHistory(record);
+  const actions = renderResults(slide, answers, record, "Blind test · result");
+  actions.innerHTML = `
+    <a class="button" href="#/two-clocks">Next: what you just saw, explained →</a>
+    <a class="button ghost" href="#/menu">Menu</a>`;
+  actions.append(...recordButtons(record));
+  const again = Object.assign(document.createElement("button"), {
+    type: "button",
+    className: "button ghost",
+    textContent: "Take the test again",
+  });
+  again.addEventListener("click", () => intro(slide, library));
+  actions.append(again);
+}
+
+/** A saved result, shown like one just taken (its questions can be watched again), with a way back; a result of an earlier test
+ * version, whose clips are gone, only shows its score. */
+export function showSavedResult(slide: HTMLElement, library: ClipLibrary, record: ResultRecord, back: () => void): void {
+  const answers = restoreAnswers(record, library);
+  const eyebrow = `Previous result · ${record.date}`;
+  let actions: HTMLElement;
+  if (answers) actions = renderResults(slide, answers, record, eyebrow);
+  else {
+    const { correct, of } = record.score.overall;
+    slide.innerHTML = `
+      <p class="eyebrow"></p>
+      <h1></h1>
+      <p class="lead">This result is from an earlier version of the test (version ${record.testVersion}); its questions cannot be
+        watched again.</p>
+      <div class="result-actions"></div>`;
+    slide.querySelector(".eyebrow")!.textContent = eyebrow;
+    slide.querySelector("h1")!.textContent = `${correct} of ${of} right`;
+    actions = slide.querySelector(".result-actions")!;
+  }
+  const backButton = Object.assign(document.createElement("button"), {
+    type: "button",
+    className: "button",
+    textContent: "← Back to the menu",
+  });
+  backButton.addEventListener("click", back);
+  actions.replaceChildren(backButton, ...recordButtons(record));
+}
+
+/** Download and copy buttons for a result. */
+function recordButtons(record: ResultRecord): HTMLButtonElement[] {
+  const download = Object.assign(document.createElement("button"), {
+    type: "button",
+    className: "button ghost",
+    textContent: "Download result (JSON)",
+  });
+  download.addEventListener("click", () => downloadRecord(record));
+  const copy = Object.assign(document.createElement("button"), {
+    type: "button",
+    className: "button ghost",
+    textContent: "Copy result",
+  });
+  copy.addEventListener("click", () => {
+    void navigator.clipboard.writeText(JSON.stringify(record, null, 2)).then(() => (copy.textContent = "Copied"));
+  });
+  return [download, copy];
+}
+
+/** The results view: score, categories, viewing summary and a row per question that folds out; returns the (empty) actions bar. */
+function renderResults(
+  slide: HTMLElement,
+  answers: readonly AnsweredTrial[],
+  record: ResultRecord,
+  eyebrow: string,
+): HTMLElement {
   slide.innerHTML = `
-    <p class="eyebrow">Blind test · result</p>
+    <p class="eyebrow"></p>
     <h1></h1>
     <p class="lead"></p>
     <div class="card categories"></div>
@@ -118,12 +187,8 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
     <h2 class="list-title">Every question</h2>
     <p class="hint">Open a row to watch its pair again, with what each box was and its animation error.</p>
     <div class="trial-list"></div>
-    <div class="result-actions">
-      <a class="button" href="#/two-clocks">Next: what you just saw, explained →</a>
-      <button type="button" class="button ghost" data-action="download">Download result (JSON)</button>
-      <button type="button" class="button ghost" data-action="copy">Copy result</button>
-      <button type="button" class="button ghost" data-action="again">Take the test again</button>
-    </div>`;
+    <div class="result-actions"></div>`;
+  slide.querySelector(".eyebrow")!.textContent = eyebrow;
   const { overall: total, byCategory } = record.score;
   slide.querySelector("h1")!.textContent = `${total.correct} of ${total.of} right`;
   slide.querySelector(".lead")!.textContent =
@@ -150,12 +215,7 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
   slide.querySelector(".setup")!.textContent = viewingSummary(record);
   const list = slide.querySelector(".trial-list")!;
   for (const answered of answers) list.append(foldOut(answered));
-  slide.querySelector('[data-action="download"]')!.addEventListener("click", () => downloadRecord(record));
-  const copy = slide.querySelector<HTMLButtonElement>('[data-action="copy"]')!;
-  copy.addEventListener("click", () => {
-    void navigator.clipboard.writeText(JSON.stringify(record, null, 2)).then(() => (copy.textContent = "Copied"));
-  });
-  slide.querySelector('[data-action="again"]')!.addEventListener("click", () => intro(slide, library));
+  return slide.querySelector(".result-actions")!;
 }
 
 function viewingSummary(record: ResultRecord): string {

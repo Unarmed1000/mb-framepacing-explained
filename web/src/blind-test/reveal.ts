@@ -4,6 +4,7 @@
 import { errorChart } from "../charts/error-chart";
 import type { ModeEntry } from "../manifest";
 import type { PixelVideo, PlaybackHealth } from "../video/pixel-video";
+import type { SavedPlayback } from "./result";
 import { expectedAnswer, isCorrect, type Answer, type Trial } from "./trials";
 
 /** A box's mode in a few words, for the preference answers: "perfect 30 fps", "jittery 60 fps". */
@@ -81,7 +82,12 @@ export function explanation(trial: Trial): string {
 }
 
 /** The playback line: what the browser's frame timing said about the clip while it was watched. */
-export function playbackLine(health: PlaybackHealth): string {
+export function playbackLine(health: PlaybackHealth | SavedPlayback): string {
+  if ("offRhythm" in health) {
+    const { presented, offRhythm } = health;
+    if (offRhythm === 0) return "Playback looked clean when you answered: every video frame on the 60 fps rhythm.";
+    return `When you answered, the browser's frame timing put ${offRhythm} of ${presented} video frames off the 60 fps rhythm.`;
+  }
   const { presented, dropped, late, early } = health;
   const off = dropped + late + early;
   if (off === 0) return "Playback looked clean: the browser's frame timing put every video frame on the 60 fps rhythm.";
@@ -94,7 +100,12 @@ export function playbackLine(health: PlaybackHealth): string {
 }
 
 /** A card revealing a trial: verdict, explanation, playback line and the chart, its playhead following `player`. */
-export function revealCard(trial: Trial, answer: Answer, health: PlaybackHealth, player: PixelVideo): HTMLElement {
+export function revealCard(
+  trial: Trial,
+  answer: Answer,
+  health: PlaybackHealth | SavedPlayback,
+  player: PixelVideo,
+): HTMLElement {
   const correct = isCorrect(trial, answer);
   const { video } = trial.clip;
   const chart = errorChart(

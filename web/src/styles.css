@@ -636,3 +636,29 @@ code {
   padding-left: 18px;
   color: var(--text);
 }
+
+/* The menu after the viewing guide: the test, previous results, the articles */
+.menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 0 24px;
+  align-items: start;
+}
+
+.menu-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.previous {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.articles {
+  margin: 12px 0 0;
+  padding-left: 22px;
+  line-height: 1.9;
+}

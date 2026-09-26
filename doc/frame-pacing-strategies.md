@@ -3,7 +3,7 @@
 For engine developers, in the order to tackle them: getting the animation time right with a vsync timer, holding a frame for more
 than one refresh, switching between full and half rate, and recovering after a frame overshoots its refresh. Everything assumes
 vsync on and a fixed refresh rate; VRR and vsync off are [still open](#still-open-vrr-and-vsync-off). The diagrams follow the conventions of the
-[overview](../README.md#frame-pacing-in-one-minute): a 10 Hz display (a slowed-down 60 Hz), bright vsyncs a frame can target at
+[overview](../README.md#frame-pacing-in-one-minute): a 10 Hz display (a refresh every 100 ms, easy to see and to count), bright vsyncs a frame can target at
 its rate and faint ones it skips.
 
 **The baseline has to work on the simplest platform**: plain vsync, no extensions, at worst a hard-coded refresh rate. The vsync

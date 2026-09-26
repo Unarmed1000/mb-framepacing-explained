@@ -58,7 +58,7 @@ animation error shows why, because only it looks at the moment each frame shows:
 
 ![Slow frames: the previous frame is held, the late frame shows a past moment and the next one jumps ahead](images/timing-slow-frames.svg)
 
-The diagrams follow both clocks at a 10 Hz display (a slowed-down 60 Hz). A perfect timer, for comparison:
+The diagrams follow both clocks at a 10 Hz display (a refresh every 100 ms, easy to see and to count). A perfect timer, for comparison:
 
 ![Perfect timer: every frame shows the moment it is displayed, so the animation error is 0](images/timing-perfect-timer.svg)
 

@@ -4,6 +4,7 @@ import { blindTestSlide } from "./blind-test/test-slide";
 import { warmupSlide } from "./blind-test/warmup";
 import { viewingCheckCard } from "./checks/viewing";
 import { EXPLANATION_SLIDES } from "./explain/slides";
+import { menuSlide } from "./menu";
 import { startSlides, type Slide } from "./slides";
 
 /** The clips are 1280 x 384 video pixels (the two boxes and a margin, no labels), shown at 1:1 device pixels. */
@@ -61,8 +62,8 @@ const bestViewing: Slide = {
     body.querySelector(".guide")!.append(viewingCheckCard(VIDEO));
     const next = document.createElement("a");
     next.className = "button";
-    next.href = "#/warm-up";
-    next.textContent = "Continue to the warm-up →";
+    next.href = "#/menu";
+    next.textContent = "Continue →";
     body.append(next);
     return body;
   },
@@ -72,4 +73,11 @@ const warmup: Slide = { id: "warm-up", title: "Warm-up", render: warmupSlide };
 const blindTest: Slide = { id: "blind-test", title: "Blind test", render: blindTestSlide };
 
 // The blind test comes before the explanations, so they cannot give its answers away
-startSlides(document.querySelector<HTMLElement>("#app")!, [welcome, bestViewing, warmup, blindTest, ...EXPLANATION_SLIDES]);
+startSlides(document.querySelector<HTMLElement>("#app")!, [
+  welcome,
+  bestViewing,
+  menuSlide,
+  warmup,
+  blindTest,
+  ...EXPLANATION_SLIDES,
+]);

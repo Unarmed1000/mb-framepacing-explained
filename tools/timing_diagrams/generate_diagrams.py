@@ -12,8 +12,8 @@ PresentMon computes it (positive: shown too soon, negative: shown too late).
 
 The loop is double buffered: a frame starts rendering when the previous one appears (the first one somewhere inside a refresh). With vsync it appears at the first refresh
 after it is presented and at least its swap interval after the previous one; with VRR the display refreshes as soon as it is
-presented, but at most every 100 ms. The display runs at 10 Hz (a refresh every 100 ms), a slowed-down 60 Hz, so the numbers stay
-readable. A perfect timer gives each frame the moment it expects to be shown: its start plus its swap interval.
+presented, but at most every 100 ms. The display runs at 10 Hz (a refresh every 100 ms), chosen so the steps are easy to see and the
+numbers easy to work with. A perfect timer gives each frame the moment it expects to be shown: its start plus its swap interval.
 
 The SVGs are transparent, with everything on a rounded, slightly translucent dark grey card, so they read the same on a white and
 on a dark page (--background adds an opaque page colour behind the card, for previews). They are vector graphics, so
@@ -481,7 +481,7 @@ DIAGRAMS = (
         "Perfect timer, every frame on time",
         (
             "Each frame shows the moment it is displayed: the animation time step equals the display time, so the animation error is 0.",
-            "A 10 Hz display with vsync (a refresh every 100 ms): a slowed-down 60 Hz.",
+            "A 10 Hz display with vsync, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work with.",
         ),
         tuple(Frame(name, 75) for name in "ABCDEFGH"),
     ),

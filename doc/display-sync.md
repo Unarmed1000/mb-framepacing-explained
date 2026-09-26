@@ -84,7 +84,7 @@ Digital Foundry found that the PS5's VRR has
 - **An unlocked frame rate on VRR** is smooth as long as the frametime is stable and the game's delta time follows it.
 - **Dynamic resolution** is the other lever: games lower the render resolution under load to hold a fixed target.
 
-Half rate on a 10 Hz display (a slowed-down 30 fps on 60 Hz), first evenly paced, then with the bad pacing of a broken cap: the
+Half rate on a 10 Hz display (5 fps, like 30 fps on 60 Hz), first evenly paced, then with the bad pacing of a broken cap: the
 animation steps 200 ms per frame in both, but only the first shows each frame for 200 ms.
 
 ![Half rate, evenly paced: each frame held for two refreshes, as intended](images/timing-half-rate-even.svg)
