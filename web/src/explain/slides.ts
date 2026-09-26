@@ -71,7 +71,7 @@ const twoClocks: Slide = {
       .querySelector(".single-holder")!
       .replaceWith(
         singleBox(
-          "normal",
+          "fast",
           "60",
           "60",
           "top",
