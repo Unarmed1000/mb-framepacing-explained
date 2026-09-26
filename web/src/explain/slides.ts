@@ -75,7 +75,9 @@ const twoClocks: Slide = {
           "60",
           "60",
           "top",
-          "60 fps with the perfect timer: every frame shows exactly the moment it is on screen.",
+          "60 fps with the perfect timer: every frame shows exactly the moment it is on screen. The chart shows each frame's " +
+            "animation error, following the video: always 0.",
+          true,
         ),
       );
     return element;
