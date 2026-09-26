@@ -92,6 +92,9 @@ that needs no timing guess (our suggestion, following from how FIFO works): **pr
 frame into the next swapchain image and presenting that as well. FIFO shows one present per refresh, so the frame stays for two,
 at the cost of a copy and a present.
 
+Digital Foundry asks PC games to let players choose the swap interval: "Include 1/2, 1/3 and 1/4 v-sync options", one of Alex
+Battaglia's [13 ways to end lousy PC ports](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=583s) (2023).
+
 Engines wrap these for you. Unreal has a frame pacer: `SetFramePace` "sets the pace we would like to running at (30 = 30fps,
 0 = unpaced)", and its generic version sets `rhi.SyncInterval` from the display's refresh rate
 ([API](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/ApplicationCore/FGenericPlatformRHIFramePacer/SetFramePace)).

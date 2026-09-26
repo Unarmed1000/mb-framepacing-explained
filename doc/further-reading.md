@@ -40,6 +40,15 @@ Frame pacing:
 - [Why Ratchet and Clank: Rift Apart's 40fps Fidelity Mode Is A Big Deal For Consoles](https://www.youtube.com/watch?v=QXi7uO7wxdc)
   (2021-07-20): 40 fps at 120 Hz, "the same consistency but smoother"
 
+Recommendations for developers:
+
+- [13 Ways To End Lousy PC Ports in 2023](https://www.youtube.com/watch?v=Kr7RGkFuPdQ) (Alex Battaglia, 2023-01-11): 13 best
+  practices, among them [no shader compilation stutter](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=60s),
+  [refresh rate and resolution as separate options](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=418s),
+  [variable aspect ratio and variable framerate](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=522s),
+  [1/2, 1/3 and 1/4 v-sync options](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=583s) and
+  [dynamic resolution if it is also used on console](https://www.youtube.com/watch?v=Kr7RGkFuPdQ&t=746s)
+
 Shader compilation and traversal stutter (#StutterStruggle):
 
 - [Elden Ring PC Performance Simply Isn't Good Enough](https://www.youtube.com/watch?v=5EtcrUrsl38) (2022-02-26)
