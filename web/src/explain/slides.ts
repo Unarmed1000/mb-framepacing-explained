@@ -431,11 +431,11 @@ const furtherReading: Slide = {
     ),
 };
 
-/** The topics, each a group of slides: the page before the first one links to each topic's first slide. */
+/** The topics, each a group of slides: the page before the first one links to each topic's first slide. `about` is HTML. */
 const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }[] = [
   {
     name: "Stutter at a steady frame rate",
-    about: "Animation error, and the first cause of stutter: delta time jitter.",
+    about: "Animation error, and the first cause of stutter: <strong>delta time jitter</strong>.",
     slides: [twoClocks, timerJitterSlide, invisible],
   },
   {
@@ -446,7 +446,7 @@ const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }
   {
     name: "Stutter from late frames",
     about:
-      "The second cause, bad frame pacing: frames that reach the screen late or unevenly, and how engines hold and switch rates.",
+      "The second cause of stutter, <strong>bad frame pacing</strong>: frames that reach the screen late or unevenly, and how engines hold and switch rates.",
     slides: [slowFramesSlide, halfRate, switching, recovery],
   },
   { name: "Display and input", about: "What VRR changes, and how pacing meets input latency.", slides: [vrr, inputLatency] },
@@ -473,7 +473,8 @@ const topics: Slide = {
       card.href = `#/${topic.slides[0]?.id ?? ""}`;
       card.innerHTML = `<h2></h2><p></p><span class="topic-start">Start →</span>`;
       card.querySelector("h2")!.textContent = topic.name;
-      card.querySelector("p")!.textContent = topic.about;
+      // Static text of this file, with the causes of stutter marked
+      card.querySelector("p")!.innerHTML = topic.about;
       grid.append(card);
     }
     return element;
