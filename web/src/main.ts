@@ -22,8 +22,8 @@ const welcome: Slide = {
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
       <p class="lead">
-        A game can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
-        before knowing what to look for. Then it explains what you saw, and how games get it right. First, a quick check that your
+        A game, an interface or any real-time animation can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
+        before knowing what to look for. Then it explains what you saw, and how apps and games get it right. First, a quick check that your
         screen shows the videos the way they are meant to be seen.
       </p>`;
     const start = document.createElement("a");

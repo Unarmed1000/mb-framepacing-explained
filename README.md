@@ -2,7 +2,7 @@
 
 **[▶ Frame pacing, explained: open the page](https://unarmed1000.github.io/mb-framepacing-explained/)**
 
-A game can run at a steady 60 fps and still stutter. The page lets you see that for yourself: first a blind test, where you
+A game, an interface or any real-time animation can run at a steady 60 fps and still stutter. The page lets you see that for yourself: first a blind test, where you
 compare moving boxes and pick the smoother one before knowing what to look for, then slides that explain what you saw, with the
 videos playing live next to timing diagrams. It is a very early draft that shows the direction; several slides are unfinished.
 
@@ -10,8 +10,8 @@ What it covers:
 
 - **Stutter** is what you see. It has two causes: **delta time jitter** (frames reach the screen on time but each shows a slightly
   wrong moment) and bad **frame pacing** (frames reach the screen late or unevenly).
-- **Animation error** is the one measurement that catches both, and there are several ways to measure it in your own game.
-- How games fix it: a vsync timer, holding frames for whole refreshes, switching rates with hysteresis, recovering from a spike.
+- **Animation error** is the one measurement that catches both, and there are several ways to measure it in your own game or app.
+- How games and apps fix it: a vsync timer, holding frames for whole refreshes, switching rates with hysteresis, recovering from a spike.
 
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
 display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
@@ -38,6 +38,8 @@ Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), opti
 > [!TIP]
 > **Watch it rather than read it:** [the page](https://unarmed1000.github.io/mb-framepacing-explained/) shows all of this with live
 > videos and a blind test. What follows is the short version in text.
+
+We say _game_ for anything that animates in real time: games, user interfaces, VR, simulators.
 
 Every frame a game shows is a picture of one moment of game time, its **animation time**, and it stays on screen for some
 **display time**. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of the game stays on screen

@@ -52,7 +52,7 @@ const twoClocks: Slide = {
       `Every frame a game shows is a picture of one moment of game time, its <strong>animation time</strong>, and it stays on screen
       for some <strong>display time</strong>. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of
       the game stays on screen for 16.7 ms. <strong>Animation error</strong> is how far they disagree, per frame, in milliseconds,
-      as PresentMon measures it. A high average frame rate says nothing about it.`,
+      as PresentMon measures it. A high average frame rate says nothing about it. We say <em>game</em> for anything that animates in real time: games, user interfaces, VR, simulators.`,
       `<div class="single-holder"></div>
       ${figure(perfectTimer, "Perfect timer: every frame shows the moment it is displayed, so the animation error is 0.")}
       <div class="card">
@@ -351,15 +351,15 @@ const measure: Slide = {
           <tbody>
             <tr>
               <td><a href="${PRESENTMON}" target="_blank" rel="noopener"><strong>PresentMon</strong></a>, also as Intel's overlay</td>
-              <td>Any game on Windows, nothing changed</td>
-              <td>Estimated: when the CPU starts the frame; exact when the game sends Reflex, XeLL or Anti-Lag 2 markers</td>
+              <td>Any app on Windows, games included, nothing changed</td>
+              <td>Estimated: when the CPU starts the frame; exact when it sends Reflex, XeLL or Anti-Lag 2 markers</td>
               <td>Estimated from software events</td>
               <td>Both causes, approximately</td>
             </tr>
             <tr>
-              <td><strong>The game's own log</strong></td>
+              <td><strong>The app's own log</strong></td>
               <td>The source code, and the platform's presentation feedback</td>
-              <td>Exact: the game knows it</td>
+              <td>Exact: the app knows it</td>
               <td>As the platform reports it (DXGI frame statistics, Vulkan present timing, Android's Choreographer, Wayland
                 presentation-time, Metal)</td>
               <td>Both causes</td>
@@ -373,7 +373,7 @@ const measure: Slide = {
             </tr>
             <tr>
               <td><strong>Capture or camera only</strong>: an FCAT-style overlay, a high-speed camera</td>
-              <td>Any game</td>
+              <td>Any app</td>
               <td>None</td>
               <td>Measured</td>
               <td>Late and uneven frames only: blind to delta time jitter</td>
@@ -393,7 +393,7 @@ const measure: Slide = {
             <li><strong>Analyse:</strong> it reads the marker back from every captured frame and compares the animation time with
               when the frame really appeared: animation error, display times, dropped and torn frames, as a GUI, CSV or JSON.</li>
           </ol>
-          <p class="note">It needs the application's source code: it cannot measure a game you cannot rebuild.</p>
+          <p class="note">It needs the application's source code: it cannot measure an application you cannot rebuild.</p>
         </div>
         <figure class="screenshot">
           <a href="${SISTER}#readme" target="_blank" rel="noopener">
