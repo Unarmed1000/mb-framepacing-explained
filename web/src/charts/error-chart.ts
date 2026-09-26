@@ -37,9 +37,10 @@ export interface ErrorChart {
   setTime(mediaTime: number): void;
 }
 
-/** A chart of both halves' animation error on one shared scale; `refreshes` is the clip length in output refreshes. */
-export function errorChart(lanes: readonly Lane[], refreshes: number, fps: number): ErrorChart {
-  const height = TOP + lanes.length * LANE_H + (lanes.length - 1) * GAP + 36;
+/** A chart of the lanes' animation error on one shared scale; `refreshes` is the clip length in output refreshes, `laneHeight`
+ * the height of each lane's plot (in the chart's own units; it scales with its width). */
+export function errorChart(lanes: readonly Lane[], refreshes: number, fps: number, laneHeight = LANE_H): ErrorChart {
+  const height = TOP + lanes.length * laneHeight + (lanes.length - 1) * GAP + 36;
   const svg = element("svg", { viewBox: `0 0 ${WIDTH} ${height}`, class: "error-chart", role: "img" });
   svg.setAttribute("aria-label", "Animation error per frame of the top and the bottom half");
   const plotWidth = WIDTH - LEFT - RIGHT;
@@ -52,9 +53,9 @@ export function errorChart(lanes: readonly Lane[], refreshes: number, fps: numbe
   );
 
   lanes.forEach((lane, index) => {
-    const top = TOP + index * (LANE_H + GAP);
-    const zero = top + LANE_H / 2;
-    const y = (value: number): number => zero - (value / limit) * (LANE_H / 2);
+    const top = TOP + index * (laneHeight + GAP);
+    const zero = top + laneHeight / 2;
+    const y = (value: number): number => zero - (value / limit) * (laneHeight / 2);
     // The lane's title and mode on a line of their own above it, so a long mode name never runs into the bars
     const heading = label(LEFT, top - 12, lane.title, "chart-lane");
     const mode = document.createElementNS(SVG, "tspan");

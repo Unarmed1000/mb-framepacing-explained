@@ -6,6 +6,9 @@ import { errorChart } from "../charts/error-chart";
 import { loadManifest, type VideoEntry } from "../manifest";
 import { PixelVideo } from "../video/pixel-video";
 
+/** The lane height of a single box's chart, in the chart's units (the pairs' charts use 92). */
+const SINGLE_LANE_HEIGHT = 56;
+
 /** The clip of a motion with `top` above and `bottom` below (the single box, never the rows). */
 export function findClip(videos: readonly VideoEntry[], top: string, bottom: string): VideoEntry | undefined {
   return videos.find((video) => video.scene === "box" && video.top.mode === top && video.bottom.mode === bottom);
@@ -79,11 +82,9 @@ export function singleBox(
       text.textContent = label;
       holder.replaceChildren(player.element, text);
       if (chart) {
-        const errors = errorChart(
-          [{ title: "This box", mode: half === "top" ? video.top : video.bottom }],
-          video.frameCount,
-          video.fps,
-        );
+        // A lower lane than the pairs' charts: one box's chart under its video
+        const lane = { title: "This box", mode: half === "top" ? video.top : video.bottom };
+        const errors = errorChart([lane], video.frameCount, video.fps, SINGLE_LANE_HEIGHT);
         player.onFrame = (mediaTime) => errors.setTime(mediaTime);
         const card = document.createElement("div");
         card.className = "card chart-card";
