@@ -30,8 +30,8 @@ the topics interactively. Notes: [the web page](web-page.md).
       by more than half a refresh (where it fails).
 - [ ] Not simulated yet: late frames (hitches, short and long frames), dropped and runt frames, tearing, VRR, input lag.
 - [ ] 40 fps on 120 Hz.
-- [x] A slow box speed (the normal timing on a quarter of the path), better suited to 20 Hz, used for the blind test's 20 Hz
-      questions instead of normal.
+- [x] A slow box speed (the normal timing on a quarter of the path), better suited to 20 Hz (`--speed slow`). The blind test
+      dropped its 20 fps questions, so it is unused there for now.
 
 ## Diagrams
 
@@ -67,8 +67,3 @@ Ideas for the sister project, from [charts](charts.md#ideas-for-mb-framepacing).
 - [ ] The same classification as the web page's, on measured captures: from the animation error, how much of a run has stutter and
       the other categories (jitter, hitches, ...), which can overlap; as shares in the report and marked stretches on its charts.
       Build it once and share the rules, so both projects label a sequence the same way.
-
-## Housekeeping
-
-- [ ] Rename the local folder to `mb-framepacing-explained` and rerun `setup.cmd`.
-- [x] Push mb-framepacing (the vocabulary slimmed down to link here, pushed as `be7e6a9`).

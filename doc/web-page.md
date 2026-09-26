@@ -5,15 +5,15 @@ playing live, and starts with a blind test. It is still work in progress; the [r
 
 ## The slides
 
-1. **Welcome and best viewing**: the viewing check and a checklist to fix what it finds (below).
+1. **Welcome**, then **best viewing**: the viewing check (once, on the best viewing slide) and a checklist to fix what it finds (below).
 2. **Warm-up**: one easy pair, a perfect 60 against a ±4 ms timer at the fast movement, answered and then revealed with its
    animation error chart.
-3. **Blind test**: "Which box has the smoother movement?", 23 questions in random order after the warm-up. Every pair is asked in
-   each of its movements and with each of its modes on top; the 20 Hz pairs only at the slow movement (the normal timing on a
-   quarter of the path). The questions, their categories and the clips they need are in
+3. **Blind test**: "Which box has the smoother movement?", 16 questions in random order after the warm-up: perfect 60 against
+   a bad 60 and against a perfect 30, a perfect 30 against a bad 60, and 60 and 30 each against itself. Every pair is asked at the
+   normal and the fast movement and with each of its modes on top. 20 fps is left out. The questions, their categories and the clips they need are in
    [`trials.json`](../web/src/blind-test/trials.json). The result is scored per category (preferences are not scored), and each
    answer can be opened again to watch its pair with the reveal. The bad timers go wrong on nearly every frame, so a few seconds
-   are enough; the page says that this is harsher than a typical game, and [why it is still fair](measured-errors.md#the-blind-test). It is kept anonymised and versioned in the browser only, and can
+   are enough; the page says that this is harsher than a typical game, and [why it is still fair](measured-errors.md#the-blind-test). The result is kept anonymised and versioned in the browser only, and can
    be downloaded or copied as JSON.
 4. **What you saw, explained**: the two clocks, timer jitter (live, with its chart following the video), why frame rate cannot see
    it, the vsync timer, slow frames, half rate, switching rates, recovering from a spike, VRR, input latency, measuring it on a

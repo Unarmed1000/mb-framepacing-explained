@@ -1,5 +1,5 @@
 {
-  "testVersion": 16,
+  "testVersion": 17,
   "clip": {
     "width": 1280,
     "height": 384,
@@ -27,35 +27,11 @@
       "smoother": "60"
     },
     {
-      "id": "rate-60-vs-20",
-      "category": "frame-rate",
-      "a": "60",
-      "b": "20",
-      "smoother": "60",
-      "motions": ["slow"]
-    },
-    {
-      "id": "rate-30-vs-20",
-      "category": "frame-rate",
-      "a": "30",
-      "b": "20",
-      "smoother": "30",
-      "motions": ["slow"]
-    },
-    {
       "id": "pref-30-vs-bad-60",
       "category": "preference",
       "a": "30",
       "b": "60-naive-4ms",
       "smoother": null
-    },
-    {
-      "id": "pref-20-vs-bad-30",
-      "category": "preference",
-      "a": "20",
-      "b": "30-naive-4ms",
-      "smoother": null,
-      "motions": ["slow"]
     },
     {
       "id": "same-60",
@@ -70,14 +46,6 @@
       "a": "30",
       "b": "30",
       "smoother": "same"
-    },
-    {
-      "id": "same-20",
-      "category": "identical",
-      "a": "20",
-      "b": "20",
-      "smoother": "same",
-      "motions": ["slow"]
     }
   ]
 }

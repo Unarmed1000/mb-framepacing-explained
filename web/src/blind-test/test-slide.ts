@@ -41,7 +41,7 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
     <p class="eyebrow">Blind test</p>
     <h1>${questions().length + 1} questions, one answer each</h1>
     <p class="lead">
-      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement (the 20 fps pairs at a small, slow one). Each pair loops; answer when you are sure. Some pairs are the same clip
+      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement. Each pair loops; answer when you are sure. Some pairs are the same clip
       twice, and some have no right answer. Nothing leaves your browser.
     </p>
     <p class="note">
@@ -54,7 +54,7 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
     <p class="history"></p>
     <button type="button" class="button" data-action="start">Start the test</button>`;
   const setup = slide.querySelector<HTMLElement>(".setup")!;
-  if (report === null) setup.innerHTML = `The viewing check has not run yet: <a href="#/welcome">run it first</a>.`;
+  if (report === null) setup.innerHTML = `The viewing check has not run yet: <a href="#/best-viewing">run it first</a>.`;
   else {
     const status = overall(report);
     setup.textContent =

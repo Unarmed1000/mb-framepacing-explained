@@ -41,8 +41,8 @@ describe("verdict", () => {
     expect(verdict(trial("pacing-60", "60", "60-naive-heavy"), "same")).toBe("There was a difference");
     expect(verdict(trial("same-60", "60", "60"), "top")).toBe("They were the same");
     expect(verdict(trial("same-60", "60", "60"), "same")).toBe("Correct");
-    expect(verdict(trial("pref-20-vs-bad-30", "20", "30-naive-4ms"), "bottom")).toBe("You chose the bottom box");
-    expect(verdict(trial("pref-20-vs-bad-30", "20", "30-naive-4ms"), "same")).toBe("You saw no difference");
+    expect(verdict(trial("pref-30-vs-bad-60", "30", "60-naive-4ms"), "bottom")).toBe("You chose the bottom box");
+    expect(verdict(trial("pref-30-vs-bad-60", "30", "60-naive-4ms"), "same")).toBe("You saw no difference");
   });
 });
 

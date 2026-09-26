@@ -47,42 +47,17 @@ function library(): ClipLibrary {
 }
 
 describe("the trial definitions", () => {
-  it("hold 9 trials with unique ids: 3 identical, 1 pacing, 3 frame rate, 2 preferences", () => {
+  it("hold 5 trials with unique ids: 2 identical, 1 pacing, 1 frame rate, 1 preference", () => {
     const ids = DEFINITIONS.trials.map((trial) => trial.id);
-    expect(new Set(ids).size).toBe(9);
+    expect(new Set(ids).size).toBe(5);
     const count = (category: string): number => DEFINITIONS.trials.filter((trial) => trial.category === category).length;
-    expect([count("identical"), count("pacing"), count("frame-rate"), count("preference")]).toEqual([3, 1, 3, 2]);
+    expect([count("identical"), count("pacing"), count("frame-rate"), count("preference")]).toEqual([2, 1, 1, 1]);
   });
 
-  it("show 20 Hz only with the slow movement (a shorter path), and everything else never slow", () => {
-    const runs = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => buildRun(library(), seededRandom(seed)));
-    const twenty = runs.flat().filter((trial) => [trial.definition.a, trial.definition.b].includes("20"));
-    expect(twenty.length).toBeGreaterThan(0);
-    expect(new Set(twenty.map((trial) => trial.motion))).toEqual(new Set(["slow"]));
-    for (const motion of ["normal", "fast"])
-      expect(
-        requiredPairs()
-          .get(motion)
-          ?.some((pair) => pair.includes("20")),
-      ).toBe(false);
-    expect(
-      requiredPairs()
-        .get("slow")
-        ?.every((pair) => pair.includes("20")),
-    ).toBe(true);
-  });
-
-  it("pair the perfect 20 with every perfect, itself included", () => {
-    const withTwenty = DEFINITIONS.trials
-      .filter((trial) => [trial.a, trial.b].includes("20"))
-      .map((trial) => [trial.a, trial.b].sort().join(":"));
-    for (const other of ["20", "30", "60"]) expect(withTwenty).toContain(["20", other].sort().join(":"));
-  });
-
-  it("use the bad 30 only against the perfect 20, at the slow movement only, as the ±4 ms extreme", () => {
-    const withBad30 = DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("30-naive")));
-    expect(withBad30.map((trial) => [trial.a, trial.b].sort().join(":"))).toEqual(["20:30-naive-4ms"]);
-    expect(withBad30[0]?.motions).toEqual(["slow"]);
+  it("never show 20 fps, and ask every trial at the normal and the fast movement", () => {
+    expect(DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("20")))).toEqual([]);
+    expect(DEFINITIONS.trials.every((trial) => trial.motions === undefined)).toBe(true);
+    expect(DEFINITIONS.motions).toEqual(["normal", "fast"]);
   });
 
   it("never compare two bad timers", () => {
@@ -101,26 +76,25 @@ describe("the trial definitions", () => {
     expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
     // At fast the warm-up pair (perfect 60 against the ±4 ms timer) is also the pacing question's pair
     expect(pairs.get("fast")).toHaveLength(2 + 3 * 2);
-    expect(pairs.get("slow")).toHaveLength(1 + 3 * 2);
+    expect([...pairs.keys()].sort()).toEqual(["fast", "normal"]);
   });
 });
 
 describe("a run", () => {
   it("starts with the warm-up, then every pair in each of its movements and both top/bottom orders", () => {
     const run = buildRun(library(), seededRandom(1));
-    expect(run).toHaveLength(24);
+    expect(run).toHaveLength(17);
     expect(run[0]?.definition.category).toBe("warm-up");
     expect(run[0]?.motion).toBe("fast");
     const ids = run.slice(1).map((trial) => trial.id);
-    expect(new Set(ids).size).toBe(23);
+    expect(new Set(ids).size).toBe(16);
     for (const trial of DEFINITIONS.trials) {
       for (const motion of trial.motions ?? DEFINITIONS.motions) {
         if (trial.a === trial.b) expect(ids).toContain(`${trial.id}-${motion}`);
         else for (const top of [trial.a, trial.b]) expect(ids).toContain(`${trial.id}-${motion}-top-${top}`);
       }
     }
-    expect(ids.some((id) => id.startsWith("pref-20-vs-bad-30-fast"))).toBe(false);
-    expect(run.map((trial) => trial.position)).toEqual([...Array(24).keys()]);
+    expect(run.map((trial) => trial.position)).toEqual([...Array(17).keys()]);
   });
 
   it("puts the questions in a different random order from run to run", () => {
@@ -138,7 +112,7 @@ describe("a run", () => {
     const run = buildRun(library(), seededRandom(3));
     const pacingFast = run.filter((trial) => trial.definition.id === "pacing-60" && trial.motion === "fast");
     expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-4ms"]));
-    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast", "slow"]));
+    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast"]));
   });
 });
 
@@ -150,26 +124,26 @@ describe("scoring", () => {
     const pacing = byId("pacing-60");
     expect(expectedAnswer(pacing)).toBe(pacing.clip.video.top.mode === "60" ? "top" : "bottom");
     expect(expectedAnswer(byId("same-30"))).toBe("same");
-    expect(expectedAnswer(byId("pref-20-vs-bad-30"))).toBeNull();
-    expect(isCorrect(byId("pref-20-vs-bad-30"), "top")).toBeNull();
+    expect(expectedAnswer(byId("pref-30-vs-bad-60"))).toBeNull();
+    expect(isCorrect(byId("pref-30-vs-bad-60"), "top")).toBeNull();
   });
 
   it("counts scored categories only", () => {
     const answers = run.map((trial) => ({ trial, answer: (expectedAnswer(trial) ?? "top") as Answer }));
     const result = score(answers);
-    expect(result.overall).toEqual({ correct: 18, of: 18 });
+    expect(result.overall).toEqual({ correct: 13, of: 13 });
     expect(result.byCategory).toEqual({
       "warm-up": { correct: 1, of: 1 },
       pacing: { correct: 4, of: 4 },
-      "frame-rate": { correct: 8, of: 8 },
-      identical: { correct: 5, of: 5 },
+      "frame-rate": { correct: 4, of: 4 },
+      identical: { correct: 4, of: 4 },
     });
-    expect(score(run.map((trial) => ({ trial, answer: "same" as Answer }))).overall).toEqual({ correct: 5, of: 18 });
+    expect(score(run.map((trial) => ({ trial, answer: "same" as Answer }))).overall).toEqual({ correct: 4, of: 13 });
   });
 });
 
 describe("loading the clips", () => {
-  it("fetches the manifest of every movement a trial or the warm-up uses, the slow one included", async () => {
+  it("fetches the manifest of every movement a trial or the warm-up uses", async () => {
     const fetched: string[] = [];
     vi.stubGlobal("fetch", (url: string) => {
       fetched.push(url);
@@ -180,10 +154,6 @@ describe("loading the clips", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-    expect(fetched.sort()).toEqual([
-      "videos/box/fast/manifest.json",
-      "videos/box/normal/manifest.json",
-      "videos/box/slow/manifest.json",
-    ]);
+    expect(fetched.sort()).toEqual(["videos/box/fast/manifest.json", "videos/box/normal/manifest.json"]);
   });
 });

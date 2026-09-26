@@ -24,7 +24,6 @@ const welcome: Slide = {
         before knowing what to look for. Then it explains what you saw, and how games get it right. First, a quick check that your
         screen shows the videos the way they are meant to be seen.
       </p>`;
-    body.append(viewingCheckCard(VIDEO));
     const start = document.createElement("a");
     start.className = "button";
     start.href = "#/best-viewing";

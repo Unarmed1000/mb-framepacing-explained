@@ -59,7 +59,7 @@ The simulated modes over an 8 s clip (our arithmetic, from the generator's timin
 | `60-naive-typical` (demo)                       | 1.68 ms                 | 10.1 %                | 4.0 ms  | 56 %             | GTX 1070 and GTX 980 outliers (11.9 %)                |
 | `60-naive-light` (demo)                         | 1.03 ms                 | 6.2 %                 | 2.4 ms  | 47 %             |                                                       |
 | `60-naive-heavy-realistic`                      | 0.51 ms                 | 3.1 %                 | 7.2 ms  | 13 %             | Crimson Desert on most GPUs (2–3 %), RTX 5090 (3.8 %) |
-| `30-naive-4ms` (random pattern, the blind test) | 3.47 ms                 | 10.4 %                | 7.5 ms  | 94 %             |                                                       |
+| `30-naive-4ms` (random pattern)                 | 3.47 ms                 | 10.4 %                | 7.5 ms  | 94 %             |                                                       |
 
 - **A healthy game** measures well under 1 ms per frame (Far Cry 5 on one GPU, 0.13 ms) or 2–3 % of the frame time: the
   realistic profile's level.
@@ -74,7 +74,7 @@ The simulated modes over an 8 s clip (our arithmetic, from the generator's timin
 
 ## The blind test
 
-The blind test's bad timers (`60-naive-4ms` and `30-naive-4ms` with the random jitter pattern) go wrong on 93 % of the frames,
+The blind test's bad timer (`60-naive-4ms` with the random jitter pattern) goes wrong on 93 % of the frames,
 and on at least 88 % in any 2 s of the clip (our arithmetic), because a viewer decides within a few seconds, not after watching
 all 8 s. The size of each error, 3.3 ms on average and up to 8 ms, is within what games measure; how often it happens is harsher
 than a typical game, but it has been measured: the SLI setups above had "2-3ms of animation error per frame" (Far Cry 5), "on
