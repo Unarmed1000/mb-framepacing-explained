@@ -21,7 +21,9 @@ class PairTests(unittest.TestCase):
         # 20 Hz only with the slow movement
         self.assertFalse([pair for pair in pairs["fast"] + pairs["normal"] if "20" in pair])
         self.assertTrue(all("20" in pair for pair in pairs["slow"]))
-        self.assertIn(("20", "30-naive-heavy"), pairs["slow"])
+        # The bad timer against 20 Hz is the +-4 ms extreme
+        self.assertIn(("20", "30-naive-4ms"), pairs["slow"])
+        self.assertNotIn(("20", "30-naive-heavy"), pairs["slow"])
         self.assertNotIn(("20", "60-naive-heavy"), pairs["slow"])
         self.assertIn(("60", "60-naive-4ms"), pairs["fast"])
         self.assertIn(("60-naive-4ms", "60"), pairs["fast"])

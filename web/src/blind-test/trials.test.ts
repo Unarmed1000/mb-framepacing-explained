@@ -79,9 +79,9 @@ describe("the trial definitions", () => {
     for (const other of ["20", "30", "60"]) expect(withTwenty).toContain(["20", other].sort().join(":"));
   });
 
-  it("use the bad 30 only against the perfect 20, at the slow movement only", () => {
-    const withBad30 = DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].includes("30-naive-heavy"));
-    expect(withBad30.map((trial) => [trial.a, trial.b].sort().join(":"))).toEqual(["20:30-naive-heavy"]);
+  it("use the bad 30 only against the perfect 20, at the slow movement only, as the ±4 ms extreme", () => {
+    const withBad30 = DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("30-naive")));
+    expect(withBad30.map((trial) => [trial.a, trial.b].sort().join(":"))).toEqual(["20:30-naive-4ms"]);
     expect(withBad30[0]?.motions).toEqual(["slow"]);
   });
 
