@@ -705,7 +705,7 @@ code {
   font-size: 14px;
 }
 
-/* The topics page: one card per topic, all the same size, linking to its slides */
+/* The topics page: one card per topic, all the same size, each a link to the topic's first slide */
 .topics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -713,13 +713,25 @@ code {
   gap: 0 24px;
 }
 
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.topic-card:hover,
+.topic-card:focus-visible {
+  border-color: var(--accent);
+}
+
 .topic-card p {
   color: var(--muted);
   line-height: 1.5;
 }
 
-.topic-links {
-  margin: 8px 0 0;
-  padding-left: 20px;
-  line-height: 1.9;
+.topic-start {
+  margin-top: auto;
+  color: var(--accent);
+  font-weight: 600;
 }

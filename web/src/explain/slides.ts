@@ -431,17 +431,18 @@ const furtherReading: Slide = {
     ),
 };
 
-/** The topics, each a group of slides: the page before the first one links to every slide by topic. */
+/** The topics, each a group of slides: the page before the first one links to each topic's first slide. */
 const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }[] = [
   {
-    name: "Animation error and delta time jitter",
-    about: "The two clocks of every frame, and delta time jitter: stutter at a steady frame rate.",
+    name: "Stutter at a steady frame rate",
+    about: "Animation error, and the first cause of stutter: delta time jitter.",
     slides: [twoClocks, timerJitterSlide, invisible],
   },
   { name: "Getting the timer right", about: "Render every frame for the moment it will be shown.", slides: [vsyncTimer] },
   {
-    name: "Frame pacing",
-    about: "Frames that reach the screen late or unevenly, and how engines hold and switch rates.",
+    name: "Stutter from late frames",
+    about:
+      "The second cause, bad frame pacing: frames that reach the screen late or unevenly, and how engines hold and switch rates.",
     slides: [slowFramesSlide, halfRate, switching, recovery],
   },
   { name: "Display and input", about: "What VRR changes, and how pacing meets input latency.", slides: [vrr, inputLatency] },
@@ -455,22 +456,20 @@ const topics: Slide = {
     const element = body(
       "How it works",
       "Pick a topic",
-      "Go through the slides in order with Next, or jump straight to a topic.",
+      `<strong>Stutter</strong> is what you see: motion that jumps or hangs instead of gliding. It has two causes,
+      <strong>delta time jitter</strong> and bad <strong>frame pacing</strong>, and one measurement that catches both:
+      <strong>animation error</strong>. Go through the slides in order with Next, or jump straight to a topic.`,
       `<div class="topics"></div>`,
     );
     const grid = element.querySelector(".topics")!;
     for (const topic of TOPICS) {
-      const card = document.createElement("div");
+      // The whole card is one link, to the topic's first slide
+      const card = document.createElement("a");
       card.className = "card topic-card";
-      card.innerHTML = `<h2></h2><p></p><ul class="topic-links"></ul>`;
+      card.href = `#/${topic.slides[0]?.id ?? ""}`;
+      card.innerHTML = `<h2></h2><p></p><span class="topic-start">Start →</span>`;
       card.querySelector("h2")!.textContent = topic.name;
       card.querySelector("p")!.textContent = topic.about;
-      const list = card.querySelector("ul")!;
-      for (const slide of topic.slides) {
-        const item = document.createElement("li");
-        item.append(Object.assign(document.createElement("a"), { href: `#/${slide.id}`, textContent: slide.title }));
-        list.append(item);
-      }
       grid.append(card);
     }
     return element;

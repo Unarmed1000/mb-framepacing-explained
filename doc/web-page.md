@@ -19,7 +19,7 @@ playing live, and starts with a blind test. It is still work in progress; the [r
    answer can be opened again to watch its pair with the reveal. The bad timers go wrong on nearly every frame, so a few seconds
    are enough; the page says that this is harsher than a typical game, and [why it is still fair](measured-errors.md#the-blind-test). The result is kept anonymised and versioned in the browser only, and can
    be downloaded or copied as JSON.
-5. **What you saw, explained**: a topics page linking to every slide by topic, then the two clocks, delta time jitter (live, with its chart following the video), why frame rate cannot see
+5. **What you saw, explained**: a topics page (stutter, its two causes and how it is measured; each topic a link to its first slide), then the two clocks, delta time jitter (live, with its chart following the video), why frame rate cannot see
    it, the vsync timer, slow frames, half rate, switching rates, recovering from a spike, VRR, input latency, measuring it on a
    real display with [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), and further reading. The diagrams are the
    ones in [`images`](images).
