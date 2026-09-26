@@ -98,11 +98,13 @@ mixed pattern, 4 s each of single longer reads and spells.
 | -------- | ----- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
 | `normal` | box   | 2 round trips of 4 s: 4 box spacings in 1.9 s, eased, 0.1 s rest at each end | A slow pan: subtle effects are easiest to follow    |
 | `fast`   | box   | 4 round trips of 2 s: 4 box spacings in 0.9 s                                | A quicker pan: more pixel error for the same timing |
+| `slow`   | box   | As `normal` on a quarter of the path (1 box spacing), centred; not in `all`  | Small, slow movement, where 20 fps holds up best    |
 | `ui-192` | row   | Scrolls right to left at a constant 192 virtual px/s                         | A slow drag                                         |
 | `ui-288` | row   | 288 virtual px/s                                                             | Scrolling a list                                    |
 | `ui-384` | row   | 384 virtual px/s                                                             | Holding a key in a list                             |
 | `ui-768` | row   | 768 virtual px/s                                                             | A fast fling                                        |
 
+- **`slow`** is opt-in (`--speed slow`): the normal timing on a shorter path (`--slow-travel`), for low frame rates such as 20 fps.
 - **`normal` and `fast`** fit whole round trips (there and back) in the clip (`--normal-round-trips`, `--fast-round-trips`), eased
   in and out (sine) at both ends. A clip starts and ends in the middle of the first rest, so it loops seamlessly.
 - **The ui speeds** show interface motion: the row never stops, so every timing error is visible for the whole clip, and there is
@@ -222,7 +224,7 @@ python tools/frame_pacing_video/generate_videos.py --pixel-size 4 --speed ui-384
 | `--output-dir DIR`       | `out/frame_pacing_video`  | Where the group folders go (see [Output](#output)). `out/` is git-ignored.                                                                       |
 | `--top MODE…`            | the nine default modes    | Modes of the top box or row: `RATE` (ideal timer) or `RATE-naive-NOISE`, NOISE `light`, `typical`, `heavy`, a window like `1ms`, or `synthetic`. |
 | `--bottom MODE…`         | the nine default modes    | Modes of the bottom box or row.                                                                                                                  |
-| `--speed SPEED…`         | `all`                     | `normal`, `fast`, a ui speed (`ui-384`), `ui` (every ui speed) or `all`. The follow scene's default is its own speed.                            |
+| `--speed SPEED…`         | `all`                     | `normal`, `fast`, `slow`, a ui speed (`ui-384`), `ui` (every ui speed) or `all` (all but `slow`). The follow scene's default is its own speed.   |
 | `--labels`               | off                       | Writes each box's mode next to it ("60 Hz naive timer, typical load").                                                                           |
 | `--width`, `--height`    | 1280 × 720                | Video size in video pixels.                                                                                                                      |
 | `--pixel-size`           | 2                         | Virtual pixel size: the moving scene is laid out and drawn in N×N blocks (see [Virtual pixels](#virtual-pixels)).                                |
@@ -230,6 +232,7 @@ python tools/frame_pacing_video/generate_videos.py --pixel-size 4 --speed ui-384
 | `--seconds`              | 8                         | Every clip's length; the jitter profiles are laid out over it.                                                                                   |
 | `--normal-round-trips`   | 2                         | Round trips per clip of the `normal` videos (more is faster).                                                                                    |
 | `--fast-round-trips`     | 4                         | Round trips per clip of the `fast` videos.                                                                                                       |
+| `--slow-travel`          | a quarter of the travel   | Virtual pixels the box travels at the `slow` speed (the normal timing, on a shorter centred path).                                               |
 | `--settle`               | 0.25                      | Seconds the box rests at each end, at `normal` and `fast`.                                                                                       |
 | `--no-easing`            | off                       | Constant speed instead of the sine ease-in-out.                                                                                                  |
 | `--ui-scroll VPX_PER_S…` | 192 384 768               | Virtual pixels per second of each ui scroll speed; each is named by it (`480` makes `ui-480`).                                                   |

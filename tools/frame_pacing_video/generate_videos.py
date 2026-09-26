@@ -84,6 +84,10 @@ FFMPEG_ENVIRONMENT_VARIABLE = "MB_FFMPEG"
 ENCODER = "libx264"
 # Standard YUV rather than libx264rgb: players that ignore the RGB tag of an RGB stream show it in false colours (white as purple)
 PIXEL_FORMAT = "yuv444p"
+# --web: what browsers play, H.264 High with 4:2:0 chroma, near-lossless. The neutral grays have no colour, so 4:2:0 leaves them
+# exact; only the anti-aliased edges and the labels lose a little chroma detail
+WEB_PIXEL_FORMAT = "yuv420p"
+WEB_CRF = 12
 MANIFEST_NAME = "manifest.json"
 
 # The modes of the default run: 60, 30 and 20 Hz with the ideal timer, then 60 and 30 Hz with the naive timer under light, typical
@@ -102,11 +106,14 @@ def format_number(value: Fraction) -> str:
 @dataclass(frozen=True)
 class Speed:
     """A motion speed: how many round trips of the eased back and forth motion fit in a clip (more is faster), or, for an interface
-    scroll, a constant speed in virtual pixels per second of a row scrolling right to left."""
+    scroll, a constant speed in virtual pixels per second of a row scrolling right to left. travel (virtual pixels) or travel_share
+    (of the settings' travel) gives this speed its own path length, centred like the others (slow: a shorter path)."""
 
     name: str
     round_trips: int = 1
     scroll: Fraction | None = None
+    travel: int | None = None
+    travel_share: Fraction = Fraction(1)
 
 
 # Interface scrolling: a row of items scrolling right to left at constant speed, in virtual pixels per second. With the default
@@ -141,6 +148,10 @@ FOLLOW_STACKS: tuple[tuple[str, tuple[FrameMode, ...]], ...] = (("", FOLLOW_BOXE
 class Settings:
     top: tuple[FrameMode, ...] = MODES
     bottom: tuple[FrameMode, ...] = MODES
+    # An exact list of top/bottom pairs instead of every top x bottom pair (--pairs); empty: every pair
+    pairs: tuple[tuple[FrameMode, FrameMode], ...] = ()
+    # Encode for browsers (--web): H.264 High 4:2:0, near-lossless, instead of lossless 4:4:4
+    web: bool = False
     speeds: tuple[Speed, ...] = (Speed("normal", 2), Speed("fast", 4), *(ui_speed(scroll) for scroll in UI_SCROLL))
     # Video size in video pixels
     width: int = 1280
@@ -205,6 +216,10 @@ class Settings:
     @property
     def resolved_travel(self) -> int:
         return 4 * self.resolved_spacing if self.travel is None else self.travel
+
+    def travel_for(self, speed: Speed) -> int:
+        """Virtual pixels the box travels / a row moves per page at this speed: its own travel (slow), else the settings'."""
+        return floor(self.resolved_travel * speed.travel_share) if speed.travel is None else speed.travel
 
     def scene_for(self, speed: Speed) -> str:
         """What the clips of this speed show: the follow scene at every speed, otherwise a ui scroll always shows a row."""
@@ -369,12 +384,12 @@ def validate(settings: Settings) -> None:
         raise ValueError(f"unknown jitter pattern {settings.jitter_pattern!r}: use {' or '.join(JITTER_PATTERNS)}")
     if settings.scene not in SCENES:
         raise ValueError(f"unknown scene {settings.scene!r}: use {' or '.join(SCENES)}")
-    box_speeds = [speed for speed in settings.speeds if settings.scene_for(speed) == "box"]
-    if box_speeds and box + settings.resolved_travel > canvas_width:
-        raise ValueError(f"box size {box} + travel {settings.resolved_travel} does not fit in the width {canvas_width}")
+    for speed in settings.speeds:
+        if settings.scene_for(speed) == "box" and box + settings.travel_for(speed) > canvas_width:
+            raise ValueError(f"box size {box} + travel {settings.travel_for(speed)} does not fit in the width {canvas_width}")
     if settings.resolved_spacing <= box:
         raise ValueError(f"the box spacing {settings.resolved_spacing} must be larger than the box size {box}")
-    if settings.resolved_travel < 0:
+    if any(settings.travel_for(speed) < 0 for speed in settings.speeds):
         raise ValueError("the travel must not be negative")
     if settings.fps <= 0 or settings.seconds <= 0:
         raise ValueError("fps and the clip length must be greater than zero")
@@ -421,12 +436,12 @@ def plan_videos(settings: Settings) -> list[VideoJob]:
             for name, stack in settings.follow_stacks
             for speed in settings.speeds
         ]
+    pairs = settings.pairs or tuple((top, bottom) for top in settings.top for bottom in settings.bottom)
     return [
         VideoJob(top, bottom, speed, settings.scene_for(speed), settings.labels, settings.pixel_size, settings.jitter_pattern, slow)
         for slow in settings.slow_motions
         for speed in settings.speeds
-        for top in settings.top
-        for bottom in settings.bottom
+        for top, bottom in pairs
     ]
 
 
@@ -509,7 +524,7 @@ def row_offset(settings: Settings, mode: FrameMode, speed: Speed, frame: int) ->
     time = content_time(settings, mode, speed, frame)
     if speed.scroll is not None:
         return -float(speed.scroll * time % settings.resolved_spacing)
-    return -settings.resolved_travel * travel_position(settings, speed, time)
+    return -settings.travel_for(speed) * travel_position(settings, speed, time)
 
 
 def row_offsets(settings: Settings, job: VideoJob, frame: int) -> tuple[float, float]:
@@ -521,7 +536,7 @@ def world_position(settings: Settings, speed: Speed, time: Fraction) -> Fraction
     constant speed, the other speeds along the eased round trip."""
     if speed.scroll is not None:
         return speed.scroll * time
-    return settings.resolved_travel * travel_position(settings, speed, time)
+    return settings.travel_for(speed) * travel_position(settings, speed, time)
 
 
 def follow_positions(settings: Settings, job: VideoJob, frame: int) -> tuple[float, ...]:
@@ -581,7 +596,7 @@ class FrameRenderer:
         canvas_width = settings.canvas[0]
         box = settings.resolved_box_size
         self._anchor: float = (canvas_width - box) / 2
-        self._box_start: float = (canvas_width - box - settings.resolved_travel) // 2
+        self._box_start: float = (canvas_width - box - settings.travel_for(job.speed)) // 2
         # The rows are drawn in virtual pixels, enlarged and centred on the video (cropping any part of a virtual pixel that does not
         # fit); boxes fade in and out at the canvas edges instead of popping in
         pixel = settings.pixel_size
@@ -899,18 +914,16 @@ def encoder_command(ffmpeg: Path, settings: Settings, frame_count: int, output: 
         "-",
         "-frames:v",
         str(frame_count),
-        # RGB -> YUV 4:4:4 (no chroma subsampling), BT.709 limited range, with accurate rounding; neutral grays convert exactly
+        # RGB -> YUV (4:4:4, or 4:2:0 for the web), BT.709 limited range, with accurate rounding; neutral grays convert exactly
         "-vf",
         "scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int",
-        # Output: lossless H.264 (-qp 0, High 4:4:4 Predictive profile), tagged BT.709 so players convert back to the same colours
+        # Output: lossless H.264 (-qp 0, High 4:4:4 Predictive profile), or for the web near-lossless H.264 High 4:2:0; tagged BT.709
+        # so players convert back to the same colours
         "-c:v",
         ENCODER,
-        "-qp",
-        "0",
-        "-preset",
-        "medium",
+        *(["-crf", str(WEB_CRF), "-preset", "slow", "-profile:v", "high"] if settings.web else ["-qp", "0", "-preset", "medium"]),
         "-pix_fmt",
-        PIXEL_FORMAT,
+        WEB_PIXEL_FORMAT if settings.web else PIXEL_FORMAT,
         "-colorspace",
         "bt709",
         "-color_primaries",
@@ -1027,13 +1040,15 @@ def build_manifest(settings: Settings, jobs: Sequence[VideoJob]) -> dict[str, ob
             "labelColor": _hex_color(settings.label_color),
             "labels": settings.labels,
             "encoder": ENCODER,
-            "pixelFormat": PIXEL_FORMAT,
+            "pixelFormat": WEB_PIXEL_FORMAT if settings.web else PIXEL_FORMAT,
+            "web": settings.web,
         },
         "videos": [
             {
                 "file": job.filename,
                 "speed": job.speed.name,
                 "roundTrips": None if job.speed.scroll is not None else job.speed.round_trips,
+                "travel": None if job.speed.scroll is not None else settings.travel_for(job.speed),
                 "scene": job.scene,
                 "scrollVirtualPixelsPerSecond": None if job.speed.scroll is None else _json_number(job.speed.scroll),
                 "moveSeconds": _json_number(settings.move_time(job.speed)),
@@ -1063,6 +1078,8 @@ class Arguments(argparse.Namespace):
     output_dir: Path
     top: list[FrameMode] | None
     bottom: list[FrameMode] | None
+    pairs: list[tuple[FrameMode, FrameMode]] | None
+    web: bool
     speed: list[str]
     ui_scroll: list[Fraction | str]
     seconds: Fraction
@@ -1080,6 +1097,7 @@ class Arguments(argparse.Namespace):
     jitter_pattern: str
     normal_round_trips: int
     fast_round_trips: int
+    slow_travel: int | None
     box_size: int | None
     travel: int | None
     box_gap: int | None
@@ -1126,6 +1144,14 @@ def _mode(text: str) -> FrameMode:
         raise argparse.ArgumentTypeError(str(error)) from error
 
 
+def _pair(text: str) -> tuple[FrameMode, FrameMode]:
+    """A --pairs item: TOP:BOTTOM, two mode names."""
+    top, separator, bottom = text.partition(":")
+    if not separator:
+        raise argparse.ArgumentTypeError(f"'{text}' is not a pair: use TOP:BOTTOM, e.g. 60:60-naive-4ms")
+    return _mode(top), _mode(bottom)
+
+
 def _positive_int(text: str) -> int:
     try:
         value = int(text)
@@ -1167,11 +1193,19 @@ def build_parser() -> argparse.ArgumentParser:
     _ = add("--top", nargs="+", type=_mode, metavar="MODE", help=f"modes of the top half: {modes_help} (default: {default_names})")
     _ = add("--bottom", nargs="+", type=_mode, metavar="MODE", help="modes of the bottom half (default: as --top)")
     _ = add(
+        "--pairs",
+        nargs="+",
+        type=_pair,
+        metavar="TOP:BOTTOM",
+        help="an exact list of top/bottom pairs instead of every --top x --bottom pair, e.g. 60:60-naive-4ms 60-naive-4ms:60",
+    )
+    _ = add("--web", action="store_true", help=f"encode for browsers: H.264 High 4:2:0, near-lossless (CRF {WEB_CRF}), instead of lossless 4:4:4")
+    _ = add(
         "--speed",
         nargs="+",
         default=["all"],
         metavar="SPEED",
-        help="which speeds to generate: normal, fast, ui (every ui scroll speed), a single ui speed like ui-384, or all",
+        help="which speeds to generate: normal, fast, slow (not in all), ui (every ui scroll speed), a single ui speed like ui-384, or all",
     )
     _ = add("--labels", action="store_true", help="write each half's pacing mode centred next to it")
     _ = add("--width", type=_positive_int, default=defaults.width, help="video width in pixels")
@@ -1230,6 +1264,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _ = add("--normal-round-trips", type=_positive_int, default=2, help="round trips per clip of the normal videos (more is faster)")
     _ = add("--fast-round-trips", type=_positive_int, default=4, help="round trips per clip of the fast videos")
+    _ = add(
+        "--slow-travel",
+        type=_non_negative_int,
+        default=None,
+        help="virtual pixels the box travels at the slow speed (as normal, on a shorter path; default: a quarter of the travel)",
+    )
     _ = add("--box-size", type=_positive_int, default=None, help="box width and height in virtual pixels (default: 2/15 of the canvas height)")
     _ = add("--travel", type=_non_negative_int, default=None, help="virtual pixels the box travels / a row moves per page (default: 4 x the box spacing)")
     _ = add(
@@ -1278,6 +1318,9 @@ def select_speeds(args: Arguments) -> tuple[Speed, ...]:
     ui = [ui_speed(scroll) for scroll in dict.fromkeys(Fraction(scroll) for scroll in args.ui_scroll)]
     speeds = {speed.name: speed for speed in (Speed("normal", args.normal_round_trips), Speed("fast", args.fast_round_trips), *ui)}
     groups = {"all": list(speeds.values()), "ui": list(ui)}
+    # slow: the normal timing on a shorter path (a quarter of the travel by default), so low frame rates move in smaller steps.
+    # Not part of all, so the default run stays the same
+    speeds["slow"] = Speed("slow", args.normal_round_trips, travel=args.slow_travel, travel_share=Fraction(1, 4))
     selected: list[Speed] = []
     for name in args.speed:
         if name in groups:
@@ -1296,8 +1339,12 @@ def _seconds_pair(milliseconds: Sequence[Fraction | str]) -> tuple[Fraction, Fra
 
 def settings_from_arguments(args: Arguments) -> Settings:
     return Settings(
-        top=MODES if args.top is None else tuple(dict.fromkeys(args.top)),
-        bottom=MODES if args.bottom is None else tuple(dict.fromkeys(args.bottom)),
+        top=tuple(dict.fromkeys(top for top, _ in args.pairs)) if args.pairs else MODES if args.top is None else tuple(dict.fromkeys(args.top)),
+        bottom=tuple(dict.fromkeys(bottom for _, bottom in args.pairs))
+        if args.pairs
+        else (MODES if args.bottom is None else tuple(dict.fromkeys(args.bottom))),
+        pairs=tuple(dict.fromkeys(args.pairs)) if args.pairs else (),
+        web=args.web,
         speeds=select_speeds(args),
         width=args.width,
         height=args.height,
@@ -1333,6 +1380,10 @@ def parse_arguments(argv: Sequence[str] | None = None) -> tuple[Arguments, Setti
     """Parse and validate the command line; invalid settings exit with the usage message like any other argument error."""
     parser = build_parser()
     args = parser.parse_args(argv, namespace=Arguments())
+    if args.pairs and (args.top is not None or args.bottom is not None):
+        parser.error("use either --pairs or --top/--bottom, not both")
+    if args.pairs and args.scene == "follow":
+        parser.error("--pairs selects top/bottom pairs; the follow scene has a stack of boxes instead (--follow-boxes)")
     try:
         settings = settings_from_arguments(args)
         validate(settings)

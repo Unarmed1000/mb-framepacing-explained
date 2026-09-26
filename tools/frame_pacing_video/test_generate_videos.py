@@ -106,6 +106,17 @@ class PlanTests(unittest.TestCase):
             _ = gv.parse_arguments([*SMALL, "--speed", "ui-100"])
         self.assertIn("unknown speed 'ui-100'", error.getvalue())
 
+    def test_slow_is_normal_timing_on_a_shorter_centred_path(self) -> None:
+        settings = settings_for("--speed", "slow", "normal")
+        slow, normal = settings.speeds
+        self.assertEqual((slow.name, settings.period(slow), settings.move_time(slow)), ("slow", settings.period(normal), settings.move_time(normal)))
+        # A quarter of the travel by default, or --slow-travel; not part of all
+        self.assertEqual((settings.travel_for(slow), settings.travel_for(normal)), (96, 384))
+        custom = settings_for("--speed", "slow", "--slow-travel", "40")
+        self.assertEqual(custom.travel_for(custom.speeds[0]), 40)
+        self.assertNotIn("slow", [speed.name for speed in settings_for().speeds])
+        self.assertEqual(max(abs(offset) for offset in [gv.row_offset(settings, MODE("60"), slow, frame) for frame in range(CLIP_FRAMES)]), 96)
+
     def test_groups_are_folders_by_scene_and_speed(self) -> None:
         def groups(*argv: str) -> list[str]:
             return sorted({job.group.as_posix() for job in gv.plan_videos(plain_settings(*argv))})
@@ -121,6 +132,36 @@ class PlanTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
             _ = gv.parse_arguments([*SMALL, "--top", "60-late"])
         self.assertIn("'60-late' is not a mode", error.getvalue())
+
+    def test_pairs(self) -> None:
+        jobs = gv.plan_videos(plain_settings("--pairs", "60:60-naive-4ms", "60-naive-4ms:60", "60:60", "--speed", "normal"))
+        self.assertEqual(
+            [job.filename for job in jobs],
+            ["normal_top-60_bottom-60-naive-4ms.mp4", "normal_top-60-naive-4ms_bottom-60.mp4", "normal_top-60_bottom-60.mp4"],
+        )
+        for argv, message in (
+            (["--pairs", "60"], "is not a pair"),
+            (["--pairs", "60:60-late"], "'60-late' is not a mode"),
+            (["--pairs", "60:30", "--top", "60"], "either --pairs or --top/--bottom"),
+            (["--pairs", "60:60", "--scene", "follow"], "the follow scene"),
+        ):
+            with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
+                _ = gv.parse_arguments([*SMALL, *argv])
+            self.assertIn(message, error.getvalue())
+
+    def test_web_encoding(self) -> None:
+        output = Path("clip.mp4")
+        lossless = gv.encoder_command(Path("ffmpeg"), plain_settings(), 10, output)
+        web = gv.encoder_command(Path("ffmpeg"), plain_settings("--web"), 10, output)
+        self.assertIn("yuv444p", lossless)
+        self.assertIn("-qp", lossless)
+        self.assertIn("yuv420p", web)
+        self.assertEqual(web[web.index("-crf") + 1], str(gv.WEB_CRF))
+        self.assertEqual(web[web.index("-profile:v") + 1], "high")
+        self.assertNotIn("-qp", web)
+        manifest = gv.build_manifest(plain_settings("--web"), [])
+        settings = cast(dict[str, object], manifest["settings"])
+        self.assertEqual((settings["pixelFormat"], settings["web"]), ("yuv420p", True))
 
     def test_manifest(self) -> None:
         settings = plain_settings("--top", "60", "--bottom", "30-naive-heavy")
@@ -347,6 +388,7 @@ class ValidationTests(unittest.TestCase):
         self.assert_rejected("--box-size", "200", message="does not fit in the height 360")
         self.assert_rejected("--box-spacing", "48", message="the box spacing 48 must be larger than the box size 48")
         self.assert_rejected("--travel", "600", message="does not fit in the width 640")
+        self.assert_rejected("--speed", "slow", "--slow-travel", "600", message="does not fit in the width 640")
         gv.validate(settings_for("--travel", "600", "--scene", "row"))
         gv.validate(settings_for("--travel", "600", "--speed", "ui"))
 
