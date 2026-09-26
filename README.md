@@ -1,23 +1,34 @@
 # mb-framepacing-explained
 
-Material for explaining **frame pacing and animation error** on the web: short looping 8 s, 1280×720 videos where boxes timed
-perfectly move next to boxes timed the way a game's naive wall-clock timer does it, under system load or with a ±N ms jitter, so the
-difference can be seen rather than described. Side by side: a slow and a quicker pan of a single box, and interface scrolling (a
-row of boxes scrolling right to left like a list). A follow camera, after Unity's Time.deltaTime demo, holds the perfect box still
-between two lines so a timing error is the only thing that moves, at real speed and 10 times slower. The scene can be drawn on a
-coarser virtual pixel grid (2×2, 4×4, …), so small errors move more screen pixels.
+**[▶ Frame pacing, explained: open the page](https://unarmed1000.github.io/mb-framepacing-explained/)**
 
-A slide-style [web page](doc/web-page.md) in [`web/`](web) explains the topics with these videos playing live, starting with
-a blind test: **[see it live](https://unarmed1000.github.io/mb-framepacing-explained/)** (a very early draft).
+A game can run at a steady 60 fps and still stutter. The page lets you see that for yourself: first a blind test, where you
+compare moving boxes and pick the smoother one before knowing what to look for, then slides that explain what you saw, with the
+videos playing live next to timing diagrams. It is a very early draft that shows the direction; several slides are unfinished.
+
+What it covers:
+
+- **Stutter** is what you see. It has two causes: **delta time jitter** (frames reach the screen on time but each shows a slightly
+  wrong moment) and bad **frame pacing** (frames reach the screen late or unevenly).
+- **Animation error** is the one measurement that catches both, and there are several ways to measure it in your own game.
+- How games fix it: a vsync timer, holding frames for whole refreshes, switching rates with hysteresis, recovering from a spike.
 
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
 display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
 [Gamers Nexus animation error methodology](https://gamersnexus.net/gpus-gn-extras-cpus/problem-gpu-benchmarks-reality-vs-numbers-animation-error-methodology-white).
 
-| Tool                                                   | What it does                                                                                                               |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| [`tools/frame_pacing_video`](tools/frame_pacing_video) | Generates the comparison videos (lossless H.264 through FFmpeg) in folders by scene and speed, each with a `manifest.json` |
-| [`tools/timing_diagrams`](tools/timing_diagrams)       | Generates the timing diagrams and example charts of the docs (`doc/images/*.svg`; `--png` for bitmaps)                     |
+## What is in this repository
+
+The page, and the tools that make its videos and diagrams. The videos are short looping clips where a perfectly timed box moves
+next to one timed the way a game's naive wall-clock timer does it (under system load or with a ±N ms jitter), or that replays a
+timing diagram's frames exactly, so the difference can be seen rather than described.
+
+| Part                                                   | What it does                                                                                                                             |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [`web/`](web)                                          | The page: TypeScript and Vite, published to GitHub Pages by the [pages workflow](.github/workflows/pages.yml) ([notes](doc/web-page.md)) |
+| [`tools/frame_pacing_video`](tools/frame_pacing_video) | Generates the comparison videos through FFmpeg, in folders by scene and speed, each with a `manifest.json` of every frame's timing       |
+| [`tools/web_export`](tools/web_export)                 | Generates exactly the clips the page's blind test needs, web-encoded                                                                     |
+| [`tools/timing_diagrams`](tools/timing_diagrams)       | Generates the timing diagrams and example charts of the docs and the page (`doc/images/*.svg`; `--png` for bitmaps)                      |
 
 Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), optionally with `--ffmpeg <path>`. It creates the
 `.venv` and the machine-local `local.toml`.
