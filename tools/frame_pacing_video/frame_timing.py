@@ -24,7 +24,7 @@ Wake-up noise (how long after the flip the clock is read), in the naive loop:
   (DEMO_LOAD_MIX):
     light    all about 1 ms
     typical  half about 1 ms, half up to 2 ms
-    heavy    60 % about 1 ms, 30 % up to 2 ms, 10 % spikes of 4-8 ms
+    heavy    90 % up to 2 ms, 10 % spikes of 4-8 ms (none about 1 ms)
   and the realistic profile (light-realistic, typical-realistic, heavy-realistic; LOAD_RANGES), where the errors are rare:
     light    3 % about 1 ms, 1 % up to 2 ms                          an idle system, only the game
     typical  7 % about 1 ms, 2 % up to 2 ms                          a normal gaming PC
@@ -92,7 +92,7 @@ LOAD_RANGES: dict[Noise, tuple[tuple[Fraction, Fraction, Fraction], ...]] = {
 DEMO_LOAD_MIX: dict[Noise, tuple[Fraction, ...]] = {
     Noise.LIGHT: (Fraction(1), Fraction(0)),
     Noise.TYPICAL: (Fraction(1, 2), Fraction(1, 2)),
-    Noise.HEAVY: (Fraction(6, 10), Fraction(3, 10), Fraction(1, 10)),
+    Noise.HEAVY: (Fraction(0), Fraction(9, 10), Fraction(1, 10)),
 }
 
 

@@ -121,12 +121,12 @@ class LoadTests(unittest.TestCase):
                 )
 
     def test_the_demo_profile_has_errors_in_most_frames_and_the_loads_differ_in_how_bad(self) -> None:
-        # 95 % of the frames by default: light all about 1 ms, typical half up to 2 ms, heavy also spikes
+        # 95 % of the frames by default: light all about 1 ms, typical half up to 2 ms, heavy up to 2 ms and spikes
         self.assertEqual(PARAMETERS.demo_load_share, Fraction(19, 20))
         for name, expected in (
             ("60-naive-light", (0.95, 0.0, 0.0)),
             ("60-naive-typical", (0.475, 0.475, 0.0)),
-            ("60-naive-heavy", (0.57, 0.285, 0.095)),
+            ("60-naive-heavy", (0.0, 0.855, 0.095)),
         ):
             offsets = self.offsets(name)
             self.assert_shares(offsets[:30000], expected, name)

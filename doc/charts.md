@@ -54,7 +54,7 @@ within a chart, and the display side is always drawn next to the animation side,
 The naive timer under heavy load, as a demo (an error in most frames): the display is perfect, 16.7 ms on every frame and an even
 refresh strip, while the animation time step jumps around it.
 
-![Example chart of 60-naive-heavy: perfect display, animation errors up to about 8.6 ms](images/chart-60-naive-heavy.svg)
+![Example chart of 60-naive-heavy: perfect display, animation errors up to about 9.4 ms](images/chart-60-naive-heavy.svg)
 
 The same load with its realistic rates: rare spikes, but the same kind of error.
 

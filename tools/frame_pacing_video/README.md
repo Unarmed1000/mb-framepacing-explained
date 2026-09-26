@@ -48,7 +48,7 @@ How much sooner or later than usual the naive loop reads the clock:
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | `60-naive-light` …             | **System load**, as a demo: a timing error in 95 % of the frames (`--demo-load-share`), all about 1 ms sooner or later | 60 Hz naive timer, light load               |
 | `60-naive-typical` …           | Half about 1 ms, half up to 2 ms                                                                                       | 60 Hz naive timer, typical load             |
-| `60-naive-heavy` …             | 60 % about 1 ms, 30 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                   | 60 Hz naive timer, heavy load               |
+| `60-naive-heavy` …             | 90 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                   | 60 Hz naive timer, heavy load               |
 | `60-naive-light-realistic` …   | **Realistic** system load, an idle system: in 3 % of the frames about 1 ms, in 1 % up to 2 ms                          | 60 Hz naive timer, light load (realistic)   |
 | `60-naive-typical-realistic` … | A normal gaming PC: 7 % about 1 ms, 2 % up to 2 ms                                                                     | 60 Hz naive timer, typical load (realistic) |
 | `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)   |

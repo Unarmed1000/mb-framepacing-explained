@@ -593,7 +593,9 @@ class VirtualPixelTests(unittest.TestCase):
 
         native, coarse = steps(default_settings()), steps(default_settings("--pixel-size", "4"))
         self.assertEqual(native, coarse)
-        self.assertLess(abs(sum(native) / len(native) - 384 / 60), 0.01)
+        # The average step is off by the last frame's timing error minus the first's, over 120 frames: heavy load's errors lie
+        # within about 10 ms of each other (2 ms early to an 8 ms spike), at 384 px/s
+        self.assertLess(abs(sum(native) / len(native) - 384 / 60), 384 * 0.010 / 120)
 
     def test_names_and_manifest(self) -> None:
         settings = default_settings("--pixel-size", "4", "--speed", "ui-384", "--top", "60", "--bottom", "30", "--labels")
