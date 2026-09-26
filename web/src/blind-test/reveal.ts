@@ -2,36 +2,36 @@
 // practice and the results list.
 
 import { errorChart } from "../charts/error-chart";
-import type { ModeEntry } from "../manifest";
 import type { PixelVideo, PlaybackHealth } from "../video/pixel-video";
 import type { SavedPlayback } from "./result";
-import { expectedAnswer, isCorrect, type Answer, type Trial } from "./trials";
+import { isCorrect, type Answer, type Category, type Trial } from "./trials";
 
-/** A box's mode in a few words, for the preference answers: "perfect 30 fps", "jittery 60 fps". */
-export function choiceName(mode: ModeEntry): string {
-  return `${mode.timer === "ideal" ? "perfect" : "jittery"} ${mode.rate} fps`;
+/** A mode in a few words, from its name (60, 60-naive-4ms, ...), for the preference answers: "perfect 30 fps", "jittery 60 fps". */
+export function choiceName(mode: string): string {
+  return `${mode.includes("naive") ? "jittery" : "perfect"} ${Number.parseInt(mode, 10)} fps`;
 }
 
-/** What a preference answer chose: the chosen box's mode in a few words, or "no difference". */
+/** What a preference answer chose, from the pair's modes: the chosen box's mode in a few words, or "no difference". */
+export function chosen(answer: Answer, top: string, bottom: string): string {
+  return answer === "same" ? "no difference" : choiceName(answer === "top" ? top : bottom);
+}
+
+/** What a preference answer chose in a trial. */
 export function preferenceChoice(trial: Trial, answer: Answer): string {
-  if (answer === "same") return "no difference";
-  return choiceName(answer === "top" ? trial.clip.video.top : trial.clip.video.bottom);
+  return chosen(answer, trial.clip.video.top.mode, trial.clip.video.bottom.mode);
 }
 
 /** The movements from slowest to fastest, for ordering per-movement summaries. */
 const MOTION_ORDER = ["slow", "normal", "fast"];
 
-/** The preference answers counted by choice, per movement from slow to fast (the answer can change with the speed: faster motion
- * may favour the higher frame rate), one line each: "Slow: perfect 30 fps ×2", "Normal: perfect 30 fps ×1, jittery 60 fps ×1", ...
- * Empty when there were none. */
-export function preferenceTally(answers: readonly { trial: Trial; answer: Answer }[]): string[] {
+/** Preference choices counted per movement, from slow to fast (the answer can change with the speed: faster motion may favour
+ * the higher frame rate), one line each: "Slow: perfect 30 fps ×2", "Normal: perfect 30 fps ×1, jittery 60 fps ×1", ... */
+export function tallyByMotion(choices: readonly { motion: string; choice: string }[]): string[] {
   const byMotion = new Map<string, Map<string, number>>();
-  for (const { trial, answer } of answers) {
-    if (trial.definition.category !== "preference") continue;
-    const counts = byMotion.get(trial.motion) ?? new Map<string, number>();
-    const choice = preferenceChoice(trial, answer);
+  for (const { motion, choice } of choices) {
+    const counts = byMotion.get(motion) ?? new Map<string, number>();
     counts.set(choice, (counts.get(choice) ?? 0) + 1);
-    byMotion.set(trial.motion, counts);
+    byMotion.set(motion, counts);
   }
   const rank = (motion: string): number => {
     const index = MOTION_ORDER.indexOf(motion);
@@ -40,20 +40,32 @@ export function preferenceTally(answers: readonly { trial: Trial; answer: Answer
   return [...byMotion]
     .sort(([x], [y]) => rank(x) - rank(y))
     .map(([motion, counts]) => {
-      const choices = [...counts].map(([name, count]) => `${name} ×${count}`).join(", ");
-      return `${motion.charAt(0).toUpperCase()}${motion.slice(1)}: ${choices}`;
+      const list = [...counts].map(([name, count]) => `${name} ×${count}`).join(", ");
+      return `${motion.charAt(0).toUpperCase()}${motion.slice(1)}: ${list}`;
     });
 }
 
-/** The one-word-ish verdict of an answer. */
-export function verdict(trial: Trial, answer: Answer): string {
-  const correct = isCorrect(trial, answer);
-  if (correct === null) return answer === "same" ? "You saw no difference" : `You chose the ${preferenceChoice(trial, answer)}`;
+/** The preference answers of a run, tallied per movement; empty when there were none. */
+export function preferenceTally(answers: readonly { trial: Trial; answer: Answer }[]): string[] {
+  return tallyByMotion(
+    answers
+      .filter(({ trial }) => trial.definition.category === "preference")
+      .map(({ trial, answer }) => ({ motion: trial.motion, choice: preferenceChoice(trial, answer) })),
+  );
+}
+
+/** The one-word-ish verdict of an answer, from its category, whether it was right (null: a preference) and what it chose. */
+export function verdictText(category: Category, answer: Answer, correct: boolean | null, choice: string): string {
+  if (correct === null) return answer === "same" ? "You saw no difference" : `You chose the ${choice}`;
   if (correct) return "Correct";
-  const expected = expectedAnswer(trial);
-  if (expected === "same") return "They were the same";
+  if (category === "identical") return "They were the same";
   if (answer === "same") return "There was a difference";
   return "Not this time";
+}
+
+/** The verdict of an answer to a trial. */
+export function verdict(trial: Trial, answer: Answer): string {
+  return verdictText(trial.definition.category, answer, isCorrect(trial, answer), preferenceChoice(trial, answer));
 }
 
 /** What the trial showed, in plain words. */

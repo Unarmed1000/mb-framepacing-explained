@@ -3,7 +3,18 @@
 
 import { latestViewingReport, overall } from "../checks/viewing";
 import { PixelVideo } from "../video/pixel-video";
-import { answerBar, DEFINITION, preferenceTally, QUESTION, revealCard, verdict } from "./reveal";
+import {
+  answerBar,
+  choiceName,
+  chosen,
+  DEFINITION,
+  preferenceTally,
+  QUESTION,
+  revealCard,
+  tallyByMotion,
+  verdict,
+  verdictText,
+} from "./reveal";
 import {
   buildRecord,
   downloadRecord,
@@ -13,8 +24,9 @@ import {
   saveToHistory,
   type AnsweredTrial,
   type ResultRecord,
+  type TrialRecord,
 } from "./result";
-import { buildRun, loadClips, questions, type Category, type ClipLibrary, type Trial } from "./trials";
+import { buildRun, isCorrect, loadClips, questions, type Category, type ClipLibrary, type Trial } from "./trials";
 import { missingClips } from "./warmup";
 
 const CATEGORIES: Record<Category, { name: string; meaning: string }> = {
@@ -110,7 +122,7 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
     navigator.userAgent,
   );
   saveToHistory(record);
-  const actions = renderResults(slide, answers, record, "Blind test · result");
+  const actions = renderResults(slide, record, "Blind test · result", answers.map(foldOut), preferenceTally(answers));
   actions.innerHTML = `
     <a class="button" href="#/two-clocks">Next: what you just saw, explained →</a>
     <a class="button ghost" href="#/menu">Menu</a>`;
@@ -124,24 +136,23 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
   actions.append(again);
 }
 
-/** A saved result, shown like one just taken (its questions can be watched again), with a way back; a result of an earlier test
- * version, whose clips are gone, only shows its score. */
+/** A saved result, shown like one just taken (its questions can be watched again), with a way back. A result of an earlier test
+ * version, whose clips are gone, lists its questions with their verdicts and what each box was, without the video. */
 export function showSavedResult(slide: HTMLElement, library: ClipLibrary, record: ResultRecord, back: () => void): void {
   const answers = restoreAnswers(record, library);
   const eyebrow = `Previous result · ${record.date}`;
   let actions: HTMLElement;
-  if (answers) actions = renderResults(slide, answers, record, eyebrow);
+  if (answers) actions = renderResults(slide, record, eyebrow, answers.map(foldOut), preferenceTally(answers));
   else {
-    const { correct, of } = record.score.overall;
-    slide.innerHTML = `
-      <p class="eyebrow"></p>
-      <h1></h1>
-      <p class="lead">This result is from an earlier version of the test (version ${record.testVersion}); its questions cannot be
-        watched again.</p>
-      <div class="result-actions"></div>`;
-    slide.querySelector(".eyebrow")!.textContent = eyebrow;
-    slide.querySelector("h1")!.textContent = `${correct} of ${of} right`;
-    actions = slide.querySelector(".result-actions")!;
+    const tally = tallyByMotion(
+      record.trials
+        .filter((saved) => saved.category === "preference")
+        .map((saved) => ({ motion: saved.motion, choice: chosen(saved.answer, saved.top, saved.bottom) })),
+    );
+    actions = renderResults(slide, record, eyebrow, record.trials.map(savedRow), tally);
+    slide.querySelector(".hint")!.textContent =
+      `From an earlier version of the test (version ${record.testVersion}): its clips are gone, so the questions cannot play ` +
+      "again. Open a row to see what each box was.";
   }
   const backButton = Object.assign(document.createElement("button"), {
     type: "button",
@@ -171,12 +182,14 @@ function recordButtons(record: ResultRecord): HTMLButtonElement[] {
   return [download, copy];
 }
 
-/** The results view: score, categories, viewing summary and a row per question that folds out; returns the (empty) actions bar. */
+/** The results view: score, categories with the preference tally, viewing summary and the question rows; returns the (empty)
+ * actions bar. */
 function renderResults(
   slide: HTMLElement,
-  answers: readonly AnsweredTrial[],
   record: ResultRecord,
   eyebrow: string,
+  rows: readonly HTMLElement[],
+  tally: readonly string[],
 ): HTMLElement {
   slide.innerHTML = `
     <p class="eyebrow"></p>
@@ -204,17 +217,15 @@ function renderResults(
     row.querySelector(".category-score")!.textContent = value;
     row.querySelector(".category-meaning")!.textContent = CATEGORIES[category].meaning;
     if (category === "preference") {
-      const tally = document.createElement("ul");
-      tally.className = "tally";
-      for (const line of preferenceTally(answers))
-        tally.append(Object.assign(document.createElement("li"), { textContent: line }));
-      row.querySelector(".category-meaning")!.append(tally);
+      const list = document.createElement("ul");
+      list.className = "tally";
+      for (const line of tally) list.append(Object.assign(document.createElement("li"), { textContent: line }));
+      row.querySelector(".category-meaning")!.append(list);
     }
     categories.append(row);
   }
   slide.querySelector(".setup")!.textContent = viewingSummary(record);
-  const list = slide.querySelector(".trial-list")!;
-  for (const answered of answers) list.append(foldOut(answered));
+  slide.querySelector(".trial-list")!.append(...rows);
   return slide.querySelector(".result-actions")!;
 }
 
@@ -231,19 +242,52 @@ function viewingSummary(record: ResultRecord): string {
   return `Taken at ${refresh}${scale}.${note}`;
 }
 
+/** A result row's summary line: number, category and movement, and the verdict marked right, wrong or a choice. */
+function rowSummary(
+  position: number,
+  category: Category,
+  motion: string,
+  verdictLine: string,
+  correct: boolean | null,
+): HTMLElement {
+  const summary = document.createElement("summary");
+  summary.innerHTML = `<span class="trial-number"></span><span class="trial-kind"></span><span class="trial-verdict"></span>`;
+  summary.querySelector(".trial-number")!.textContent = String(position + 1);
+  summary.querySelector(".trial-kind")!.textContent = `${CATEGORIES[category]?.name ?? category} · ${motion} movement`;
+  const verdictElement = summary.querySelector<HTMLElement>(".trial-verdict")!;
+  verdictElement.textContent = verdictLine;
+  verdictElement.dataset.kind = correct === null ? "choice" : correct ? "correct" : "wrong";
+  return summary;
+}
+
+/** A row of a saved result whose clips are gone: its verdict, folding out to what each box was. */
+function savedRow(saved: TrialRecord): HTMLElement {
+  const row = document.createElement("details");
+  row.className = "trial-row";
+  const choice = chosen(saved.answer, saved.top, saved.bottom);
+  row.append(
+    rowSummary(
+      saved.position,
+      saved.category,
+      saved.motion,
+      verdictText(saved.category, saved.answer, saved.correct, choice),
+      saved.correct,
+    ),
+  );
+  const text = document.createElement("p");
+  text.className = "saved-boxes";
+  text.textContent = `Top: ${choiceName(saved.top)} (${saved.top}). Bottom: ${choiceName(saved.bottom)} (${saved.bottom}).`;
+  row.append(text);
+  return row;
+}
+
 /** A result row that folds out to the trial's video, reveal and chart; the video only plays while the row is open. */
 function foldOut({ trial, answer, health }: AnsweredTrial): HTMLElement {
   const row = document.createElement("details");
   row.className = "trial-row";
-  const summary = document.createElement("summary");
-  summary.innerHTML = `<span class="trial-number"></span><span class="trial-kind"></span><span class="trial-verdict"></span>`;
-  summary.querySelector(".trial-number")!.textContent = String(trial.position + 1);
-  summary.querySelector(".trial-kind")!.textContent = `${CATEGORIES[trial.definition.category].name} · ${trial.motion} movement`;
-  const verdictText = verdict(trial, answer);
-  const verdictElement = summary.querySelector<HTMLElement>(".trial-verdict")!;
-  verdictElement.textContent = verdictText;
-  verdictElement.dataset.kind = verdictText === "Correct" ? "correct" : trial.definition.smoother === null ? "choice" : "wrong";
-  row.append(summary);
+  row.append(
+    rowSummary(trial.position, trial.definition.category, trial.motion, verdict(trial, answer), isCorrect(trial, answer)),
+  );
   let player: PixelVideo | null = null;
   row.addEventListener("toggle", () => {
     if (row.open) {

@@ -45,13 +45,20 @@ export class PixelVideo {
   /** Frames still to skip after a (re)start: while the decoder settles, the timing is irregular and says nothing. */
   private settling = 0;
 
+  /** Holds the video; when only some rows are shown, it clips the rest. */
+  private readonly frame: HTMLDivElement;
+
+  /** `visibleRows`: show only the video's first rows (still at 1:1 device pixels), e.g. the top box of a pair. */
   constructor(
     src: string,
     private readonly size: Size,
     private readonly fps: number,
+    private readonly options: { visibleRows?: number; label?: string } = {},
   ) {
     this.element = document.createElement("div");
     this.element.className = "pixel-video";
+    this.frame = document.createElement("div");
+    this.frame.className = options.visibleRows === undefined ? "pixel-frame" : "pixel-frame cropped";
     this.video = document.createElement("video");
     Object.assign(this.video, {
       src,
@@ -61,10 +68,11 @@ export class PixelVideo {
       preload: "auto",
       disablePictureInPicture: true,
     });
-    this.video.setAttribute("aria-label", "Two boxes moving; compare the top and the bottom");
+    this.video.setAttribute("aria-label", options.label ?? "Two boxes moving; compare the top and the bottom");
     this.readout = document.createElement("p");
     this.readout.className = "pixel-readout";
-    this.element.append(this.video);
+    this.frame.append(this.video);
+    this.element.append(this.frame);
     const layout = (): void => this.layout();
     window.addEventListener("resize", layout);
     // Any scrolling ancestor (the slides scroll inside their own area) moves the video: capture every scroll on the page
@@ -95,6 +103,8 @@ export class PixelVideo {
     const dx = snapOffset(rect.left, ratio);
     const dy = snapOffset(rect.top, ratio);
     this.video.style.transform = `translate(${dx}px, ${dy}px)`;
+    // The clip ends exactly below the last shown row: the rows' height plus the shift that snapped the video
+    if (this.options.visibleRows !== undefined) this.frame.style.height = `${this.options.visibleRows / ratio + dy}px`;
     this.report();
   }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ModeEntry, VideoEntry } from "../manifest";
 import { browserFamily, buildRecord, restoreAnswers, RESULT_FORMAT, type AnsweredTrial } from "./result";
-import { preferenceTally, verdict } from "./reveal";
+import { preferenceTally, verdict, verdictText } from "./reveal";
 import {
   buildRun,
   ClipLibrary,
@@ -56,6 +56,16 @@ describe("verdict", () => {
   });
 });
 
+describe("the verdict of a saved answer", () => {
+  it("reads the same as a live one, from the category, the correctness and the choice", () => {
+    expect(verdictText("pacing", "top", true, "perfect 60 fps")).toBe("Correct");
+    expect(verdictText("identical", "top", false, "perfect 60 fps")).toBe("They were the same");
+    expect(verdictText("pacing", "same", false, "no difference")).toBe("There was a difference");
+    expect(verdictText("frame-rate", "bottom", false, "perfect 30 fps")).toBe("Not this time");
+    expect(verdictText("preference", "top", null, "perfect 30 fps")).toBe("You chose the perfect 30 fps");
+  });
+});
+
 describe("the preference tally", () => {
   it("counts each choice by name, whichever box it was in, per movement from slow to fast", () => {
     const at = (motion: string, top: string, bottom: string): Trial => ({ ...trial("pref-30-vs-bad-60", top, bottom), motion });
@@ -105,7 +115,7 @@ describe("the result record", () => {
       answer: "bottom",
       correct: true,
       answerMs: 4322,
-      playback: { presented: 480, offRhythm: 3 },
+      playback: { presented: 480, offRhythm: 3, dropped: 0, late: 2, early: 1 },
     });
     expect(record.trials[1]?.correct).toBeNull();
     expect(record.score.overall).toEqual({ correct: 1, of: 1 });
@@ -155,10 +165,16 @@ describe("restoring a saved result", () => {
       run.map((trial) => [trial.id, trial.position, trial.motion, trial.clip.video.file]),
     );
     expect(restored?.map(({ trial }) => trial.definition.smoother)).toEqual(run.map((trial) => trial.definition.smoother));
-    // A result keeps only the total off the rhythm: here the dropped frames, 0 or 1
     expect(restored?.map(({ answer, answerMs, health }) => [answer, answerMs, health])).toEqual(
-      answers.map(({ answer, answerMs }, index) => [answer, answerMs, { presented: 480, offRhythm: index % 2 }]),
+      answers.map(({ answer, answerMs, health }) => [answer, answerMs, health]),
     );
+    // A result in format 1 kept only the total off the rhythm
+    const formatOne = {
+      ...record,
+      format: 1,
+      trials: record.trials.map((trial) => ({ ...trial, playback: { presented: 480, offRhythm: 1 } })),
+    };
+    expect(restoreAnswers(formatOne, clips)?.[0]?.health).toEqual({ presented: 480, offRhythm: 1 });
   });
 
   it("refuses a result of an earlier test version, whose questions or clips are gone", () => {

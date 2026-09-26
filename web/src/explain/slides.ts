@@ -13,7 +13,7 @@ import switchingNaive from "../../../doc/images/timing-switching-naive.svg?url";
 import timerJitter from "../../../doc/images/timing-timer-jitter.svg?url";
 import vrrSlowFrames from "../../../doc/images/timing-vrr-slow-frames.svg?url";
 import type { Slide } from "../slides";
-import { liveComparison } from "./live";
+import { liveComparison, singleBox } from "./live";
 
 const REPOSITORY = "https://github.com/Unarmed1000/mb-framepacing-explained";
 const SISTER = "https://github.com/Unarmed1000/mb-framepacing";
@@ -44,15 +44,16 @@ const more = (href: string, text: string): string =>
 const twoClocks: Slide = {
   id: "two-clocks",
   title: "Two clocks",
-  render: () =>
-    body(
+  render() {
+    const element = body(
       "What you just saw",
       "Every frame shows a moment",
       `Every frame a game shows is a picture of one moment of game time, its <strong>animation time</strong>, and it stays on screen
       for some <strong>display time</strong>. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of
       the game stays on screen for 16.7 ms. <strong>Animation error</strong> is how far they disagree, per frame, in milliseconds,
       as PresentMon measures it. A high average frame rate says nothing about it.`,
-      `${figure(perfectTimer, "Perfect timer: every frame shows the moment it is displayed, so the animation error is 0.")}
+      `<div class="single-holder"></div>
+      ${figure(perfectTimer, "Perfect timer: every frame shows the moment it is displayed, so the animation error is 0.")}
       <div class="card">
         <h2>Reading the diagrams</h2>
         <ul class="points">
@@ -65,7 +66,14 @@ const twoClocks: Slide = {
             PresentMon does: positive is shown too soon, negative too late.</li>
         </ul>
       </div>`,
-    ),
+    );
+    element
+      .querySelector(".single-holder")!
+      .replaceWith(
+        singleBox("normal", "60", "60 fps with the perfect timer: every frame shows exactly the moment it is on screen."),
+      );
+    return element;
+  },
 };
 
 const timerJitterSlide: Slide = {
@@ -99,15 +107,26 @@ const timerJitterSlide: Slide = {
 const invisible: Slide = {
   id: "invisible",
   title: "Invisible to the numbers",
-  render: () =>
-    body(
+  render() {
+    const element = body(
       "Why frame rate cannot see it",
       "Same frame rate, same frame times, different motion",
       `Timer jitter is invisible to the usual numbers. Frame rate, frametime, display time and a frame-time graph are identical to
       the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
       animation error shows why, because only it looks at the moment each frame shows.`,
       `${figure(perfectVsJitter, "Same frame rate, same frametimes, different motion: only the animation error differs.")}`,
-    ),
+    );
+    element.append(
+      liveComparison(
+        "normal",
+        "60",
+        "60-naive-4ms",
+        "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh. Only the animation error, " +
+          "in the chart, shows why the bottom one stutters.",
+      ),
+    );
+    return element;
+  },
 };
 
 const vsyncTimer: Slide = {

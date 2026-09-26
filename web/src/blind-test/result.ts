@@ -15,12 +15,12 @@ import {
   type TrialDefinition,
 } from "./trials";
 
-/** The result schema's version: bump when the fields change. */
-export const RESULT_FORMAT = 1;
+/** The result schema's version: bump when the fields change. 2: the playback also keeps dropped, late and early. */
+export const RESULT_FORMAT = 2;
 const HISTORY_KEY = "mb-framepacing-explained.blind-test";
 const HISTORY_LIMIT = 50;
 
-/** The playback of a saved answer: a result keeps only how many video frames were off the rhythm, not which way. */
+/** The playback of an answer saved in format 1, which kept only how many video frames were off the rhythm, not which way. */
 export interface SavedPlayback {
   presented: number;
   offRhythm: number;
@@ -47,7 +47,8 @@ export interface TrialRecord {
   answer: Answer;
   correct: boolean | null;
   answerMs: number;
-  playback: { presented: number; offRhythm: number };
+  /** Format 2 and later also keep dropped, late and early. */
+  playback: { presented: number; offRhythm: number; dropped?: number; late?: number; early?: number };
 }
 
 export interface ResultRecord {
@@ -108,10 +109,25 @@ export function buildRecord(
       answer,
       correct: isCorrect(trial, answer),
       answerMs: Math.round(answerMs),
-      playback: { presented: health.presented, offRhythm: offRhythm(health) },
+      playback:
+        "offRhythm" in health
+          ? { presented: health.presented, offRhythm: health.offRhythm }
+          : {
+              presented: health.presented,
+              offRhythm: offRhythm(health),
+              dropped: health.dropped,
+              late: health.late,
+              early: health.early,
+            },
     })),
     score: score(answers),
   };
+}
+
+/** A saved answer's playback: the full split when the result kept it (format 2), else only the total. */
+function savedHealth(playback: TrialRecord["playback"]): PlaybackHealth | SavedPlayback {
+  const { presented, offRhythm, dropped, late, early } = playback;
+  return dropped === undefined ? { presented, offRhythm } : { presented, dropped, late: late ?? 0, early: early ?? 0 };
 }
 
 /** A saved result's answers as questions again, with their clips, to show it like a result just taken; null when a question
@@ -143,7 +159,7 @@ export function restoreAnswers(
       trial: { definition, id: saved.id, position: saved.position, motion: saved.motion, clip },
       answer: saved.answer,
       answerMs: saved.answerMs,
-      health: saved.playback,
+      health: savedHealth(saved.playback),
     });
   }
   return answers;
