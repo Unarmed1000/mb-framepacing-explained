@@ -101,7 +101,7 @@ const timerJitterSlide: Slide = {
       .querySelector(".single-holder")!
       .replaceWith(
         singleBox(
-          "normal",
+          "fast",
           "60",
           "60-naive-4ms",
           "bottom",
