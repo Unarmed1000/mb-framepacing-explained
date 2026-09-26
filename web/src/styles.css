@@ -638,7 +638,7 @@ code {
   color: var(--text);
 }
 
-/* The menu after the viewing guide: the test, previous results, the articles */
+/* The menu after the viewing guide: the explanation, the test, previous results */
 .menu {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));

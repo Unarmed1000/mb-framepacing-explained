@@ -6,7 +6,7 @@ playing live, and starts with a blind test. It is still work in progress; the [r
 ## The slides
 
 1. **Welcome**, then **best viewing**: the viewing check (once, on the best viewing slide) and a checklist to fix what it finds (below).
-2. **Menu**: read the articles (from the first explanation slide), take the blind test, or open the previous results kept in
+2. **Menu**: start the explanation ("How it works", from its first slide), take the blind test, or open the previous results kept in
    this browser (disabled when there are none), stepping between them with older and newer buttons. A result's questions can be
    watched again; one from an earlier test version lists its answers without the video.
 3. **Warm-up**: one easy pair, a perfect 60 against a ±5 ms timer (the worst measured timer error, on every frame) at the fast movement, answered and then revealed with its

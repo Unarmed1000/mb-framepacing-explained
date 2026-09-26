@@ -1,4 +1,4 @@
-// The menu after the viewing guide: read the articles (the explanation slides), take the blind test, or step through the
+// The menu after the viewing guide: start the explanation (its first slide), take the blind test, or step through the
 // previous results (when this browser has any).
 
 import { loadHistory } from "./blind-test/result";
@@ -27,14 +27,13 @@ function renderMenu(body: HTMLElement): void {
   body.innerHTML = `
     <p class="eyebrow">Ready</p>
     <h1>Where to next?</h1>
-    <p class="lead">Take the blind test before reading the articles: they explain what it shows, so reading them first gives its
+    <p class="lead">Take the blind test before the explanation: it shows what the test is about, so reading it first gives the
       answers away.</p>
     <div class="menu">
       <div class="card menu-card">
-        <h2>Articles</h2>
-        <p>What the test shows and how games get it right, one topic per slide: ${EXPLANATION_SLIDES.length} short articles with
-          diagrams and live video.</p>
-        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Read the articles →</a>
+        <h2>How it works</h2>
+        <p>What the test shows and how games get it right: ${EXPLANATION_SLIDES.length} slides with diagrams and live video.</p>
+        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
       </div>
       <div class="card menu-card">
         <h2>Blind test</h2>
