@@ -6,9 +6,19 @@
   "venvPath": ".",
   "venv": ".venv",
   "executionEnvironments": [
-    { "root": "tools/frame_pacing_video" },
-    { "root": "tools/timing_diagrams", "extraPaths": ["tools/frame_pacing_video"] },
-    { "root": "tools" }
+    {
+      "root": "tools/frame_pacing_video"
+    },
+    {
+      "root": "tools/timing_diagrams",
+      "extraPaths": ["tools/frame_pacing_video"]
+    },
+    {
+      "root": "tools/web_export"
+    },
+    {
+      "root": "tools"
+    }
   ],
   "typeCheckingMode": "recommended"
 }

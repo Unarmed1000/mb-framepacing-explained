@@ -1,0 +1,156 @@
+// A looping video shown at 1:1 device pixels, with playback health from requestVideoFrameCallback.
+
+import { cssSizeForDevicePixels, devicePixelBox, isOneToOne, snapOffset, type Size } from "../checks/scaling";
+import { watchDevicePixelRatio } from "../checks/viewing";
+
+export interface PlaybackHealth {
+  /** Video frames the browser presented. */
+  presented: number;
+  /** Video frames skipped between two presented ones (gaps in presentedFrames). */
+  dropped: number;
+  /** Video frames that reached the display half a frame or more later than the frame rate says. */
+  late: number;
+  /** Video frames that reached the display half a frame or more earlier than the frame rate says. */
+  early: number;
+}
+
+export type FrameStep = "on-time" | "late" | "early" | "dropped";
+
+/** Classify the step from one presented video frame to the next: the gap in presentedFrames and the change in
+ * expectedDisplayTime (ms), against the video's frame period (ms). */
+export function classifyStep(presentedGap: number, displayDeltaMs: number, periodMs: number): FrameStep {
+  if (presentedGap > 1) return "dropped";
+  if (displayDeltaMs >= periodMs * 1.5) return "late";
+  if (displayDeltaMs <= periodMs * 0.5) return "early";
+  return "on-time";
+}
+
+/** Browsers without requestVideoFrameCallback (older ones) cannot report playback health. */
+function hasFrameCallback(video: HTMLVideoElement): boolean {
+  return "requestVideoFrameCallback" in video;
+}
+
+export class PixelVideo {
+  readonly element: HTMLDivElement;
+  readonly video: HTMLVideoElement;
+  /** A line saying whether the video is shown 1:1, with its size and position in device pixels; the caller places it, out of
+   * the way (below the answers), so it does not draw the eye. */
+  readonly readout: HTMLParagraphElement;
+  readonly health: PlaybackHealth = { presented: 0, dropped: 0, late: 0, early: 0 };
+  /** Called with the video's media time for every presented frame (to move chart playheads). */
+  onFrame: ((mediaTime: number) => void) | null = null;
+  private lastPresented: number | null = null;
+  private lastExpected: number | null = null;
+  private lastMediaTime: number | null = null;
+  /** Frames still to skip after a (re)start: while the decoder settles, the timing is irregular and says nothing. */
+  private settling = 0;
+
+  constructor(
+    src: string,
+    private readonly size: Size,
+    private readonly fps: number,
+  ) {
+    this.element = document.createElement("div");
+    this.element.className = "pixel-video";
+    this.video = document.createElement("video");
+    Object.assign(this.video, {
+      src,
+      muted: true,
+      loop: true,
+      playsInline: true,
+      preload: "auto",
+      disablePictureInPicture: true,
+    });
+    this.video.setAttribute("aria-label", "Two boxes moving; compare the top and the bottom");
+    this.readout = document.createElement("p");
+    this.readout.className = "pixel-readout";
+    this.element.append(this.video);
+    const layout = (): void => this.layout();
+    window.addEventListener("resize", layout);
+    // Any scrolling ancestor (the slides scroll inside their own area) moves the video: capture every scroll on the page
+    document.addEventListener("scroll", layout, { passive: true, capture: true });
+    new ResizeObserver(layout).observe(document.documentElement);
+    watchDevicePixelRatio(layout);
+    requestAnimationFrame(layout);
+    // A pause, seek, stall or hidden tab is a gap in playback, not a late frame: start the frame tracking over after one
+    for (const event of ["play", "pause", "seeking", "waiting"]) this.video.addEventListener(event, () => this.restartTracking());
+    document.addEventListener("visibilitychange", () => this.restartTracking());
+    this.watchFrames();
+  }
+
+  /** Forget the previous frame, so the next step is not compared with one from before a gap; the counts stay. */
+  private restartTracking(): void {
+    this.lastPresented = null;
+    this.lastExpected = null;
+    this.lastMediaTime = null;
+    this.settling = Math.round(this.fps / 2);
+  }
+
+  /** Size the video to exactly its pixel size in device pixels and move it onto whole device pixels. */
+  layout(): void {
+    const ratio = window.devicePixelRatio || 1;
+    const css = cssSizeForDevicePixels(this.size, ratio);
+    Object.assign(this.video.style, { width: `${css.width}px`, height: `${css.height}px`, transform: "none" });
+    const rect = this.video.getBoundingClientRect();
+    const dx = snapOffset(rect.left, ratio);
+    const dy = snapOffset(rect.top, ratio);
+    this.video.style.transform = `translate(${dx}px, ${dy}px)`;
+    this.report();
+  }
+
+  /** Measure where the video really is, in device pixels, and say whether it is 1:1. */
+  report(): boolean {
+    const ratio = window.devicePixelRatio || 1;
+    const box = devicePixelBox(this.video.getBoundingClientRect(), ratio);
+    const exact = isOneToOne(box, this.size);
+    const number = (value: number): string =>
+      Math.abs(value - Math.round(value)) < 0.005 ? String(Math.round(value)) : value.toFixed(2);
+    const scale = `scale ${Math.round(ratio * 100)} %`;
+    this.readout.dataset.status = exact ? "ok" : "fail";
+    this.readout.textContent = exact
+      ? `1:1: ${this.size.width} x ${this.size.height} device pixels (${scale})`
+      : `Not 1:1: ${number(box.width)} x ${number(box.height)} device pixels at ${number(box.left)}, ${number(box.top)} (${scale})`;
+    return exact;
+  }
+
+  play(): void {
+    void this.video.play();
+  }
+
+  pause(): void {
+    this.video.pause();
+  }
+
+  resetHealth(): void {
+    Object.assign(this.health, { presented: 0, dropped: 0, late: 0, early: 0 });
+    this.lastPresented = null;
+    this.lastExpected = null;
+  }
+
+  private watchFrames(): void {
+    if (!hasFrameCallback(this.video)) return;
+    const video = this.video;
+    const period = 1000 / this.fps;
+    const step: VideoFrameRequestCallback = (_now, metadata) => {
+      // The loop wraps the media time back to the start: a restart, not a late frame
+      if (this.lastMediaTime !== null && metadata.mediaTime < this.lastMediaTime) this.restartTracking();
+      this.lastMediaTime = metadata.mediaTime;
+      if (this.settling > 0) {
+        this.settling -= 1;
+      } else if (this.lastPresented !== null && this.lastExpected !== null) {
+        const gap = metadata.presentedFrames - this.lastPresented;
+        const step = classifyStep(gap, metadata.expectedDisplayTime - this.lastExpected, period);
+        if (step === "dropped") this.health.dropped += gap - 1;
+        else if (step === "late") this.health.late += 1;
+        else if (step === "early") this.health.early += 1;
+      }
+      this.health.presented += 1;
+      this.lastPresented = metadata.presentedFrames;
+      this.lastExpected = metadata.expectedDisplayTime;
+      this.onFrame?.(metadata.mediaTime);
+      video.requestVideoFrameCallback(step);
+    };
+    this.restartTracking();
+    video.requestVideoFrameCallback(step);
+  }
+}

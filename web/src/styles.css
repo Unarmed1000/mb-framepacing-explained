@@ -1,0 +1,520 @@
+/* The same design as the timing diagrams (tools/timing_diagrams): a dark grey card, green / amber / red, soft grey text. */
+:root {
+  --bg: #121519;
+  --card: #1f242b;
+  --card-border: rgba(139, 148, 158, 0.25);
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --faint: #6e7681;
+  --green: #2ea043;
+  --amber: #d29922;
+  --red: #e5534b;
+  --accent: #58a6ff;
+  --radius: 14px;
+  font-family:
+    "Segoe UI Variable Text",
+    "Segoe UI",
+    Inter,
+    system-ui,
+    -apple-system,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+/* Top and bottom bars */
+.topbar,
+.bottombar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+}
+
+.topbar {
+  border-bottom: 1px solid var(--card-border);
+}
+
+.bottombar {
+  border-top: 1px solid var(--card-border);
+  justify-content: space-between;
+}
+
+.brand {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.progress {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(139, 148, 158, 0.2);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.counter,
+.slide-title {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Slides */
+.slides {
+  overflow: auto;
+}
+
+.slide-body {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+/* Work-in-progress notice on the first slide (temporary) */
+.wip {
+  display: inline-block;
+  margin: 0 0 20px;
+  padding: 8px 14px;
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  color: var(--amber);
+  font-size: 14px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3vw, 38px);
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.lead {
+  max-width: 820px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 20px 0;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #0b1220;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button.ghost {
+  background: transparent;
+  border-color: var(--card-border);
+  color: var(--text);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+kbd {
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* Viewing check */
+.check-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.check-overall {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(139, 148, 158, 0.16);
+}
+
+.check-overall[data-status="ok"] {
+  color: var(--green);
+}
+
+.check-overall[data-status="warn"] {
+  color: var(--amber);
+}
+
+.check-overall[data-status="fail"] {
+  color: var(--red);
+}
+
+.check-rows {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+}
+
+.check-waiting {
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.check-row {
+  display: grid;
+  grid-template-columns: 14px 190px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(139, 148, 158, 0.12);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.check-row[data-status="warn"] .dot {
+  background: var(--amber);
+}
+
+.check-row[data-status="fail"] .dot {
+  background: var(--red);
+}
+
+.check-label {
+  font-weight: 600;
+}
+
+.check-value {
+  color: var(--muted);
+}
+
+.check-fix {
+  grid-column: 2 / -1;
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.check-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Best viewing guide */
+.guide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 0 24px;
+}
+
+.checklist {
+  margin: 20px 0;
+  padding-left: 40px;
+  line-height: 1.5;
+}
+
+.checklist li {
+  margin: 6px 0;
+}
+
+/* The video at 1:1 device pixels: never scaled by the layout, centred, overflowing rather than shrinking */
+.pixel-video {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.pixel-readout {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.pixel-readout[data-status="fail"] {
+  color: var(--red);
+}
+
+.pixel-video video {
+  display: block;
+  flex: none;
+  background: #303030;
+}
+
+/* Trial */
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.answer.chosen {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* Inside a card, text uses the card's full width */
+.card .lead {
+  max-width: none;
+}
+
+.result[data-correct="true"] h2 {
+  color: var(--green);
+}
+
+.result[data-correct="false"] h2 {
+  color: var(--amber);
+}
+
+.health {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.notice pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Error chart (SVG) */
+.error-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 12px 0 18px;
+}
+
+.error-chart text {
+  fill: var(--text);
+  font-size: 13px;
+}
+
+.error-chart .chart-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.error-chart .chart-note {
+  fill: var(--faint);
+  font-size: 12px;
+}
+
+.error-chart .chart-lane {
+  font-weight: 600;
+}
+
+.chart-grid {
+  stroke: #ffffff;
+  stroke-opacity: 0.1;
+}
+
+.chart-zero {
+  stroke: #ffffff;
+  stroke-opacity: 0.45;
+}
+
+.chart-bar {
+  fill: var(--red);
+}
+
+.chart-playhead {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+/* Blind test: intro and results */
+.setup,
+.history,
+.hint {
+  color: var(--muted);
+}
+
+.setup a {
+  color: var(--accent);
+}
+
+.categories {
+  display: grid;
+  gap: 0;
+  padding: 8px 22px;
+}
+
+.category-row {
+  display: grid;
+  grid-template-columns: 170px 110px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(139, 148, 158, 0.12);
+}
+
+.category-row:first-child {
+  border-top: none;
+}
+
+.category-name {
+  font-weight: 600;
+}
+
+.category-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.category-meaning {
+  color: var(--muted);
+}
+
+.list-title {
+  margin-top: 28px;
+}
+
+.trial-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 24px;
+}
+
+.trial-row {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 0 16px;
+}
+
+.trial-row summary {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trial-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.trial-row[open] {
+  padding-bottom: 12px;
+}
+
+.trial-number {
+  color: var(--faint);
+}
+
+.trial-verdict {
+  font-weight: 600;
+}
+
+.trial-verdict[data-kind="correct"] {
+  color: var(--green);
+}
+
+.trial-verdict[data-kind="wrong"] {
+  color: var(--amber);
+}
+
+.trial-verdict[data-kind="choice"] {
+  color: var(--accent);
+}
+
+/* A check mark on right answers, a cross on wrong ones; preferences (no right answer) get neither */
+.trial-verdict::before,
+.result h2::before {
+  display: inline-block;
+  width: 1.3em;
+  font-weight: 700;
+}
+
+.trial-verdict[data-kind="correct"]::before,
+.result[data-correct="true"] h2::before {
+  content: "✓";
+}
+
+.trial-verdict[data-kind="wrong"]::before,
+.result[data-correct="false"] h2::before {
+  content: "✗";
+}
+
+.trial-row .result {
+  margin-bottom: 0;
+}
+
+.result[data-correct="none"] h2 {
+  color: var(--text);
+}
+
+.actions,
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

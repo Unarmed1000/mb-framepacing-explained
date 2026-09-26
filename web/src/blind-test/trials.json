@@ -1,0 +1,83 @@
+{
+  "testVersion": 9,
+  "clip": {
+    "width": 1280,
+    "height": 384,
+    "arguments": ["--web", "--height", "384", "--box-size", "48"]
+  },
+  "motions": ["normal", "fast"],
+  "warmup": {
+    "motions": ["fast"],
+    "pairs": [["60", "60-naive-4ms"]],
+    "smoother": "60"
+  },
+  "trials": [
+    {
+      "id": "pacing-60",
+      "category": "pacing",
+      "a": "60",
+      "b": "60-naive-heavy",
+      "smoother": "60"
+    },
+    {
+      "id": "rate-60-vs-30",
+      "category": "frame-rate",
+      "a": "60",
+      "b": "30",
+      "smoother": "60"
+    },
+    {
+      "id": "rate-60-vs-20",
+      "category": "frame-rate",
+      "a": "60",
+      "b": "20",
+      "smoother": "60",
+      "motions": ["normal"]
+    },
+    {
+      "id": "rate-30-vs-20",
+      "category": "frame-rate",
+      "a": "30",
+      "b": "20",
+      "smoother": "30",
+      "motions": ["normal"]
+    },
+    {
+      "id": "pref-30-vs-bad-60",
+      "category": "preference",
+      "a": "30",
+      "b": "60-naive-heavy",
+      "smoother": null
+    },
+    {
+      "id": "pref-20-vs-bad-30",
+      "category": "preference",
+      "a": "20",
+      "b": "30-naive-heavy",
+      "smoother": null,
+      "motions": ["normal"]
+    },
+    {
+      "id": "same-60",
+      "category": "identical",
+      "a": "60",
+      "b": "60",
+      "smoother": "same"
+    },
+    {
+      "id": "same-30",
+      "category": "identical",
+      "a": "30",
+      "b": "30",
+      "smoother": "same"
+    },
+    {
+      "id": "same-20",
+      "category": "identical",
+      "a": "20",
+      "b": "20",
+      "smoother": "same",
+      "motions": ["normal"]
+    }
+  ]
+}

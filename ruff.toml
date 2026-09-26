@@ -10,7 +10,7 @@ extend-exclude = [
 ]
 
 # First-party import roots: the repository and each tool folder (the tests import their tool as a top-level module)
-src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams"]
+src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams", "tools/web_export"]
 
 line-length = 160
 

@@ -113,6 +113,7 @@ Not simulated yet: late frames (hitches, short and long frames), dropped and run
   to draw here
 - [Further reading](doc/further-reading.md): the articles and videos, grouped by subject
 - [The web page (planned)](doc/web-page.md): why the videos are only on the web page, and its 60 Hz and zoom checks
+- [Roadmap](doc/roadmap.md): future ideas and next steps, ticked off as they are done
 
 ## About the research
 

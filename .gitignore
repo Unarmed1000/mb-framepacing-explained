@@ -1,6 +1,11 @@
 # Generated output (videos, frames, manifests)
 /out/
 
+# Web page (web/): dependencies, build output and the generated videos
+web/node_modules/
+web/dist/
+web/public/videos/
+
 # Machine-local settings (see local.example.toml)
 local.toml
 

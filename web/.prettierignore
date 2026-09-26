@@ -1,0 +1,5 @@
+# Build output and the generated clips: never reformat
+dist/
+public/videos/
+node_modules/
+package-lock.json

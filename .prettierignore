@@ -10,6 +10,8 @@ test-data/
 licenses/*.txt
 package-lock.json
 doc/images/
+web/dist/
+web/public/videos/
 
 # clang tool configs (clang-tidy accepts YAML that Prettier rejects)
 marker/cpp/.clang-format
