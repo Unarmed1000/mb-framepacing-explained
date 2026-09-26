@@ -110,7 +110,8 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
     <p class="hint">Open a row to watch its pair again, with what each box was and its animation error.</p>
     <div class="trial-list"></div>
     <div class="result-actions">
-      <button type="button" class="button" data-action="download">Download result (JSON)</button>
+      <a class="button" href="#/two-clocks">Next: what you just saw, explained →</a>
+      <button type="button" class="button ghost" data-action="download">Download result (JSON)</button>
       <button type="button" class="button ghost" data-action="copy">Copy result</button>
       <button type="button" class="button ghost" data-action="again">Take the test again</button>
     </div>`;

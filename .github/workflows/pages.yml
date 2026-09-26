@@ -1,0 +1,71 @@
+# Build the web page and publish it on GitHub Pages: generate the blind test's clips (web-encoded, never committed), test and
+# build the page, deploy web/dist. Needs Pages enabled with "GitHub Actions" as the source (Settings > Pages).
+name: pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install FFmpeg and Pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+          python -m pip install "Pillow>=12"
+          python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
+
+      - name: Test the clip export
+        run: python -m unittest discover -s tools/web_export
+
+      - name: Generate the blind test's clips
+        run: python tools/web_export/build_blind_test.py
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Test and build the page
+        working-directory: web
+        run: |
+          npm ci
+          npm run format:check
+          npm test
+          npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

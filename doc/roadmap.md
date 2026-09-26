@@ -13,8 +13,10 @@ generated videos. Notes: [the web page](web-page.md).
 - [ ] Phase 2 (built, in review): the full blind test (warm-up first, then 23 questions in random order: each pair in each of
       its movements and with each mode on top; categories, score, saved anonymised and versioned result with export). The results list has one row per trial with its verdict ("Correct", "There was a difference", …);
       clicking a row folds it out to show that trial's video again, which box was which, and its animation error chart.
-- [ ] Phase 3: the explanation slides, including "measure it yourself" with mb-framepacing.
-- [ ] Phase 4: the GitHub Pages workflow (generate and web-encode the clips, build, deploy).
+- [ ] Phase 3 (built, in review): the explanation slides after the blind test, including "measure it yourself" with
+      mb-framepacing.
+- [ ] Phase 4 (built, not run yet): the GitHub Pages workflow (generate and web-encode the clips, build, deploy). Enable Pages
+      with GitHub Actions as the source, then merge to `master`.
 - [ ] Remove the "Unfinished work in progress" notice from the first slide (`.wip` in `web/src/main.ts` and `styles.css`) when the page is ready.
 - [x] Video tool: a `--web` encoding (H.264 4:2:0) and generating an exact list of pairs (`--pairs`).
 - [ ] Later: central collection of the anonymised results (opt-in submit), a shareable result link, a canvas renderer for extra

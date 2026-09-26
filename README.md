@@ -7,8 +7,8 @@ row of boxes scrolling right to left like a list). A follow camera, after Unity'
 between two lines so a timing error is the only thing that moves, at real speed and 10 times slower. The scene can be drawn on a
 coarser virtual pixel grid (2×2, 4×4, …), so small errors move more screen pixels.
 
-The generators live here now; a slide-style web page that explains the topics with these videos live, including a blind test,
-comes later ([plans](doc/web-page.md)).
+A slide-style [web page](doc/web-page.md) in [`web/`](web) explains the topics with these videos playing live, starting with
+a blind test (work in progress).
 
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
 display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
@@ -112,7 +112,7 @@ Not simulated yet: late frames (hitches, short and long frames), dropped and run
 - [Charts](doc/charts.md): how Gamers Nexus, PC Perspective, CapFrameX, Digital Foundry and mb-framepacing chart pacing, and what
   to draw here
 - [Further reading](doc/further-reading.md): the articles and videos, grouped by subject
-- [The web page (planned)](doc/web-page.md): why the videos are only on the web page, and its 60 Hz and zoom checks
+- [The web page](doc/web-page.md): the slides and the blind test, running and publishing it, and its 60 Hz and zoom checks
 - [Roadmap](doc/roadmap.md): future ideas and next steps, ticked off as they are done
 
 ## About the research

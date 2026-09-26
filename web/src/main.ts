@@ -3,6 +3,7 @@ import "./styles.css";
 import { blindTestSlide } from "./blind-test/test-slide";
 import { warmupSlide } from "./blind-test/warmup";
 import { viewingCheckCard } from "./checks/viewing";
+import { EXPLANATION_SLIDES } from "./explain/slides";
 import { startSlides, type Slide } from "./slides";
 
 /** The clips are 1280 x 384 video pixels (the two boxes and a margin, no labels), shown at 1:1 device pixels. */
@@ -19,8 +20,9 @@ const welcome: Slide = {
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
       <p class="lead">
-        A game can run at a perfect 60 fps and still stutter. This page shows why, with videos you compare yourself, and ends in
-        a blind test. First, a quick check that your screen shows the videos the way they are meant to be seen.
+        A game can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
+        before knowing what to look for. Then it explains what you saw, and how games get it right. First, a quick check that your
+        screen shows the videos the way they are meant to be seen.
       </p>`;
     body.append(viewingCheckCard(VIDEO));
     const start = document.createElement("a");
@@ -70,4 +72,5 @@ const bestViewing: Slide = {
 const warmup: Slide = { id: "warm-up", title: "Warm-up", render: warmupSlide };
 const blindTest: Slide = { id: "blind-test", title: "Blind test", render: blindTestSlide };
 
-startSlides(document.querySelector<HTMLElement>("#app")!, [welcome, bestViewing, warmup, blindTest]);
+// The blind test comes before the explanations, so they cannot give its answers away
+startSlides(document.querySelector<HTMLElement>("#app")!, [welcome, bestViewing, warmup, blindTest, ...EXPLANATION_SLIDES]);
