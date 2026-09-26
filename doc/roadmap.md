@@ -5,8 +5,8 @@ here as they come up.
 
 ## The web page
 
-A self-guided, slide-style page that takes the visitor through the topics interactively and ends in a blind test built from the
-generated videos. Notes: [the web page](web-page.md).
+A self-guided, slide-style page that starts with a blind test built from the generated videos, then takes the visitor through
+the topics interactively. Notes: [the web page](web-page.md).
 
 - [x] Phase 1, vertical slice: the page shell (navigation, one slide, the card look), the viewing check card and the best
       viewing guide, and the warm-up trial with its reveal chart. Stop for review of the look and feel.
@@ -14,7 +14,7 @@ generated videos. Notes: [the web page](web-page.md).
       its movements and with each mode on top; categories, score, saved anonymised and versioned result with export). The results list has one row per trial with its verdict ("Correct", "There was a difference", …);
       clicking a row folds it out to show that trial's video again, which box was which, and its animation error chart.
 - [ ] Phase 3 (built, in review): the explanation slides after the blind test, including "measure it yourself" with
-      mb-framepacing.
+      mb-framepacing. Review the wording.
 - [ ] Phase 4 (built, not run yet): the GitHub Pages workflow (generate and web-encode the clips, build, deploy). Enable Pages
       with GitHub Actions as the source, then merge to `master`.
 - [ ] Remove the "Unfinished work in progress" notice from the first slide (`.wip` in `web/src/main.ts` and `styles.css`) when the page is ready.
@@ -37,7 +37,8 @@ generated videos. Notes: [the web page](web-page.md).
 
 Sample first each time.
 
-- [ ] The vsync timer rounding, and its failure when a wake-up is late by more than half a refresh.
+- [ ] The vsync timer rounding, and its failure when a wake-up is late by more than half a refresh; also for the web page's
+      vsync timer slide, which has none yet.
 - [ ] Drift as a chart: the nominal rate, paying the error back in whole refreshes (a sawtooth), slewing.
 - [ ] Presenting each frame twice on FIFO for half rate.
 - [ ] A refresh rate change mid-run (144 to 60 Hz).
@@ -67,4 +68,4 @@ Ideas for the sister project, from [charts](charts.md#ideas-for-mb-framepacing).
 ## Housekeeping
 
 - [ ] Rename the local folder to `mb-framepacing-explained` and rerun `setup.cmd`.
-- [ ] Push mb-framepacing (`3098593`, the vocabulary slimmed down to link here).
+- [x] Push mb-framepacing (the vocabulary slimmed down to link here, pushed as `be7e6a9`).
