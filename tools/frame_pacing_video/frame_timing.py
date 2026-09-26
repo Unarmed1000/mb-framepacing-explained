@@ -55,9 +55,11 @@ JITTER_PATTERNS = ("mixed", "alternating", "runs", "random")
 MIXED_PATTERNS = ("alternating", "runs", "random", "runs")
 # Runs: how many frames the error stays on one side before it moves to the other
 RUN_FRAMES = (4, 10)
-# System load, second half of a clip: how many frames in a row a late wake-up lasts while something else keeps using the CPU (the
-# first half has single late frames)
+# Realistic system load, second half of a clip: how many frames in a row a late wake-up lasts while something else keeps using the
+# CPU (the first half has single late frames; the demo profile has single frames all through)
 LOAD_SPELL_FRAMES = (3, 10)
+# The demo profile shows its largest range (heavy load: a spike) within this many seconds from the start, where a viewer looks first
+DEMO_LARGEST_WITHIN = 2
 
 
 class Timer(StrEnum):
@@ -286,20 +288,22 @@ def wake_delays(mode: FrameMode, parameters: TimingParameters, count: int) -> li
         return [window * (1 + offset) for offset in jitter_offsets(mode.rate, count, parameters.synthetic_pattern)]
     generator = Pcg32.from_text(f"wake-up {mode.noise.value}{'' if mode.realistic else ' demo'}, {mode.rate} Hz, {count} frames")
     delays: list[Fraction] = []
-    # The first half of the clip has single late frames, each drawn on its own; the second half has spells: several frames in a row
-    # while something else uses the CPU (LOAD_SPELL_FRAMES). A spell starts with its range's share of frames divided by the average
-    # spell length, so both halves have the same share of late frames
+    # Realistic: the first half of the clip has single late frames, each drawn on its own; the second half has spells, several
+    # frames in a row while something else uses the CPU (LOAD_SPELL_FRAMES). A spell starts with its range's share of frames divided
+    # by the average spell length, so both halves have the same share of late frames. The demo profile draws every frame on its own
+    # for the whole clip: within a spell the error only shows at its ends, so its second half would look much lighter
     # Each event goes either way (sign), except the ranges beyond the base, which can only be late (CPU contention only delays)
     average_spell = sum(LOAD_SPELL_FRAMES) / 2
     ranges = parameters.load_ranges(mode)
     # A new spell cannot start during one, so a range's chance per free frame is its share / (length x (1 - total share) + total)
     total = float(sum(share for share, _, _ in ranges))
     spread = average_spell * (1 - total) + total
+    spells_from = count // 2 if mode.realistic else count
     spell: tuple[Fraction, Fraction] | None = None
     spell_left, sign = 0, 1
     for index in range(count):
         if spell is None:
-            spells = index >= count // 2
+            spells = index >= spells_from
             chance = spread if spells else 1
             draw = generator.random()
             for share, low, high in ranges:
@@ -315,7 +319,24 @@ def wake_delays(mode: FrameMode, parameters: TimingParameters, count: int) -> li
         spell_left -= 1
         if spell_left == 0:
             spell = None
+    if not mode.realistic:
+        _largest_early(
+            delays, [(low, high) for share, low, high in ranges if share > 0], min(count, DEMO_LARGEST_WITHIN * mode.rate), parameters.base, generator
+        )
     return delays
+
+
+def _largest_early(delays: list[Fraction], ranges: list[tuple[Fraction, Fraction]], early: int, base: Fraction, generator: Pcg32) -> None:
+    """Make sure the largest of the ranges occurs in the first `early` frames: if the draws put none there, one frame there gets it
+    (going either way when it is within the base, like the draws, else late)."""
+    if not ranges or early <= 0:
+        return
+    low, high = ranges[-1]
+    if any(low <= abs(delay - base) <= high for delay in delays[:early]):
+        return
+    index = generator.randint(0, early - 1)
+    sign = generator.choice((1, -1)) if high <= base else 1
+    delays[index] = base + sign * _microseconds(generator, low, high)
 
 
 @functools.cache

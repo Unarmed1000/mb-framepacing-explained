@@ -137,6 +137,37 @@ class LoadTests(unittest.TestCase):
         # Each profile has its own draws
         self.assertNotEqual(self.offsets("60-naive-heavy", 60), self.offsets("60-naive-heavy-realistic", 60))
 
+    def test_the_demo_profile_is_as_busy_at_the_end_as_at_the_start(self) -> None:
+        # No spells: consecutive frames are no more alike in the second half than in the first (a spell would repeat its range and
+        # direction, and hide its error between its ends)
+        def kind(offset: Fraction) -> tuple[int, bool]:
+            size = 0 if abs(offset) <= Fraction(3, 10) * MS else 1 if abs(offset) <= Fraction(12, 10) * MS else 2 if abs(offset) <= 2 * MS else 3
+            return size, offset > 0
+
+        for name in ("60-naive-light", "60-naive-typical", "60-naive-heavy"):
+            offsets = self.offsets(name)
+
+            def alike(part: list[Fraction]) -> float:
+                return sum(kind(a) == kind(b) for a, b in itertools.pairwise(part)) / (len(part) - 1)
+
+            self.assertAlmostEqual(alike(offsets[:30000]), alike(offsets[30000:]), delta=0.02, msg=name)
+
+    def test_the_demo_profile_shows_its_largest_range_in_the_first_2_s(self) -> None:
+        def spike_early(name: str, count: int, parameters: ft.TimingParameters = PARAMETERS) -> bool:
+            mode = ft.parse_mode(name)
+            offsets = self.offsets(name, count, parameters)
+            return any(4 * MS <= offset <= 8 * MS for offset in offsets[: 2 * mode.rate])
+
+        # Every clip length at 60, 30 and 20 Hz (8 s is 480, 240 and 160 frames)
+        for name, count in (("60-naive-heavy", 480), ("30-naive-heavy", 240), ("20-naive-heavy", 160), ("60-naive-heavy", 60)):
+            self.assertTrue(spike_early(name, count), (name, count))
+        # Also when spikes are so rare that the draws put none there: one frame there gets one, and only one
+        rare = ft.TimingParameters(demo_load_share=Fraction(1, 100))
+        for count in (480, 1000, 5000):
+            self.assertTrue(spike_early("60-naive-heavy", count, rare), count)
+        offsets = self.offsets("60-naive-heavy", 480, rare)
+        self.assertEqual(sum(4 * MS <= offset <= 8 * MS for offset in offsets[:120]), 1)
+
     def test_the_longer_reads_go_both_ways_but_spikes_only_late(self) -> None:
         offsets = self.offsets("60-naive-heavy-realistic")
         early = sum(offset < 0 for offset in offsets)

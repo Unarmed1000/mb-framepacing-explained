@@ -48,7 +48,7 @@ How much sooner or later than usual the naive loop reads the clock:
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | `60-naive-light` …             | **System load**, as a demo: a timing error in 95 % of the frames (`--demo-load-share`), all about 1 ms sooner or later | 60 Hz naive timer, light load               |
 | `60-naive-typical` …           | Half about 1 ms, half up to 2 ms                                                                                       | 60 Hz naive timer, typical load             |
-| `60-naive-heavy` …             | 90 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                   | 60 Hz naive timer, heavy load               |
+| `60-naive-heavy` …             | 90 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                                    | 60 Hz naive timer, heavy load               |
 | `60-naive-light-realistic` …   | **Realistic** system load, an idle system: in 3 % of the frames about 1 ms, in 1 % up to 2 ms                          | 60 Hz naive timer, light load (realistic)   |
 | `60-naive-typical-realistic` … | A normal gaming PC: 7 % about 1 ms, 2 % up to 2 ms                                                                     | 60 Hz naive timer, typical load (realistic) |
 | `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)   |
@@ -58,9 +58,11 @@ How much sooner or later than usual the naive loop reads the clock:
 - **System load:** the clock is read after the frame's first work (input, OS messages), usually about 2 ms plus 0–0.3 ms of noise
   (`--noise-ms`); that constant part is latency. How late the thread gets there depends on what else runs: background work,
   driver interrupts, power states. The ~1 ms and ~2 ms reads go either way (the work can also be shorter than usual); the heavy
-  spikes are always late, as CPU contention only delays. In the **first half** of a clip every frame is drawn on its own, so a
-  longer read is a single frame; in the **second half** they come in **spells** of 3–10 frames in a row, while something else
-  keeps using the CPU. Both halves have the same share of longer reads. Unity measured 6.854, 7.423 and 6.691 ms at a steady
+  spikes are always late, as CPU contention only delays. In the demo profile every frame is drawn on its own for the whole clip,
+  and its largest reads (heavy: a spike) always occur within the first 2 s. In the realistic profile the **first half** of a clip
+  has single longer reads; in the **second half** they come in **spells** of 3–10 frames in a row, while something else keeps
+  using the CPU, with the same share of longer reads in both halves. (A spell's error only shows at its ends, which is why the demo
+  profile has none: its second half would look much lighter.) Unity measured 6.854, 7.423 and 6.691 ms at a steady
   144 Hz, whose frames are 6.944 ms.
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
@@ -92,7 +94,7 @@ For the timers to come: [How to make your game run at 60fps](https://medium.com/
 ## Speeds
 
 Every clip is 8 s (480 frames at 60 fps, `--seconds`), so every video shows the jitter profiles the same way: 2 s per part of the
-mixed pattern, 4 s each of single longer reads and spells.
+mixed pattern, and for the realistic loads 4 s each of single longer reads and spells.
 
 | Speed    | Scene | Motion                                                                       | Like                                                |
 | -------- | ----- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -322,7 +324,8 @@ videos are meant to show.
 
 - `test_pcg32.py`: the generator against PCG32's reference output, seeding from a text, even `randint`, `random` and `choice`.
 - `test_frame_timing.py`: the ideal and naive timers, every frame making its vsync, `x += speed * dt` matching the positions, the
-  system loads (shares of longer reads in both halves, both directions, spikes only late, single frames then spells), the windows
+  system loads (shares of longer reads in both halves, both directions, spikes only late, the demo profile as busy at the end as at
+  the start with its largest reads in the first 2 s, the realistic one single frames then spells), the windows
   and synthetic noise, the jitter patterns at every clip length, determinism and validation.
 - `test_generate_videos.py`: the video plan, the timing of every mode, the 8 s clips and seamless loops, the easing and rest, the ui
   speeds, validation, rendering (rows, sub-pixel edges, edge fade, divider, labels, colours, virtual pixel grids and the layout per

@@ -26,10 +26,11 @@ next vsync) and presents. A mode is a rate and a timer (see the repository READM
 - Ideal timer (60, 30, 20 Hz): every frame shows exactly its display time; the reference.
 - Naive timer: the animation time is the wall clock reading minus its average delay, so every frame is off by how much later or
   sooner than usual the loop read the clock after the flip. Under system load (60-naive-light, -typical, -heavy) it is usually on
-  time, and in some frames about 1 ms or up to 2 ms sooner or later or, under heavy load, 4-8 ms later: single frames in the first
-  half of the clip, spells of several frames in the second. By default the loads are a demo profile: a timing error in 95 % of the
-  frames (--demo-load-share), the loads differing in how bad: light about 1 ms, typical also 2 ms, heavy also the spikes;
-  60-naive-light-realistic, -typical-realistic, -heavy-realistic have the realistic rates, a few percent of the frames.
+  time, and in some frames about 1 ms or up to 2 ms sooner or later or, under heavy load, 4-8 ms later. By default the loads are a
+  demo profile: a timing error in 95 % of the frames (--demo-load-share), each drawn on its own, the loads differing in how bad:
+  light about 1 ms, typical also 2 ms, heavy up to 2 ms and the spikes, the largest always within the first 2 s;
+  60-naive-light-realistic, -typical-realistic, -heavy-realistic have the realistic rates, a few percent of the frames, single
+  frames in the first half of the clip and spells of several frames in the second.
   In a +-N ms window (60-naive-1ms, 60-naive-4ms, ...) it follows the
   jitter pattern (--jitter-pattern: mixed goes through alternating, runs, random and runs over the clip); 60-naive-synthetic is the
   same pattern within +-1 ms (--jitter-ms) for teaching the metric. The random draws come from pcg32.py, so they never change.
@@ -123,8 +124,8 @@ class Speed:
 UI_SCROLL = (Fraction(192), Fraction(288), Fraction(384), Fraction(768))
 # The default virtual pixel size: 2 x 2 video pixels, so a timing error moves a box in steps a viewer on a large screen can see
 DEFAULT_PIXEL_SIZE = 2
-# Every clip's length: the jitter profiles are laid out over it (2 s per quarter of the mixed jitter pattern, 4 s each of single late
-# frames and late spells), so every video shows them the same way
+# Every clip's length: the jitter profiles are laid out over it (2 s per quarter of the mixed jitter pattern; for the realistic loads
+# 4 s each of single late frames and late spells), so every video shows them the same way
 CLIP_SECONDS = Fraction(8)
 
 
