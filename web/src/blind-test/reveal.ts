@@ -2,13 +2,52 @@
 // practice and the results list.
 
 import { errorChart } from "../charts/error-chart";
+import type { ModeEntry } from "../manifest";
 import type { PixelVideo, PlaybackHealth } from "../video/pixel-video";
 import { expectedAnswer, isCorrect, type Answer, type Trial } from "./trials";
+
+/** A box's mode in a few words, for the preference answers: "perfect 30 fps", "jittery 60 fps". */
+export function choiceName(mode: ModeEntry): string {
+  return `${mode.timer === "ideal" ? "perfect" : "jittery"} ${mode.rate} fps`;
+}
+
+/** What a preference answer chose: the chosen box's mode in a few words, or "no difference". */
+export function preferenceChoice(trial: Trial, answer: Answer): string {
+  if (answer === "same") return "no difference";
+  return choiceName(answer === "top" ? trial.clip.video.top : trial.clip.video.bottom);
+}
+
+/** The movements from slowest to fastest, for ordering per-movement summaries. */
+const MOTION_ORDER = ["slow", "normal", "fast"];
+
+/** The preference answers counted by choice, per movement from slow to fast (the answer can change with the speed: faster motion
+ * may favour the higher frame rate), one line each: "Slow: perfect 30 fps ×2", "Normal: perfect 30 fps ×1, jittery 60 fps ×1", ...
+ * Empty when there were none. */
+export function preferenceTally(answers: readonly { trial: Trial; answer: Answer }[]): string[] {
+  const byMotion = new Map<string, Map<string, number>>();
+  for (const { trial, answer } of answers) {
+    if (trial.definition.category !== "preference") continue;
+    const counts = byMotion.get(trial.motion) ?? new Map<string, number>();
+    const choice = preferenceChoice(trial, answer);
+    counts.set(choice, (counts.get(choice) ?? 0) + 1);
+    byMotion.set(trial.motion, counts);
+  }
+  const rank = (motion: string): number => {
+    const index = MOTION_ORDER.indexOf(motion);
+    return index < 0 ? MOTION_ORDER.length : index;
+  };
+  return [...byMotion]
+    .sort(([x], [y]) => rank(x) - rank(y))
+    .map(([motion, counts]) => {
+      const choices = [...counts].map(([name, count]) => `${name} ×${count}`).join(", ");
+      return `${motion.charAt(0).toUpperCase()}${motion.slice(1)}: ${choices}`;
+    });
+}
 
 /** The one-word-ish verdict of an answer. */
 export function verdict(trial: Trial, answer: Answer): string {
   const correct = isCorrect(trial, answer);
-  if (correct === null) return answer === "same" ? "You saw no difference" : `You chose the ${answer} box`;
+  if (correct === null) return answer === "same" ? "You saw no difference" : `You chose the ${preferenceChoice(trial, answer)}`;
   if (correct) return "Correct";
   const expected = expectedAnswer(trial);
   if (expected === "same") return "They were the same";

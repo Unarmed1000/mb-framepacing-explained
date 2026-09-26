@@ -54,10 +54,13 @@ describe("the trial definitions", () => {
     expect([count("identical"), count("pacing"), count("frame-rate"), count("preference")]).toEqual([2, 1, 1, 1]);
   });
 
-  it("never show 20 fps, and ask every trial at the normal and the fast movement", () => {
+  it("never show 20 fps; ask every trial at the normal and the fast movement, the preference also at the slow one", () => {
     expect(DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("20")))).toEqual([]);
-    expect(DEFINITIONS.trials.every((trial) => trial.motions === undefined)).toBe(true);
     expect(DEFINITIONS.motions).toEqual(["normal", "fast"]);
+    for (const trial of DEFINITIONS.trials)
+      expect(trial.motions ?? DEFINITIONS.motions).toEqual(
+        trial.category === "preference" ? ["normal", "fast", "slow"] : ["normal", "fast"],
+      );
   });
 
   it("never compare two bad timers", () => {
@@ -76,25 +79,29 @@ describe("the trial definitions", () => {
     expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
     // At fast the warm-up pair (perfect 60 against the ±4 ms timer) is also the pacing question's pair
     expect(pairs.get("fast")).toHaveLength(2 + 3 * 2);
-    expect([...pairs.keys()].sort()).toEqual(["fast", "normal"]);
+    // Slow: only the preference pair, both ways round
+    expect(pairs.get("slow")).toEqual([
+      ["30", "60-naive-4ms"],
+      ["60-naive-4ms", "30"],
+    ]);
   });
 });
 
 describe("a run", () => {
   it("starts with the warm-up, then every pair in each of its movements and both top/bottom orders", () => {
     const run = buildRun(library(), seededRandom(1));
-    expect(run).toHaveLength(17);
+    expect(run).toHaveLength(19);
     expect(run[0]?.definition.category).toBe("warm-up");
     expect(run[0]?.motion).toBe("fast");
     const ids = run.slice(1).map((trial) => trial.id);
-    expect(new Set(ids).size).toBe(16);
+    expect(new Set(ids).size).toBe(18);
     for (const trial of DEFINITIONS.trials) {
       for (const motion of trial.motions ?? DEFINITIONS.motions) {
         if (trial.a === trial.b) expect(ids).toContain(`${trial.id}-${motion}`);
         else for (const top of [trial.a, trial.b]) expect(ids).toContain(`${trial.id}-${motion}-top-${top}`);
       }
     }
-    expect(run.map((trial) => trial.position)).toEqual([...Array(17).keys()]);
+    expect(run.map((trial) => trial.position)).toEqual([...Array(19).keys()]);
   });
 
   it("puts the questions in a different random order from run to run", () => {
@@ -112,7 +119,7 @@ describe("a run", () => {
     const run = buildRun(library(), seededRandom(3));
     const pacingFast = run.filter((trial) => trial.definition.id === "pacing-60" && trial.motion === "fast");
     expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-4ms"]));
-    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast"]));
+    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast", "slow"]));
   });
 });
 
@@ -154,6 +161,10 @@ describe("loading the clips", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-    expect(fetched.sort()).toEqual(["videos/box/fast/manifest.json", "videos/box/normal/manifest.json"]);
+    expect(fetched.sort()).toEqual([
+      "videos/box/fast/manifest.json",
+      "videos/box/normal/manifest.json",
+      "videos/box/slow/manifest.json",
+    ]);
   });
 });

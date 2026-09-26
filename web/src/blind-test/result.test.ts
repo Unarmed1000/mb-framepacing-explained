@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ModeEntry, VideoEntry } from "../manifest";
 import { browserFamily, buildRecord, RESULT_FORMAT, type AnsweredTrial } from "./result";
-import { verdict } from "./reveal";
+import { preferenceTally, verdict } from "./reveal";
 import { DEFINITIONS, type Trial, type TrialDefinition } from "./trials";
 
 const mode = (name: string): ModeEntry => ({
@@ -41,8 +41,30 @@ describe("verdict", () => {
     expect(verdict(trial("pacing-60", "60", "60-naive-heavy"), "same")).toBe("There was a difference");
     expect(verdict(trial("same-60", "60", "60"), "top")).toBe("They were the same");
     expect(verdict(trial("same-60", "60", "60"), "same")).toBe("Correct");
-    expect(verdict(trial("pref-30-vs-bad-60", "30", "60-naive-4ms"), "bottom")).toBe("You chose the bottom box");
+    expect(verdict(trial("pref-30-vs-bad-60", "30", "60-naive-4ms"), "bottom")).toBe("You chose the jittery 60 fps");
+    expect(verdict(trial("pref-30-vs-bad-60", "60-naive-4ms", "30"), "bottom")).toBe("You chose the perfect 30 fps");
     expect(verdict(trial("pref-30-vs-bad-60", "30", "60-naive-4ms"), "same")).toBe("You saw no difference");
+  });
+});
+
+describe("the preference tally", () => {
+  it("counts each choice by name, whichever box it was in, per movement from slow to fast", () => {
+    const at = (motion: string, top: string, bottom: string): Trial => ({ ...trial("pref-30-vs-bad-60", top, bottom), motion });
+    const answers = [
+      { trial: at("fast", "30", "60-naive-4ms"), answer: "bottom" as const },
+      { trial: at("fast", "60-naive-4ms", "30"), answer: "top" as const },
+      { trial: at("slow", "30", "60-naive-4ms"), answer: "top" as const },
+      { trial: at("slow", "60-naive-4ms", "30"), answer: "bottom" as const },
+      { trial: at("normal", "30", "60-naive-4ms"), answer: "top" as const },
+      { trial: at("normal", "60-naive-4ms", "30"), answer: "same" as const },
+      { trial: trial("pacing-60", "60", "60-naive-4ms"), answer: "top" as const },
+    ];
+    expect(preferenceTally(answers)).toEqual([
+      "Slow: perfect 30 fps ×2",
+      "Normal: perfect 30 fps ×1, no difference ×1",
+      "Fast: jittery 60 fps ×2",
+    ]);
+    expect(preferenceTally(answers.slice(6))).toEqual([]);
   });
 });
 

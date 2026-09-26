@@ -1,5 +1,5 @@
 {
-  "testVersion": 17,
+  "testVersion": 18,
   "clip": {
     "width": 1280,
     "height": 384,
@@ -31,7 +31,8 @@
       "category": "preference",
       "a": "30",
       "b": "60-naive-4ms",
-      "smoother": null
+      "smoother": null,
+      "motions": ["normal", "fast", "slow"]
     },
     {
       "id": "same-60",

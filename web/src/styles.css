@@ -629,3 +629,10 @@ code {
   color: var(--muted);
   font-size: 14px;
 }
+
+/* The preference choices, one line per movement, under the category's explanation */
+.tally {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+}

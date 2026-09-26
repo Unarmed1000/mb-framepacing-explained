@@ -3,7 +3,7 @@
 
 import { latestViewingReport, overall } from "../checks/viewing";
 import { PixelVideo } from "../video/pixel-video";
-import { answerBar, DEFINITION, QUESTION, revealCard, verdict } from "./reveal";
+import { answerBar, DEFINITION, preferenceTally, QUESTION, revealCard, verdict } from "./reveal";
 import {
   buildRecord,
   downloadRecord,
@@ -21,7 +21,10 @@ const CATEGORIES: Record<Category, { name: string; meaning: string }> = {
   pacing: { name: "Pacing", meaning: "The same frame rate, one box with a jittery timer: the stutter this page is about." },
   "frame-rate": { name: "Frame rate", meaning: "A 60 against a 30: the 60 is smoother, even when both are evenly paced." },
   identical: { name: "Identical clips", meaning: "The same clip twice: most people see a difference that is not there." },
-  preference: { name: "Preference", meaning: "Each has a different weakness: not scored, your choices are shown." },
+  preference: {
+    name: "Preference",
+    meaning: "Each has a different weakness: not scored; your choices per movement, as the answer can change with the speed.",
+  },
 };
 
 export function blindTestSlide(): HTMLElement {
@@ -41,7 +44,7 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
     <p class="eyebrow">Blind test</p>
     <h1>${questions().length + 1} questions, one answer each</h1>
     <p class="lead">
-      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement. Each pair loops; answer when you are sure. Some pairs are the same clip
+      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement (the preference pair also at a small, slow one). Each pair loops; answer when you are sure. Some pairs are the same clip
       twice, and some have no right answer. Nothing leaves your browser.
     </p>
     <p class="note">
@@ -130,13 +133,18 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
     const row = document.createElement("div");
     row.className = "category-row";
     const scored = byCategory[category];
-    const value = scored
-      ? `${scored.correct} of ${scored.of}`
-      : `${answers.filter((a) => a.trial.definition.category === category).length} answered`;
+    const value = scored ? `${scored.correct} of ${scored.of}` : "Not scored";
     row.innerHTML = `<span class="category-name"></span><span class="category-score"></span><span class="category-meaning"></span>`;
     row.querySelector(".category-name")!.textContent = CATEGORIES[category].name;
     row.querySelector(".category-score")!.textContent = value;
     row.querySelector(".category-meaning")!.textContent = CATEGORIES[category].meaning;
+    if (category === "preference") {
+      const tally = document.createElement("ul");
+      tally.className = "tally";
+      for (const line of preferenceTally(answers))
+        tally.append(Object.assign(document.createElement("li"), { textContent: line }));
+      row.querySelector(".category-meaning")!.append(tally);
+    }
     categories.append(row);
   }
   slide.querySelector(".setup")!.textContent = viewingSummary(record);

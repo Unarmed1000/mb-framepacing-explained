@@ -140,7 +140,7 @@ export interface Question {
   top: string;
 }
 
-/** Every question after the warm-up: each trial in each of its movements (normal and fast) and, when its two
+/** Every question after the warm-up: each trial in each of its movements (normal and fast; the preference also slow) and, when its two
  * modes differ, with each of them on top once. */
 export function questions(definitions: Definitions = DEFINITIONS): Question[] {
   return definitions.trials.flatMap((definition) =>
