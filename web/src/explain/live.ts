@@ -45,24 +45,25 @@ export function liveComparison(motion: string, top: string, bottom: string, capt
   return holder;
 }
 
-/** Video rows above the divider line, where the top box moves (as the video tool lays it out: the divider is height / 180 thick,
- * at least 1, in the middle). */
-export function rowsAboveDivider(height: number): number {
+/** The video rows of one box's half, as the video tool lays it out (the divider in the middle, height / 180 thick, at least 1):
+ * top from the first row to the divider, bottom from just below it (one row of margin, so no part of the divider shows) to the end. */
+export function halfRows(height: number, half: "top" | "bottom"): { from: number; to: number } {
   const thickness = Math.max(1, Math.floor(height / 180));
-  return Math.floor((height - thickness) / 2);
+  const divider = Math.floor((height - thickness) / 2);
+  return half === "top" ? { from: 0, to: divider } : { from: divider + thickness + 1, to: height };
 }
 
-/** One box alone: the top half of a clip with `mode` in both halves, at 1:1 device pixels, with a label under it. */
-export function singleBox(motion: string, mode: string, label: string): HTMLElement {
+/** One box alone, at 1:1 device pixels, with a label under it: one half of the clip with `top` above and `bottom` below. */
+export function singleBox(motion: string, top: string, bottom: string, half: "top" | "bottom", label: string): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live single";
   const folder = folderFor(motion);
   loadManifest(folder)
     .then((manifest) => {
-      const video = findClip(manifest.videos, mode, mode);
-      if (!video) throw new Error(`${folder}: no clip with ${mode} in both halves`);
+      const video = findClip(manifest.videos, top, bottom);
+      if (!video) throw new Error(`${folder}: no clip with ${top} on top and ${bottom} below`);
       const player = new PixelVideo(`${folder}/${video.file}`, { width: video.width, height: video.height }, video.fps, {
-        visibleRows: rowsAboveDivider(video.height),
+        rows: halfRows(video.height, half),
         label: `One box moving: ${label}`,
       });
       const text = document.createElement("p");

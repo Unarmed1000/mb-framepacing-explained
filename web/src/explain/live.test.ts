@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { VideoEntry } from "../manifest";
-import { findClip, rowsAboveDivider } from "./live";
+import { findClip, halfRows } from "./live";
 
 const clip = (scene: string, top: string, bottom: string): VideoEntry =>
   ({ file: `${scene}-${top}-${bottom}.mp4`, scene, top: { mode: top }, bottom: { mode: bottom } }) as unknown as VideoEntry;
@@ -18,10 +18,12 @@ describe("findClip", () => {
   });
 });
 
-describe("rowsAboveDivider", () => {
-  it("ends the top box's half where the video tool draws the divider", () => {
-    // 384 high: a 2 px divider from row 191; 720 high: a 4 px divider from row 358
-    expect(rowsAboveDivider(384)).toBe(191);
-    expect(rowsAboveDivider(720)).toBe(358);
+describe("halfRows", () => {
+  it("splits a clip at the divider the video tool draws, leaving the divider out", () => {
+    // 384 high: a 2 px divider on rows 191-192; 720 high: a 4 px divider on rows 358-361
+    expect(halfRows(384, "top")).toEqual({ from: 0, to: 191 });
+    expect(halfRows(384, "bottom")).toEqual({ from: 194, to: 384 });
+    expect(halfRows(720, "top")).toEqual({ from: 0, to: 358 });
+    expect(halfRows(720, "bottom")).toEqual({ from: 363, to: 720 });
   });
 });

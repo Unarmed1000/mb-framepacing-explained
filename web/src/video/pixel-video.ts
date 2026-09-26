@@ -48,17 +48,17 @@ export class PixelVideo {
   /** Holds the video; when only some rows are shown, it clips the rest. */
   private readonly frame: HTMLDivElement;
 
-  /** `visibleRows`: show only the video's first rows (still at 1:1 device pixels), e.g. the top box of a pair. */
+  /** `rows`: show only these video rows, from (inclusive) to (exclusive), still at 1:1 device pixels, e.g. one box of a pair. */
   constructor(
     src: string,
     private readonly size: Size,
     private readonly fps: number,
-    private readonly options: { visibleRows?: number; label?: string } = {},
+    private readonly options: { rows?: { from: number; to: number }; label?: string } = {},
   ) {
     this.element = document.createElement("div");
     this.element.className = "pixel-video";
     this.frame = document.createElement("div");
-    this.frame.className = options.visibleRows === undefined ? "pixel-frame" : "pixel-frame cropped";
+    this.frame.className = options.rows === undefined ? "pixel-frame" : "pixel-frame cropped";
     this.video = document.createElement("video");
     Object.assign(this.video, {
       src,
@@ -102,9 +102,11 @@ export class PixelVideo {
     const rect = this.video.getBoundingClientRect();
     const dx = snapOffset(rect.left, ratio);
     const dy = snapOffset(rect.top, ratio);
-    this.video.style.transform = `translate(${dx}px, ${dy}px)`;
-    // The clip ends exactly below the last shown row: the rows' height plus the shift that snapped the video
-    if (this.options.visibleRows !== undefined) this.frame.style.height = `${this.options.visibleRows / ratio + dy}px`;
+    // Shown rows: the video moves up by the rows above them (whole device pixels, so it stays on the grid), and the frame ends
+    // exactly below the last one: the rows' height plus the shift that snapped the video
+    const rows = this.options.rows;
+    this.video.style.transform = `translate(${dx}px, ${dy - (rows ? rows.from / ratio : 0)}px)`;
+    if (rows) this.frame.style.height = `${(rows.to - rows.from) / ratio + dy}px`;
     this.report();
   }
 

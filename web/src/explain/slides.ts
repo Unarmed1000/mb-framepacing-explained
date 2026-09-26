@@ -70,7 +70,13 @@ const twoClocks: Slide = {
     element
       .querySelector(".single-holder")!
       .replaceWith(
-        singleBox("normal", "60", "60 fps with the perfect timer: every frame shows exactly the moment it is on screen."),
+        singleBox(
+          "normal",
+          "60",
+          "60",
+          "top",
+          "60 fps with the perfect timer: every frame shows exactly the moment it is on screen.",
+        ),
       );
     return element;
   },
@@ -86,9 +92,22 @@ const timerJitterSlide: Slide = {
       `Frames reach the screen perfectly evenly, but the animation time advances unevenly: the game reads its wall clock a little
       early or late after each flip, and renders the frame for that reading (<strong>delta time jitter</strong>). Gamers Nexus
       compare it to a flipbook with unevenly drawn pages, flipped at a steady tempo.`,
-      `<div class="live-holder"></div>
-      ${figure(timerJitter, "Timer jitter: frames reach the screen on time, but each shows a moment a little off.")}`,
+      `<div class="single-holder"></div>
+      ${figure(timerJitter, "Timer jitter: frames reach the screen on time, but each shows a moment a little off.")}
+      <div class="live-holder"></div>`,
     );
+    element
+      .querySelector(".single-holder")!
+      .replaceWith(
+        singleBox(
+          "normal",
+          "60",
+          "60-naive-4ms",
+          "bottom",
+          "60 fps with a naive timer that reads the clock up to 4 ms early or late: every frame on screen on time, but showing a " +
+            "moment a little off.",
+        ),
+      );
     element
       .querySelector(".live-holder")!
       .replaceWith(
