@@ -96,7 +96,8 @@ The videos simulate a game loop on a plain vsync display: every frame makes its 
 | `60-naive-light` / `-typical` / `-heavy` (also `30-`, `-realistic`) | The game's wall clock read a little late or early after the flip, as under system load                  | Delta time jitter, animation error |
 | `60-naive-1ms` … `-4ms`, `60-naive-synthetic`                       | A ±N ms window, or a made-up pattern for teaching the metric; alternating errors look like microstutter | Delta time jitter, microstutter    |
 
-Not simulated yet: late frames (hitches, short and long frames), dropped and runt frames, tearing, VRR and input lag. The
+Late and held frames are replayed exactly as the timing diagrams show them (`60-diagram-slow-frames`, …). Not simulated yet:
+random late frames and long hitches, dropped and runt frames, tearing, VRR and input lag. The
 [tool's README](tools/frame_pacing_video/README.md) has the modes, scenes and options; [charts](doc/charts.md) has how to draw the
 `manifest.json` data next to the videos.
 

@@ -54,6 +54,7 @@ How much sooner or later than usual the naive loop reads the clock:
 | `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)   |
 | `60-naive-1ms` … `-4ms` …      | **A ±N ms window** (any size, e.g. `60-naive-2.5ms`), following the jitter pattern (`--jitter-pattern`)                | 60 Hz naive timer, ±1 ms mixed              |
 | `60-naive-synthetic` …         | The jitter pattern within ±1 ms (`--jitter-ms`), for teaching the metric                                               | 60 Hz naive timer, synthetic ±1 ms mixed    |
+| `60-diagram-slow-frames` …     | **A timing diagram, replayed** (see below)                                                                             | 60 Hz, slow frames (as the diagram)         |
 
 - **System load:** the clock is read after the frame's first work (input, OS messages), usually about 2 ms plus 0–0.3 ms of noise
   (`--noise-ms`); that constant part is latency. How late the thread gets there depends on what else runs: background work,
@@ -64,6 +65,15 @@ How much sooner or later than usual the naive loop reads the clock:
   using the CPU, with the same share of longer reads in both halves. (A spell's error only shows at its ends, which is why the demo
   profile has none: its second half would look much lighter.) Unity measured 6.854, 7.423 and 6.691 ms at a steady
   144 Hz, whose frames are 6.944 ms.
+- **Timing diagrams, replayed** (`RATE-diagram-NAME`, e.g. `60-diagram-slow-frames`, `60-diagram-half-rate-bad-pacing`): the
+  frames of one of the [timing diagrams](../timing_diagrams) exactly as the diagram shows them, when each is shown and which
+  animation time it shows, with one diagram refresh per frame of the mode's rate (the diagram's 100 ms is 16.7 ms at 60 Hz).
+  The diagram is reduced to its smallest repeating unit (slow frames: a frame on time, one a refresh late, the one that catches
+  up), repeated back to back; when it does not divide the clip, on-time frames at full rate fill each repetition. `-every-Ns`
+  repeats it only every N seconds, with on-time frames between (`60-diagram-slow-frames-every-1s`). Every diagram at a fixed
+  refresh rate can be replayed: `perfect-timer`, `timer-jitter`, `slow-frames`, `half-rate-even`, `half-rate-bad-pacing`,
+  `switching-naive`, `switching-hysteresis`, `recovery-half-rate`, `recovery-targeting`. The VRR diagram cannot: its frames
+  appear between refreshes, which needs a much finer video (about 240 fps) and a display to match.
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
   really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also

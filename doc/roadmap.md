@@ -28,7 +28,9 @@ the topics interactively. Notes: [the web page](web-page.md).
 
 - [ ] A vsync timer mode: the naive wall-clock reading rounded to whole refreshes, next to the naive timer, plus a wake-up late
       by more than half a refresh (where it fails).
-- [ ] Not simulated yet: late frames (hitches, short and long frames), dropped and runt frames, tearing, VRR, input lag.
+- [x] Late and held frames as the timing diagrams show them: `RATE-diagram-NAME` replays a diagram's frames exactly.
+- [ ] Not simulated yet: random late frames and long hitches, dropped and runt frames, tearing, VRR, input lag.
+- [ ] VRR on video: frames between refreshes need a finer video (about 240 fps) and a display that shows it.
 - [ ] 40 fps on 120 Hz.
 - [x] A slow box speed (the normal timing on a quarter of the path), better suited to 20 Hz (`--speed slow`). The blind test
       dropped its 20 fps questions, so it is unused there for now.

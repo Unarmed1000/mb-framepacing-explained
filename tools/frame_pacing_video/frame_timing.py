@@ -110,20 +110,31 @@ class FrameMode:
     window: Fraction | None = None
     # A system load at its realistic rates (LOAD_RANGES) instead of the demo profile (errors in most frames)
     realistic: bool = False
+    # A replayed timing diagram (diagram_replay): its frames, late or held exactly as the diagram shows them, repeated to fill the
+    # clip, every `every` seconds when set
+    diagram: str | None = None
+    every: Fraction | None = None
 
 
 MODE_PATTERN = re.compile(
-    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms))?"
+    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms)"
+    + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?)?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
 
 
 def parse_mode(name: str) -> FrameMode:
-    """A mode from its name: RATE (the ideal timer, e.g. 60) or RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical)."""
+    """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical) or
+    RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g. 60-diagram-slow-frames)."""
     match = MODE_PATTERN.fullmatch(name)
-    if match is None or (match["ms"] is not None and Fraction(match["ms"]) <= 0):
-        raise ValueError(f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60) or RATE-naive-NOISE with NOISE {NOISE_NAMES}")
+    if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every")):
+        raise ValueError(
+            f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES}, or "
+            + "RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames)"
+        )
     rate = int(match["rate"])
+    if match["diagram"] is not None:
+        return FrameMode(name, rate, diagram=match["diagram"], every=None if match["every"] is None else Fraction(match["every"]))
     if match["ms"] is not None:
         return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, Fraction(match["ms"]) / 1000)
     noise = match["load"] or match["synthetic"]
@@ -202,6 +213,10 @@ def validate(mode: FrameMode, parameters: TimingParameters) -> None:
             raise ValueError(f"unknown jitter pattern {parameters.synthetic_pattern!r}: use {' or '.join(JITTER_PATTERNS)}")
         if not 0 <= 2 * parameters.synthetic < 1 / Fraction(mode.rate):
             raise ValueError(f"the synthetic jitter of {format_ms(parameters.synthetic)} must be less than half the {mode.rate} Hz frame time")
+    if mode.diagram is not None:
+        from diagram_replay import pattern  # noqa: PLC0415  (only diagram modes need the diagrams)
+
+        _ = pattern(mode.diagram)
     busy = parameters.largest_wake(mode) + parameters.frame_cost * frame_time
     if busy >= frame_time:
         raise ValueError(
@@ -350,6 +365,12 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     interval = swap_interval(mode, parameters.fps)
     if refreshes % interval:
         raise ValueError(f"{refreshes} refreshes are not a whole number of {mode.rate} Hz frames")
+    if mode.diagram is not None:
+        from diagram_replay import schedule  # noqa: PLC0415
+
+        flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps)
+        # The perfect timer reads no clock: each frame's sample is its own flip
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation))
     count = refreshes // interval
     frame_time = Fraction(interval) / parameters.fps
     wakes = wake_delays(mode, parameters, count)
@@ -372,6 +393,11 @@ def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
 
 def describe(mode: FrameMode, parameters: TimingParameters) -> str:
     """The text written next to a box, for example "60 Hz naive timer, heavy load"."""
+    if mode.diagram is not None:
+        from diagram_replay import title  # noqa: PLC0415
+
+        every = "" if mode.every is None else f", every {float(mode.every):g} s"
+        return f"{mode.rate} Hz, {title(mode.diagram)} (as the diagram{every})"
     if mode.timer is Timer.IDEAL:
         return f"{mode.rate} Hz ideal timer"
     if mode.noise is Noise.SYNTHETIC:

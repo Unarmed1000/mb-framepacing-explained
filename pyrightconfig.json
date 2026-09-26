@@ -7,7 +7,8 @@
   "venv": ".venv",
   "executionEnvironments": [
     {
-      "root": "tools/frame_pacing_video"
+      "root": "tools/frame_pacing_video",
+      "extraPaths": ["tools/timing_diagrams"]
     },
     {
       "root": "tools/timing_diagrams",
