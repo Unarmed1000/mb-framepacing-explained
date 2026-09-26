@@ -168,7 +168,11 @@ export function showResultHistory(
     className: "result-position",
     textContent: `Result ${index + 1} of ${history.length} · ${record.date}`,
   });
-  nav.append(step(index - 1, "‹ Older"), position, step(index + 1, "Newer ›"));
+  const kept = Object.assign(document.createElement("span"), {
+    className: "result-kept",
+    textContent: "Kept in this browser only",
+  });
+  nav.append(step(index - 1, "‹ Older"), position, step(index + 1, "Newer ›"), kept);
   slide.prepend(nav);
 }
 

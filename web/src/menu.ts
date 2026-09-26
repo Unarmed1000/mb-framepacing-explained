@@ -33,7 +33,6 @@ function renderMenu(body: HTMLElement): void {
       <div class="card menu-card">
         <h2>Blind test</h2>
         <p>A warm-up, then ${questions().length} pairs of moving boxes: which one moves more smoothly?</p>
-        <p class="previous-note"></p>
         <div class="menu-actions">
           <a class="button" href="#/warm-up">Take the test →</a>
           <button type="button" class="button ghost" data-action="previous">Previous results</button>
@@ -49,12 +48,8 @@ function renderMenu(body: HTMLElement): void {
     </div>`;
   const history = loadHistory();
   const previous = body.querySelector<HTMLButtonElement>('[data-action="previous"]')!;
-  const note = body.querySelector(".previous-note")!;
-  if (history.length === 0) {
-    previous.disabled = true;
-    note.textContent = "No results yet in this browser: they appear here after the test.";
-  } else {
-    note.textContent = `${history.length} result${history.length === 1 ? "" : "s"} kept in this browser only.`;
+  if (history.length === 0) previous.disabled = true;
+  else {
     previous.addEventListener("click", () => {
       loadClips().then(
         (library) => showResultHistory(body, library, history, history.length - 1, () => renderMenu(body)),

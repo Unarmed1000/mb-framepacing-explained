@@ -698,3 +698,9 @@ code {
 .result-position {
   color: var(--muted);
 }
+
+.result-kept {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 14px;
+}
