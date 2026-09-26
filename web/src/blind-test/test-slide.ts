@@ -137,6 +137,41 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
   actions.append(again);
 }
 
+/** The saved results (oldest first), showing the one at `index` with older and newer buttons to step through them. */
+export function showResultHistory(
+  slide: HTMLElement,
+  library: ClipLibrary,
+  history: readonly ResultRecord[],
+  index: number,
+  back: () => void,
+): void {
+  const record = history[index];
+  if (!record) return;
+  slide.querySelectorAll("video").forEach((video) => video.pause());
+  showSavedResult(slide, library, record, back);
+  const nav = document.createElement("div");
+  nav.className = "result-nav";
+  const step = (to: number, text: string): HTMLButtonElement => {
+    const button = Object.assign(document.createElement("button"), {
+      type: "button",
+      className: "button ghost",
+      textContent: text,
+      disabled: history[to] === undefined,
+    });
+    button.addEventListener("click", () => {
+      showResultHistory(slide, library, history, to, back);
+      slide.closest(".slides")?.scrollTo(0, 0);
+    });
+    return button;
+  };
+  const position = Object.assign(document.createElement("span"), {
+    className: "result-position",
+    textContent: `Result ${index + 1} of ${history.length} · ${record.date}`,
+  });
+  nav.append(step(index - 1, "‹ Older"), position, step(index + 1, "Newer ›"));
+  slide.prepend(nav);
+}
+
 /** A saved result, shown like one just taken (its questions can be watched again), with a way back. A result of an earlier test
  * version, whose clips are gone, lists its questions with their verdicts and what each box was, without the video. */
 export function showSavedResult(slide: HTMLElement, library: ClipLibrary, record: ResultRecord, back: () => void): void {

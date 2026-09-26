@@ -1,15 +1,12 @@
-// The menu after the viewing guide: take the blind test, look at a previous result (when this browser has one), or go straight
-// to one of the explanation slides.
+// The menu after the viewing guide: read the articles (the explanation slides), take the blind test, or step through the
+// previous results (when this browser has any).
 
 import { loadHistory } from "./blind-test/result";
-import { showSavedResult } from "./blind-test/test-slide";
+import { showResultHistory } from "./blind-test/test-slide";
 import { loadClips, questions } from "./blind-test/trials";
 import { missingClips } from "./blind-test/warmup";
 import { EXPLANATION_SLIDES } from "./explain/slides";
 import type { Slide } from "./slides";
-
-/** How many of the latest results the menu offers. */
-const PREVIOUS_SHOWN = 5;
 
 export const menuSlide: Slide = {
   id: "menu",
@@ -34,56 +31,34 @@ function renderMenu(body: HTMLElement): void {
       answers away.</p>
     <div class="menu">
       <div class="card menu-card">
+        <h2>Articles</h2>
+        <p>What the test shows and how games get it right, one topic per slide: ${EXPLANATION_SLIDES.length} short articles with
+          diagrams and live video.</p>
+        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Read the articles →</a>
+      </div>
+      <div class="card menu-card">
         <h2>Blind test</h2>
         <p>A warm-up, then ${questions().length} pairs of moving boxes: which one moves more smoothly?</p>
-        <a class="button" href="#/warm-up">Take the test →</a>
-      </div>
-      <div class="card menu-card">
-        <h2>Previous results</h2>
+        <div class="menu-actions">
+          <a class="button" href="#/warm-up">Take the test →</a>
+          <button type="button" class="button ghost" data-action="previous">Previous results</button>
+        </div>
         <p class="previous-note"></p>
-        <div class="previous"></div>
-      </div>
-      <div class="card menu-card">
-        <h2>Articles</h2>
-        <ol class="articles"></ol>
       </div>
     </div>`;
-  const history = loadHistory().slice(-PREVIOUS_SHOWN).reverse();
+  const history = loadHistory();
+  const previous = body.querySelector<HTMLButtonElement>('[data-action="previous"]')!;
   const note = body.querySelector(".previous-note")!;
-  const previous = body.querySelector(".previous")!;
   if (history.length === 0) {
-    note.textContent = "None yet in this browser: your results appear here after the test.";
-    previous.append(
-      Object.assign(document.createElement("button"), {
-        type: "button",
-        className: "button ghost",
-        disabled: true,
-        textContent: "Show a result",
-      }),
-    );
+    previous.disabled = true;
+    note.textContent = "No results yet in this browser: they appear here after the test.";
   } else {
-    note.textContent = "Kept in this browser only. Open one to see its score and watch its questions again.";
-    history.forEach((record, index) => {
-      const { correct, of } = record.score.overall;
-      const button = Object.assign(document.createElement("button"), {
-        type: "button",
-        className: index === 0 ? "button" : "button ghost",
-        textContent: `${index === 0 ? "Latest · " : ""}${record.date} · ${correct} of ${of} right`,
-      });
-      button.addEventListener("click", () => {
-        loadClips().then(
-          (library) => showSavedResult(body, library, record, () => renderMenu(body)),
-          (error: unknown) => body.replaceChildren(missingClips(error)),
-        );
-      });
-      previous.append(button);
+    note.textContent = `${history.length} result${history.length === 1 ? "" : "s"} kept in this browser only.`;
+    previous.addEventListener("click", () => {
+      loadClips().then(
+        (library) => showResultHistory(body, library, history, history.length - 1, () => renderMenu(body)),
+        (error: unknown) => body.replaceChildren(missingClips(error)),
+      );
     });
-  }
-  const articles = body.querySelector(".articles")!;
-  for (const slide of EXPLANATION_SLIDES) {
-    const link = Object.assign(document.createElement("a"), { href: `#/${slide.id}`, textContent: slide.title });
-    const item = document.createElement("li");
-    item.append(link);
-    articles.append(item);
   }
 }

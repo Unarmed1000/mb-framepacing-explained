@@ -658,12 +658,6 @@ code {
   gap: 8px;
 }
 
-.articles {
-  margin: 12px 0 0;
-  padding-left: 22px;
-  line-height: 1.9;
-}
-
 /* A cropped video (only its first rows): the frame clips the rest */
 .pixel-frame.cropped {
   overflow: hidden;
@@ -673,5 +667,23 @@ code {
 .saved-boxes {
   margin: 0;
   padding: 0 16px 14px 52px;
+  color: var(--muted);
+}
+
+.menu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Stepping through the saved results */
+.result-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.result-position {
   color: var(--muted);
 }
