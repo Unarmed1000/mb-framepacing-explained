@@ -1,5 +1,5 @@
 // The menu after the viewing guide: take the blind test first, or step through the previous results (when this browser has
-// any), then start the explanation (its first slide).
+// any), then start the explanation (its first slide), or go straight to measuring animation error.
 
 import { loadHistory } from "./blind-test/result";
 import { showResultHistory } from "./blind-test/test-slide";
@@ -68,6 +68,13 @@ function renderMenu(body: HTMLElement): void {
         <p>What the test shows and how games get it right, topic by topic, with diagrams and live video.</p>
         <div class="menu-actions">
           <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
+        </div>
+      </div>
+      <div class="card menu-card">
+        <h2>Measure it</h2>
+        <p>Animation error, the one number that catches stutter, and how to measure it on a real display with mb-framepacing.</p>
+        <div class="menu-actions">
+          <a class="button" href="#/measure">Animation error and how to measure it →</a>
         </div>
       </div>
     </div>`;

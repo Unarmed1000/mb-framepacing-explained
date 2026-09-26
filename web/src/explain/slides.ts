@@ -338,7 +338,8 @@ const measure: Slide = {
       "Measure it on a real display: mb-framepacing",
       `The videos here are simulated. <a href="${SISTER}" target="_blank" rel="noopener">mb-framepacing</a> measures animation error
       on the real display output, frame by frame, with the goal of making it easy to measure. It is a cooperative tool: the
-      application writes its frame index and exact animation time into every frame, so neither clock is estimated.`,
+      application writes its frame index and exact animation time into every frame, so neither clock is estimated.
+      <a href="#/two-clocks">What animation error is</a>.`,
       `<div class="guide">
         <div class="card">
           <h2>How it works</h2>
