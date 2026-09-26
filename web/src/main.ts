@@ -73,11 +73,11 @@ const warmup: Slide = { id: "warm-up", title: "Warm-up", render: warmupSlide };
 const blindTest: Slide = { id: "blind-test", title: "Blind test", render: blindTestSlide };
 
 // The blind test comes before the explanations, so they cannot give its answers away
-startSlides(document.querySelector<HTMLElement>("#app")!, [
-  welcome,
-  bestViewing,
-  menuSlide,
-  warmup,
-  blindTest,
-  ...EXPLANATION_SLIDES,
-]);
+startSlides(
+  document.querySelector<HTMLElement>("#app")!,
+  [welcome, bestViewing, menuSlide, warmup, blindTest, ...EXPLANATION_SLIDES],
+  [
+    { href: "#/menu", label: "Menu" },
+    { href: "#/topics", label: "Topics" },
+  ],
+);

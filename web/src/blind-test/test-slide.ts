@@ -137,13 +137,15 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
   actions.append(again);
 }
 
-/** The saved results (oldest first), showing the one at `index` with older and newer buttons to step through them. */
+/** The saved results (oldest first), showing the one at `index` with older and newer buttons to step through them; `open`
+ * shows another one (through the address, so the browser's Back works). */
 export function showResultHistory(
   slide: HTMLElement,
   library: ClipLibrary,
   history: readonly ResultRecord[],
   index: number,
   back: () => void,
+  open: (index: number) => void,
 ): void {
   const record = history[index];
   if (!record) return;
@@ -158,10 +160,7 @@ export function showResultHistory(
       textContent: text,
       disabled: history[to] === undefined,
     });
-    button.addEventListener("click", () => {
-      showResultHistory(slide, library, history, to, back);
-      slide.closest(".slides")?.scrollTo(0, 0);
-    });
+    button.addEventListener("click", () => open(to));
     return button;
   };
   const position = Object.assign(document.createElement("span"), {

@@ -481,19 +481,25 @@ const topics: Slide = {
   },
 };
 
-/** The explanation slides, in order: the topics first. */
+/** A topic's slide with a line above its heading: the topic and where in it this slide is, linking back to the topics. */
+function withTopic(slide: Slide, topic: (typeof TOPICS)[number], position: number): Slide {
+  return {
+    ...slide,
+    render() {
+      const element = slide.render();
+      const line = Object.assign(document.createElement("a"), {
+        className: "topic-line",
+        href: "#/topics",
+        textContent: `‹ ${topic.name} · ${position + 1} of ${topic.slides.length}`,
+      });
+      element.prepend(line);
+      return element;
+    },
+  };
+}
+
+/** The explanation slides, in order: the topics first, then every topic's slides. */
 export const EXPLANATION_SLIDES: readonly Slide[] = [
   topics,
-  twoClocks,
-  timerJitterSlide,
-  invisible,
-  vsyncTimer,
-  slowFramesSlide,
-  halfRate,
-  switching,
-  recovery,
-  vrr,
-  inputLatency,
-  measure,
-  furtherReading,
+  ...TOPICS.flatMap((topic) => topic.slides.map((slide, position) => withTopic(slide, topic, position))),
 ];

@@ -740,3 +740,28 @@ code {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* The top bar's links to the menu and the topics */
+.topbar-links {
+  display: flex;
+  gap: 16px;
+}
+
+.topbar-links a {
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.topbar-links a:hover {
+  color: var(--text);
+}
+
+/* Above an explanation slide's heading: its topic and place in it, back to the topics */
+.topic-line {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+}

@@ -8,18 +8,43 @@ import { missingClips } from "./blind-test/warmup";
 import { EXPLANATION_SLIDES } from "./explain/slides";
 import type { Slide } from "./slides";
 
+const body = document.createElement("div");
+body.className = "slide-body";
+// Whether the results view was opened from the menu in this visit: then Back to the menu is the browser's Back
+let openedFromMenu = false;
+
+/** #/menu: the menu, shown afresh on every visit (so a result just taken is listed); #/menu/results/N: saved result N (oldest
+ * first; the latest without N), with its own address so the browser's Back returns to the menu. */
 export const menuSlide: Slide = {
   id: "menu",
   title: "Menu",
-  render() {
-    const body = document.createElement("div");
-    body.className = "slide-body";
-    renderMenu(body);
-    // The menu is rendered once and kept: show it afresh on every visit, so a result just taken is listed
-    window.addEventListener("hashchange", () => {
-      if (location.hash === "#/menu") renderMenu(body);
-    });
-    return body;
+  render: () => body,
+  route(path) {
+    const [view, number] = path.split("/");
+    if (view !== "results") {
+      openedFromMenu = false;
+      renderMenu(body);
+      return;
+    }
+    const saved = loadHistory();
+    if (saved.length === 0) {
+      location.replace("#/menu");
+      return;
+    }
+    const index =
+      number === undefined ? saved.length - 1 : Math.min(saved.length - 1, Math.max(0, Number.parseInt(number, 10) || 0));
+    loadClips().then(
+      (library) =>
+        showResultHistory(
+          body,
+          library,
+          saved,
+          index,
+          () => (openedFromMenu ? history.back() : (location.hash = "#/menu")),
+          (to) => location.replace(`#/menu/results/${to}`),
+        ),
+      (error: unknown) => body.replaceChildren(missingClips(error)),
+    );
   },
 };
 
@@ -51,10 +76,8 @@ function renderMenu(body: HTMLElement): void {
   if (history.length === 0) previous.disabled = true;
   else {
     previous.addEventListener("click", () => {
-      loadClips().then(
-        (library) => showResultHistory(body, library, history, history.length - 1, () => renderMenu(body)),
-        (error: unknown) => body.replaceChildren(missingClips(error)),
-      );
+      openedFromMenu = true;
+      location.hash = `#/menu/results/${history.length - 1}`;
     });
   }
 }
