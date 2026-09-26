@@ -1,5 +1,5 @@
 {
-  "testVersion": 18,
+  "testVersion": 19,
   "clip": {
     "width": 1280,
     "height": 384,
@@ -8,7 +8,7 @@
   "motions": ["normal", "fast"],
   "warmup": {
     "motions": ["fast"],
-    "pairs": [["60", "60-naive-4ms"]],
+    "pairs": [["60", "60-naive-5ms"]],
     "smoother": "60"
   },
   "trials": [

@@ -8,7 +8,7 @@ playing live, and starts with a blind test. It is still work in progress; the [r
 1. **Welcome**, then **best viewing**: the viewing check (once, on the best viewing slide) and a checklist to fix what it finds (below).
 2. **Menu**: take the blind test, open a previous result (kept in this browser; its questions can be watched again; one
    from an earlier test version lists its answers without the video; disabled when there is none), or jump straight to one of the explanation slides.
-3. **Warm-up**: one easy pair, a perfect 60 against a ±4 ms timer at the fast movement, answered and then revealed with its
+3. **Warm-up**: one easy pair, a perfect 60 against a ±5 ms timer (the worst measured timer error, on every frame) at the fast movement, answered and then revealed with its
    animation error chart.
 4. **Blind test**: "Which box has the smoother movement?", 18 questions in random order after the warm-up: perfect 60 against
    a bad 60 and against a perfect 30, a perfect 30 against a bad 60, and 60 and 30 each against itself. Every pair is asked at the

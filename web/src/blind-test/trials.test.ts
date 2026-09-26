@@ -77,8 +77,8 @@ describe("the trial definitions", () => {
   it("need identical pairs once and the other pairs in both orders, per motion", () => {
     const pairs = requiredPairs();
     expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
-    // At fast the warm-up pair (perfect 60 against the ±4 ms timer) is also the pacing question's pair
-    expect(pairs.get("fast")).toHaveLength(2 + 3 * 2);
+    // At fast also the warm-up pair (perfect 60 against the ±5 ms timer), its own
+    expect(pairs.get("fast")).toHaveLength(2 + 3 * 2 + 2);
     // Slow: only the preference pair, both ways round
     expect(pairs.get("slow")).toEqual([
       ["30", "60-naive-4ms"],

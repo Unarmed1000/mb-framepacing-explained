@@ -1,4 +1,4 @@
-// The warm-up practice slide: one easy pair (a perfect 60 against a ±4 ms window, fast movement), answered, then revealed.
+// The warm-up practice slide: one easy pair (a perfect 60 against a ±5 ms window, fast movement), answered, then revealed.
 
 import type { ModeEntry, VideoEntry } from "../manifest";
 import { PixelVideo } from "../video/pixel-video";

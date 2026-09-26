@@ -138,7 +138,9 @@ const vsyncTimer: Slide = {
       "Fix the animation time before the pacing",
       `A game that renders its frames for the wrong moment has animation error on every frame, however well it paces them. On a
       fixed refresh display with vsync on, every frame appears a whole number of refreshes after the previous one, so the animation
-      time only has to advance in whole refreshes. That needs no modern API or extension.`,
+      time only has to advance in whole refreshes. That needs no modern API or extension. It is for vsync on: with VRR or vsync
+      off there is no refresh grid to round to, and they need other solutions or the more modern APIs that report when frames
+      appear.`,
       `<div class="guide">
         <div class="card">
           <h2>The vsync timer</h2>
@@ -158,13 +160,20 @@ const vsyncTimer: Slide = {
               240 Hz.</li>
             <li>A missed vsync still costs one late frame, but it shows up as a whole extra refresh in the next measurement, so the
               frame after it catches up exactly.</li>
-            <li>Vsync on and a fixed refresh rate, a loop paced by vsync, and an accurate refresh period (a slightly wrong one
-              drifts).</li>
+            <li>Vsync on, a fixed refresh rate and a loop paced by vsync.</li>
+            <li><strong>Watch for drift.</strong> The timer counts refreshes, so it runs on the display's clock: take 60 Hz for a
+              59.94 Hz display and it is 0.1 % off, about 3.6 s per hour. The picture stays smooth, but audio and a game server run on
+              other clocks and slowly disagree. Measure the period over many frames and slew towards the clock that matters in tiny
+              steps; paying it back in whole refreshes is a visible hitch.</li>
             <li>It is the perfect timer of every diagram here and the ideal timer of the videos.</li>
           </ul>
         </div>
       </div>
-      ${more(doc("doc/frame-pacing-strategies.md#first-get-the-animation-time-right"), "Getting the animation time right: signals per platform, drift")}`,
+      <p class="more">
+        <a href="${doc("doc/frame-pacing-strategies.md#first-get-the-animation-time-right")}" target="_blank" rel="noopener">Getting the animation time right ↗</a>
+        <a href="${doc("doc/frame-pacing-strategies.md#appendix-a-vsync-signals-per-platform")}" target="_blank" rel="noopener">Vsync signals per platform ↗</a>
+        <a href="${doc("doc/frame-pacing-strategies.md#appendix-b-drift")}" target="_blank" rel="noopener">Drift ↗</a>
+      </p>`,
     ),
 };
 

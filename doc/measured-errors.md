@@ -54,6 +54,7 @@ The simulated modes over an 8 s clip (our arithmetic, from the generator's timin
 | Mode                                            | Average error per frame | Percent of frame time | Largest | Frames over 1 ms | Close to                                              |
 | ----------------------------------------------- | ----------------------- | --------------------- | ------- | ---------------- | ----------------------------------------------------- |
 | `60-naive-4ms` (mixed pattern)                  | 3.80 ms                 | 22.8 %                | 8.0 ms  | 82 %             | Worse than SLI microstutter                           |
+| `60-naive-5ms` (random pattern, the warm-up)    | 4.13 ms                 | 24.8 %                | 10.0 ms | 99 %             | Croteam's +8.1 / −6.0 ms, on every frame              |
 | `60-naive-4ms` (random pattern, the blind test) | 3.30 ms                 | 19.8 %                | 8.0 ms  | 93 %             | SLI microstutter (17.3 %)                             |
 | `60-naive-heavy` (demo)                         | 2.62 ms                 | 15.7 %                | 9.8 ms  | 65 %             | Far Cry 5 in SLI (2.31 ms, 17.3 %)                    |
 | `60-naive-typical` (demo)                       | 1.68 ms                 | 10.1 %                | 4.0 ms  | 56 %             | GTX 1070 and GTX 980 outliers (11.9 %)                |
@@ -79,7 +80,8 @@ and on at least 88 % in any 2 s of the clip (our arithmetic), because a viewer d
 all 8 s. The size of each error, 3.3 ms on average and up to 8 ms, is within what games measure; how often it happens is harsher
 than a typical game, but it has been measured: the SLI setups above had "2-3ms of animation error per frame" (Far Cry 5), "on
 nearly every frame" (Strange Brigade), and Crimson Desert on a GTX 1070 had "a significant simulation time error value" on
-"almost every frame". The test page says so before it starts.
+"almost every frame". The warm-up goes further on purpose, so it is easy: a ±5 ms window, errors up to 10 ms on 99 % of the frames, about the worst
+timer error measured (Croteam's +8.1 / −6.0 ms) on every frame. The test page says all this before it starts.
 
 Not found: per-game animation error from Digital Foundry (their site blocked the automated fetch), CapFrameX (it reports average
 and P99 animation error, but no published game values turned up), Intel's own presentations, Unreal, Godot and Android's Swappy.

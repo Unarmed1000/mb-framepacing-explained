@@ -61,10 +61,11 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
       twice, and some have no right answer. Nothing leaves your browser.
     </p>
     <p class="note">
-      The badly timed boxes go wrong on nearly every frame, so a few seconds are enough to see it. Each error is the size measured
-      in real games, a few milliseconds, but most games have them less often; setups like multi-GPU SLI have been measured with
-      errors on nearly every frame (<a href="https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/measured-errors.md"
-      target="_blank" rel="noopener">measured in real games ↗</a>).
+      Made to be seen in seconds: the badly timed boxes go wrong on nearly every frame. Each error is the size measured in real
+      games, a few milliseconds, but most games have them less often; setups like multi-GPU SLI have been measured with errors on
+      nearly every frame (<a href="https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/measured-errors.md"
+      target="_blank" rel="noopener">measured in real games ↗</a>). The boxes are also drawn on a 2 × 2 pixel grid, like a 2× zoom,
+      so every step moves twice as many of your screen's pixels.
     </p>
     <p class="setup"></p>
     <p class="history"></p>
