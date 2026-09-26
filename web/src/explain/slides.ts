@@ -431,8 +431,55 @@ const furtherReading: Slide = {
     ),
 };
 
-/** The explanation slides, in order. */
+/** The topics, each a group of slides: the page before the first one links to every slide by topic. */
+const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }[] = [
+  {
+    name: "Stutter and animation error",
+    about: "The two clocks of every frame, and why a steady frame rate can still stutter.",
+    slides: [twoClocks, timerJitterSlide, invisible],
+  },
+  { name: "Getting the timer right", about: "Render every frame for the moment it will be shown.", slides: [vsyncTimer] },
+  {
+    name: "Frame pacing",
+    about: "Frames that reach the screen late or unevenly, and how engines hold and switch rates.",
+    slides: [slowFramesSlide, halfRate, switching, recovery],
+  },
+  { name: "Display and input", about: "What VRR changes, and how pacing meets input latency.", slides: [vrr, inputLatency] },
+  { name: "Go further", about: "Measure it on a real display, and where to read more.", slides: [measure, furtherReading] },
+];
+
+const topics: Slide = {
+  id: "topics",
+  title: "Topics",
+  render() {
+    const element = body(
+      "How it works",
+      "Pick a topic",
+      "Go through the slides in order with Next, or jump straight to a topic.",
+      `<div class="topics"></div>`,
+    );
+    const grid = element.querySelector(".topics")!;
+    for (const topic of TOPICS) {
+      const card = document.createElement("div");
+      card.className = "card topic-card";
+      card.innerHTML = `<h2></h2><p></p><ul class="topic-links"></ul>`;
+      card.querySelector("h2")!.textContent = topic.name;
+      card.querySelector("p")!.textContent = topic.about;
+      const list = card.querySelector("ul")!;
+      for (const slide of topic.slides) {
+        const item = document.createElement("li");
+        item.append(Object.assign(document.createElement("a"), { href: `#/${slide.id}`, textContent: slide.title }));
+        list.append(item);
+      }
+      grid.append(card);
+    }
+    return element;
+  },
+};
+
+/** The explanation slides, in order: the topics first. */
 export const EXPLANATION_SLIDES: readonly Slide[] = [
+  topics,
   twoClocks,
   timerJitterSlide,
   invisible,

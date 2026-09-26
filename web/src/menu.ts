@@ -40,7 +40,7 @@ function renderMenu(body: HTMLElement): void {
       </div>
       <div class="card menu-card">
         <h2>How it works</h2>
-        <p>What the test shows and how games get it right: ${EXPLANATION_SLIDES.length} slides with diagrams and live video.</p>
+        <p>What the test shows and how games get it right, topic by topic, with diagrams and live video.</p>
         <div class="menu-actions">
           <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
         </div>

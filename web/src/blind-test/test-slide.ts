@@ -125,7 +125,7 @@ async function results(slide: HTMLElement, library: ClipLibrary, answers: Answer
   saveToHistory(record);
   const actions = renderResults(slide, record, "Blind test · result", answers.map(foldOut), preferenceTally(answers));
   actions.innerHTML = `
-    <a class="button" href="#/two-clocks">Next: what you just saw, explained →</a>
+    <a class="button" href="#/topics">Next: what you just saw, explained →</a>
     <a class="button ghost" href="#/menu">Menu</a>`;
   actions.append(...recordButtons(record));
   const again = Object.assign(document.createElement("button"), {

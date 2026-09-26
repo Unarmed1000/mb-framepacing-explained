@@ -704,3 +704,22 @@ code {
   color: var(--faint);
   font-size: 14px;
 }
+
+/* The topics page: one card per topic, all the same size, linking to its slides */
+.topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 0 24px;
+}
+
+.topic-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.topic-links {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  line-height: 1.9;
+}
