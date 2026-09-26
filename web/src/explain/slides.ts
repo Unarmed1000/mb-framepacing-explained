@@ -145,7 +145,7 @@ const vsyncTimer: Slide = {
   title: "The vsync timer",
   render: () =>
     body(
-      "First things first",
+      "The fix for delta time jitter",
       "Fix the animation time before the pacing",
       `A game that renders its frames for the wrong moment has animation error on every frame, however well it paces them. On a
       fixed refresh display with vsync on, every frame appears a whole number of refreshes after the previous one, so the animation
@@ -438,7 +438,11 @@ const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }
     about: "Animation error, and the first cause of stutter: delta time jitter.",
     slides: [twoClocks, timerJitterSlide, invisible],
   },
-  { name: "Getting the timer right", about: "Render every frame for the moment it will be shown.", slides: [vsyncTimer] },
+  {
+    name: "Fixing delta time jitter",
+    about: "The vsync timer: round each measured frame time to whole refreshes, so every frame shows the moment it is on screen.",
+    slides: [vsyncTimer],
+  },
   {
     name: "Stutter from late frames",
     about:
