@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate the timing diagrams of the docs: SVG timelines of a game loop on a display.
 
-Each diagram shows the two clocks behind animation error. The render row has one box per frame, labelled with the frame's
-animation time (the moment of game time it shows) and as wide as its rendering takes; an arrow marks where it is presented. The
+Each diagram shows the two clocks behind animation error. The render row has one box per frame, labelled with its predicted
+display time (when the game expects it to be shown, which is its animation time) and as wide as its rendering takes; an arrow marks
+where it is presented. Whether it really appears at its predicted display time is what the diagram shows. The
 display row shows which frame is on screen at each refresh: green when it shows that refresh's moment, light green when it is held
 for a refresh as intended (swap interval 2), amber when the previous frame is held because the next one is not ready, red when it
 shows another moment. The time of every refresh is written just below it. Under that, for every frame when it first appears, the
@@ -71,7 +72,7 @@ ROWS_Y = AXIS_Y + 36
 ROW_STEP = 26
 ROW_LABELS = ("Animation time step", "Display time", "Animation error")
 LEGEND_Y = ROWS_Y + ROW_STEP * len(ROW_LABELS) + 22
-HEIGHT = LEGEND_Y + 70
+HEIGHT = LEGEND_Y + 96
 
 # Designed for a black or transparent background
 STYLE = """
@@ -83,7 +84,10 @@ STYLE = """
   .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
   .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
   .axis { font-size: 12px; fill: #c9d1d9; }
-  .vsync { stroke: #ffffff; stroke-opacity: 0.16; stroke-width: 1; stroke-dasharray: 3 4; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.34; stroke-width: 1; stroke-dasharray: 3 4; }
+  .vsync-skip { stroke: #ffffff; stroke-opacity: 0.09; stroke-width: 1; stroke-dasharray: 2 6; }
+  .vsync-target { font-size: 11px; font-weight: 600; fill: #c9d1d9; letter-spacing: 0.04em; }
+  .vsync-n-skip { font-size: 11px; fill: #545b64; letter-spacing: 0.04em; }
   .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
   .frame { font-size: 14px; font-weight: 700; }
   .box-time { fill: #b1bac4; font-size: 12px; }
@@ -113,8 +117,9 @@ LEGEND = {
 
 @dataclass(frozen=True)
 class Frame:
-    """A frame of the loop: its name, how long it takes until it is presented (ms), how many refreshes it is meant to stay on
-    screen (its swap interval), and how far its timer reading is off (ms)."""
+    """A frame of the loop: its name, how long it takes until it is presented (ms), its swap interval (how many refreshes after
+    the previous frame it is meant to appear, so how long the previous one stays on screen), and how far its timer reading is off
+    (ms)."""
 
     name: str
     render: float
@@ -132,6 +137,8 @@ class Diagram:
     vrr: bool = False
     # A fixed animation step per frame (ms) instead of the perfect timer, like a game that assumes its target frame rate
     fixed_step: float | None = None
+    # Pixels per ms: smaller for the longer timelines
+    scale: float = SCALE
 
 
 @dataclass(frozen=True)
@@ -188,6 +195,8 @@ def cells(diagram: Diagram, timed: list[Timed]) -> list[Cell]:
         for k in range(round(stop / PERIOD)):
             at = k * PERIOD
             spans.append((at, at + PERIOD, [t for t in timed if t.shown <= at + EPSILON][-1]))
+    # A frame's swap interval says how long the frame before it stays on screen; the last frame keeps its own
+    intended = {id(t): (timed[i + 1] if i + 1 < len(timed) else t).frame.interval for i, t in enumerate(timed)}
     result: list[Cell] = []
     previous: Timed | None = None
     for start, end, t in spans:
@@ -196,12 +205,31 @@ def cells(diagram: Diagram, timed: list[Timed]) -> list[Cell]:
             kind = "ok"
         elif first:
             kind = "off"
-        elif start - t.shown < t.frame.interval * PERIOD - EPSILON:
+        elif start - t.shown < intended[id(t)] * PERIOD - EPSILON:
             kind = "hold"
         else:
             kind = "again"
         result.append(Cell(start, end, t, kind, first))
         previous = t
+    return result
+
+
+def targetable_refreshes(diagram: Diagram, timed: list[Timed]) -> list[float]:
+    """The refreshes a frame can be aimed at: for each frame, every whole swap interval after the previous frame appeared, up to when
+    it appears. At full rate that is every refresh; at half rate every second one. With VRR every refresh is one."""
+    if diagram.vrr:
+        return [t.shown for t in timed]
+    result: list[float] = []
+    previous_shown = -diagram.frames[0].interval * PERIOD
+    for t in timed:
+        step = t.frame.interval * PERIOD
+        at = previous_shown + step
+        while at <= t.shown + EPSILON:
+            result.append(at)
+            at += step
+        previous_shown = t.shown
+    last = timed[-1]
+    result.append(last.shown + last.frame.interval * PERIOD)
     return result
 
 
@@ -226,7 +254,7 @@ def render(diagram: Diagram, background: str | None) -> str:
     origin = -diagram.frames[0].interval * PERIOD
 
     def x_of(t: float) -> float:
-        return LEFT + (t - origin) * SCALE
+        return LEFT + (t - origin) * diagram.scale
 
     width = x_of(refreshes[-1].end) + RIGHT
     parts: list[str] = [
@@ -241,18 +269,22 @@ def render(diagram: Diagram, background: str | None) -> str:
     for i, line in enumerate(diagram.description):
         parts.append(text(20, 54 + i * 19, line, "sub", "start"))
 
-    # The refresh lines: where the first frame starts rendering, every refresh, and the end
+    # The refresh lines: where the first frame starts rendering, every refresh, and the end. The ones a frame can target at its rate
+    # (whole swap intervals after the previous frame appeared) are bright; the others, skipped at half rate, are faint
+    targetable = targetable_refreshes(diagram, timed)
     lines = sorted({origin, *(c.start for c in refreshes), refreshes[-1].end})
     for number, at in enumerate(lines):
         x = x_of(at)
-        parts.append(f'<line class="vsync" x1="{x:.1f}" y1="{VSYNC_Y + 6}" x2="{x:.1f}" y2="{DISPLAY_Y + DISPLAY_H + 5}"/>')
-        parts.append(text(x, AXIS_Y, f"{ms(at)} ms", "axis"))
+        target = any(abs(at - t) < EPSILON for t in targetable)
+        parts.append(f'<line class="{"vsync" if target else "vsync-skip"}" x1="{x:.1f}" y1="{VSYNC_Y + 6}" x2="{x:.1f}" y2="{DISPLAY_Y + DISPLAY_H + 5}"/>')
+        parts.append(text(x, AXIS_Y, f"{ms(at)} ms", "axis" if target or at < 0 else "vsync-n-skip"))
         if at >= -EPSILON and at < refreshes[-1].end - EPSILON:
-            parts.append(text(x, VSYNC_Y, f"{'refresh' if diagram.vrr else 'vsync'} {number - (1 if origin < 0 else 0) + 1}", "vsync-n"))
+            label = f"{'refresh' if diagram.vrr else 'vsync'} {number - (1 if origin < 0 else 0) + 1}"
+            parts.append(text(x, VSYNC_Y, label, "vsync-target" if target else "vsync-n-skip"))
 
     # Row labels
     parts.append(text(20, RENDER_Y + RENDER_H / 2 - 3, "RENDER", "label", "start"))
-    parts.append(text(20, RENDER_Y + RENDER_H / 2 + 13, "animation time", "vsync-n", "start"))
+    parts.append(text(20, RENDER_Y + RENDER_H / 2 + 13, "predicted display time", "vsync-n", "start"))
     parts.append(text(20, DISPLAY_Y + DISPLAY_H / 2 + 4, "DISPLAY", "label", "start"))
     for i, label in enumerate(ROW_LABELS):
         parts.append(text(20, ROWS_Y + i * ROW_STEP, label.upper(), "label", "start"))
@@ -299,18 +331,23 @@ def render(diagram: Diagram, background: str | None) -> str:
 
     # Key: what the render boxes and the arrows mean
     parts.append(f'<rect class="box" x="20" y="{LEGEND_Y - 12}" width="30" height="16" rx="4"/>')
-    parts.append(text(58, LEGEND_Y + 1, "render: as wide as the frame takes, labelled with the animation time it shows", "sub", "start"))
-    arrow_x = 578.0
-    parts.append(f'<line class="arrow" x1="{arrow_x:.1f}" y1="{LEGEND_Y - 13}" x2="{arrow_x:.1f}" y2="{LEGEND_Y - 2}"/>')
-    parts.append(f'<path class="arrowhead" d="M{arrow_x - 4:.1f},{LEGEND_Y - 3} L{arrow_x + 4:.1f},{LEGEND_Y - 3} L{arrow_x:.1f},{LEGEND_Y + 4} z"/>')
+    parts.append(text(58, LEGEND_Y + 1, "render: as wide as the frame takes, labelled with its predicted display time (its animation time)", "sub", "start"))
+    arrow_x, arrow_y = 35.0, LEGEND_Y + 26
+    parts.append(f'<line class="arrow" x1="{arrow_x:.1f}" y1="{arrow_y - 13}" x2="{arrow_x:.1f}" y2="{arrow_y - 2}"/>')
+    parts.append(f'<path class="arrowhead" d="M{arrow_x - 4:.1f},{arrow_y - 3} L{arrow_x + 4:.1f},{arrow_y - 3} L{arrow_x:.1f},{arrow_y + 4} z"/>')
     if diagram.vrr:
         present = "present: the frame is done and handed to the display, which shows it at once"
     else:
-        present = "present: the frame is done and waits for the next vsync to be shown"
-    parts.append(text(arrow_x + 14, LEGEND_Y + 1, present, "sub", "start"))
+        present = "present: the frame is done and waits for the vsync it is meant for"
+    parts.append(text(58, arrow_y + 1, present, "sub", "start"))
+    if not diagram.vrr:
+        key_x = 58 + len(present) * 6.9 + 36
+        parts.append(f'<line class="vsync" x1="{key_x:.1f}" y1="{arrow_y - 13}" x2="{key_x:.1f}" y2="{arrow_y + 4}"/>')
+        parts.append(f'<line class="vsync-skip" x1="{key_x + 8:.1f}" y1="{arrow_y - 13}" x2="{key_x + 8:.1f}" y2="{arrow_y + 4}"/>')
+        parts.append(text(key_x + 22, arrow_y + 1, "vsync: bright can be targeted at the frame's rate, faint is skipped", "sub", "start"))
 
     # Legend: only the colours this diagram uses
-    colours_y = LEGEND_Y + 26
+    colours_y = LEGEND_Y + 52
     x = 20.0
     used = {cell.kind for cell in refreshes}
     for kind, label in LEGEND.items():
@@ -402,6 +439,40 @@ def render_comparison(comparison: Comparison, background: str | None) -> str:
     return "\n".join(parts) + "\n"
 
 
+def switching(renders: tuple[tuple[str, float], ...], fast_needed: int) -> tuple[Frame, ...]:
+    """Frames whose swap interval an engine chooses as it goes: half rate (interval 2) after a frame that did not fit one refresh,
+    back to full rate (interval 1) after `fast_needed` frames in a row that did. With 1, it switches back after the first fast
+    frame, as a naive engine does; more is hysteresis."""
+    frames: list[Frame] = []
+    interval, fast_run = 1, 0
+    for name, render_ms in renders:
+        frames.append(Frame(name, render_ms, interval))
+        if render_ms > PERIOD - EPSILON:
+            interval, fast_run = 2, 0
+        else:
+            fast_run += 1
+            if fast_run >= fast_needed:
+                interval = 1
+    return tuple(frames)
+
+
+def targeting(renders: tuple[tuple[str, float], ...], history: int) -> tuple[Frame, ...]:
+    """Frames of an engine that stays at full rate and gives each frame its own predicted display time: as many refreshes after the
+    previous frame as the slowest of its last `history` frames needed (at least one)."""
+    frames: list[Frame] = []
+    for index, (name, render_ms) in enumerate(renders):
+        recent = [r for _, r in renders[max(0, index - history) : index]]
+        needed = max(1, math.ceil(max(recent, default=0.0) / PERIOD - EPSILON))
+        frames.append(Frame(name, render_ms, needed))
+    return tuple(frames)
+
+
+# One frame overshoots a refresh, then every frame fits again
+HITCH = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 75.0), ("E", 75.0), ("F", 75.0), ("G", 75.0))
+
+# A busy stretch: every other frame is too slow for one refresh, then it calms down
+BUSY = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 125.0), ("E", 75.0), ("F", 75.0), ("G", 75.0), ("H", 75.0))
+
 SLOW = (Frame("A", 75), Frame("B", 125), Frame("C", 75), Frame("D", 75), Frame("E", 125), Frame("F", 75))
 
 DIAGRAMS = (
@@ -460,6 +531,46 @@ DIAGRAMS = (
         ),
         SLOW,
         vrr=True,
+    ),
+    Diagram(
+        "switching-naive",
+        "Switching rates without hysteresis",
+        (
+            "A naive engine drops to half rate (swap interval 2) after a slow frame and goes back to full rate after the first fast one.",
+            "In a busy stretch the next slow frame misses its refresh again: every switch back up costs a late frame and a catch-up jump.",
+        ),
+        switching(BUSY, fast_needed=1),
+        scale=0.9,
+    ),
+    Diagram(
+        "switching-hysteresis",
+        "Switching rates with hysteresis",
+        (
+            "The same frames. The engine drops to half rate after the first slow frame and goes back up only after three fast frames in",
+            "a row: the busy stretch plays at an even half rate, and only the first slow frame is late. The price: longer at half rate.",
+        ),
+        switching(BUSY, fast_needed=3),
+        scale=0.9,
+    ),
+    Diagram(
+        "recovery-half-rate",
+        "Recovering at half rate",
+        (
+            "B overshoots its refresh. The engine switches to half rate (swap interval 2) and stays there until three frames in a row fit",
+            "one refresh: C, D and E are each held for two refreshes although they render in less than one. Only B is late.",
+        ),
+        switching(HITCH, fast_needed=3),
+        scale=0.9,
+    ),
+    Diagram(
+        "recovery-targeting",
+        "Recovering at full rate with per-frame targets",
+        (
+            "The same frames at full rate: each frame targets the refreshes its last two frames needed, so C and D get two and E is back",
+            "at one, a frame sooner than at half rate. It needs a present scheduled per frame; sleeping until then is only a guess.",
+        ),
+        targeting(HITCH, history=2),
+        scale=0.9,
     ),
 )
 DIAGRAMS_BY_NAME = {diagram.name: diagram for diagram in DIAGRAMS}

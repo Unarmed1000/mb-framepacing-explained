@@ -8,7 +8,7 @@ between two lines so a timing error is the only thing that moves, at real speed 
 coarser virtual pixel grid (2×2, 4×4, …), so small errors move more screen pixels.
 
 The generators live here now; a slide-style web page that explains the topics with these videos live, including a blind test,
-comes later.
+comes later ([plans](doc/web-page.md)).
 
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
 display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
@@ -32,9 +32,12 @@ frame rate says nothing about it.
 ![Perfect timer: every frame shows the moment it is displayed, so the animation error is 0](doc/images/timing-perfect-timer.svg)
 
 Each diagram follows the two clocks at a 10 Hz display (a slowed-down 60 Hz). In the **render** row each box is one frame, as
-wide as it takes to render and labelled with the animation time it shows; the **arrow** under it is where the game presents it:
-the frame is done and waits for the next vsync. The **display** row shows which frame is on screen at each refresh, and the rows
-below compute the animation error the way PresentMon does. Gamers Nexus explain the two ways it goes wrong with a flipbook:
+wide as it takes to render and labelled with its **predicted display time**: when the game expects it to be shown, which becomes
+its animation time. The game predicts it from the recent frame times (the last one, or several smoothed) and the pacing it aims for, a whole
+number of refreshes that fits the refresh period (30 fps on 60 Hz is two). Whether the frame really appears then is the question.
+The **arrow** under it is where the game presents it: the frame is done and waits for the next vsync. The **display** row shows
+which frame is on screen at each refresh, and the rows below compute the animation error the way PresentMon does. Gamers Nexus
+explain the two ways it goes wrong with a flipbook:
 
 | Case                                                                                  | Flipbook                                        | Typical cause                                                                                  |
 | ------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -49,6 +52,10 @@ animation error shows why, because only it looks at the moment each frame shows:
 
 ![Same frame rate, same frametimes, different motion: only the animation error differs](doc/images/timing-perfect-vs-jitter.svg)
 
+**First things first: fix the animation time before the pacing.** Every diagram after this one assumes a perfect timer (with plain vsync: a vsync timer), frames
+rendered for the moment they are meant to appear, so that the errors left come from the display side. How to get there is the first
+of the [frame pacing strategies](doc/frame-pacing-strategies.md#first-get-the-animation-time-right).
+
 ![Slow frames: the previous frame is held, the late frame shows a past moment and the next one jumps ahead](doc/images/timing-slow-frames.svg)
 
 How frames reach the screen, and how fast input gets there, depends on vsync, VRR and the frame queue: see
@@ -59,24 +66,25 @@ How frames reach the screen, and how fast input gets there, depends on vsync, VR
 The terms used here and in mb-framepacing, in one line each. The [full vocabulary](doc/vocabulary.md) maps them to PresentMon,
 Gamers Nexus, Digital Foundry, Unity, Unreal, Android and VR, with sources and the video modes.
 
-| Term                    | In one line                                                                       | Also called                                                            |
-| ----------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Animation error**     | Animation time step minus display time. Positive: shown too soon; negative: late. | `MsAnimationError` (PresentMon), simulation time error                 |
-| **Animation time**      | The moment of game time a frame shows.                                            | Simulation time, game time                                             |
-| **Animation time step** | How far the animation time advanced from one shown frame to the next.             | Delta time, `Time.deltaTime`                                           |
-| **Display time**        | How long the previous frame stayed on screen.                                     | `MsBetweenDisplayChange`, display delta; "frame time" in overlays      |
-| **Frametime**           | CPU start to CPU start: the application side.                                     | `MsBetweenPresents`, `MsBetweenAppStart`, CPU frame time               |
-| **Frame pacing**        | How evenly frames reach the screen.                                               | Frame delivery, cadence; "bad frame-pacing" (Digital Foundry)          |
-| **Stutter**             | Motion that suddenly speeds up or slows down: what the eye sees.                  | Judder, jerkiness                                                      |
-| **Hitch**               | A single, severe frametime spike.                                                 | Spike; shader compilation stutter, traversal stutter (Digital Foundry) |
-| **Delta time jitter**   | The measured delta time wobbles while frames reach the screen evenly.             | Timestep jitter                                                        |
-| **Microstutter**        | Uneven delivery while the average frame rate looks fine.                          | Micro stuttering; from multi-GPU, with its runt frames                 |
-| **Judder**              | Uneven display durations for constant motion.                                     | Pulldown judder (film), stale frames (VR)                              |
-| **Dropped frame**       | Rendered but never shown.                                                         | Skipped frame                                                          |
-| **Swap interval**       | How many vsyncs a frame stays on screen: 1, 2, 3 for 60, 30, 20 fps at 60 Hz.     | Present interval, `SyncInterval`                                       |
-| **Tearing**             | Vsync off: one refresh shows parts of two frames.                                 | Screen tearing                                                         |
-| **VRR**                 | The display refreshes when the frame is ready.                                    | G-SYNC, FreeSync, Adaptive-Sync, HDMI VRR                              |
-| **Input lag**           | From input to its result on screen.                                               | End-to-end latency, click-to-photon, button to pixel (Digital Foundry) |
+| Term                       | In one line                                                                                     | Also called                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Animation error**        | Animation time step minus display time. Positive: shown too soon; negative: late.               | `MsAnimationError` (PresentMon), simulation time error                 |
+| **Animation time**         | The moment of game time a frame shows.                                                          | Simulation time, game time                                             |
+| **Animation time step**    | How far the animation time advanced from one shown frame to the next.                           | Delta time, `Time.deltaTime`                                           |
+| **Predicted display time** | When the game expects a frame to be shown, from recent frame times; the frame's animation time. | Expected presentation time (Android), `targetTimestamp` (Apple)        |
+| **Display time**           | How long the previous frame stayed on screen.                                                   | `MsBetweenDisplayChange`, display delta; "frame time" in overlays      |
+| **Frametime**              | CPU start to CPU start: the application side.                                                   | `MsBetweenPresents`, `MsBetweenAppStart`, CPU frame time               |
+| **Frame pacing**           | How evenly frames reach the screen.                                                             | Frame delivery, cadence; "bad frame-pacing" (Digital Foundry)          |
+| **Stutter**                | Motion that suddenly speeds up or slows down: what the eye sees.                                | Judder, jerkiness                                                      |
+| **Hitch**                  | A single, severe frametime spike.                                                               | Spike; shader compilation stutter, traversal stutter (Digital Foundry) |
+| **Delta time jitter**      | The measured delta time wobbles while frames reach the screen evenly.                           | Timestep jitter                                                        |
+| **Microstutter**           | Uneven delivery while the average frame rate looks fine.                                        | Micro stuttering; from multi-GPU, with its runt frames                 |
+| **Judder**                 | Uneven display durations for constant motion.                                                   | Pulldown judder (film), stale frames (VR)                              |
+| **Dropped frame**          | Rendered but never shown.                                                                       | Skipped frame                                                          |
+| **Swap interval**          | How many vsyncs a frame stays on screen: 1, 2, 3 for 60, 30, 20 fps at 60 Hz.                   | Present interval, `SyncInterval`                                       |
+| **Tearing**                | Vsync off: one refresh shows parts of two frames.                                               | Screen tearing                                                         |
+| **VRR**                    | The display refreshes when the frame is ready.                                                  | G-SYNC, FreeSync, Adaptive-Sync, HDMI VRR                              |
+| **Input lag**              | From input to its result on screen.                                                             | End-to-end latency, click-to-photon, button to pixel (Digital Foundry) |
 
 ## What this covers so far
 
@@ -98,10 +106,19 @@ Not simulated yet: late frames (hitches, short and long frames), dropped and run
   modes that show it
 - [Vsync, VRR and frame rate targets](doc/display-sync.md): vsync and present modes, G-SYNC and FreeSync, what VRR does not fix,
   fixed or adaptive frame rates
+- [Advanced frame pacing strategies](doc/frame-pacing-strategies.md): holding a frame for two refreshes, switching between full
+  and half rate with hysteresis, and recovering from a frame that overshoots its refresh
 - [Input latency](doc/input-latency.md): how it is measured, where it comes from, Reflex, Anti-Lag 2, XeLL and frame generation
 - [Charts](doc/charts.md): how Gamers Nexus, PC Perspective, CapFrameX, Digital Foundry and mb-framepacing chart pacing, and what
   to draw here
 - [Further reading](doc/further-reading.md): the articles and videos, grouped by subject
+- [The web page (planned)](doc/web-page.md): why the videos are only on the web page, and its 60 Hz and zoom checks
+
+## About the research
+
+Much of the research behind these docs was done with AI assistance: sources were searched for, fetched and checked, and quotes
+were compared with the pages they come from, but mistakes are still possible. Check the linked source before relying on a detail,
+and please report anything that is wrong. Where the docs go beyond their sources, they say so.
 
 ## License
 

@@ -2,7 +2,7 @@
 
 Articles and videos behind the [vocabulary](vocabulary.md) and the topic pages, grouped by subject. The YouTube titles and channels
 were checked through YouTube's oEmbed; timestamps come from the videos' chapter lists. Pages that are no longer online link to a
-Wayback Machine copy.
+Wayback Machine copy. The research was AI assisted; see [about the research](../README.md#about-the-research).
 
 ## Animation error
 

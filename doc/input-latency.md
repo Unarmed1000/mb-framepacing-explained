@@ -4,6 +4,17 @@ Input lag is how long it takes from pressing a button or moving the mouse until 
 from frame pacing: a game can be perfectly paced and still feel slow, or respond quickly and stutter. The two meet in the frame
 queue and in vsync, which is why it is here. The videos in this repository do not simulate latency.
 
+## How much it matters
+
+It depends on how directly the input moves what is on screen:
+
+- **Less critical: indirect input.** A TV interface driven by a remote control, a media player: a little more latency goes
+  unnoticed, while uneven motion stays visible. Here smooth pacing can win over the last milliseconds, for example with a deeper
+  frame queue or half rate.
+- **Critical: direct control.** Playing a game with a mouse, keyboard or gamepad (aiming, steering, timing a jump), or dragging and
+  scrolling with a finger, where the image has to follow the hand: every frame of latency is felt. These need the latency kept
+  low, even at some cost to pacing, and a short frame queue or the low-latency modes below.
+
 ## What it is called and how it is measured
 
 | Name                                        | Where                                                                                                                               | What it covers                                                                                         |

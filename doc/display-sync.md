@@ -91,6 +91,9 @@ animation steps 200 ms per frame in both, but only the first shows each frame fo
 
 ![Half rate, bad frame pacing: frames held for 1 and 3 refreshes instead of 2](images/timing-half-rate-bad-pacing.svg)
 
+How to hold a frame for two refreshes, how to switch between full and half rate without extra late frames, and how to recover after
+a frame overshoots its refresh: [advanced frame pacing strategies](frame-pacing-strategies.md).
+
 ## In the videos
 
 | Case                                | Modes                                                                              |

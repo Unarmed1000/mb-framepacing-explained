@@ -2,7 +2,7 @@
 """Generate the example charts of doc/charts.md: SVG charts of one video mode's frames, in the style of the timing diagrams.
 
 The data comes from the frame pacing videos' own simulation (tools/frame_pacing_video/frame_timing.py), so each chart shows exactly
-the frames of the video of that mode: the refresh each frame appears on and the animation time it shows. From those:
+the frames of the video of that mode: the refresh each frame appears on and the animation time it was rendered for. From those:
 
 - summary tiles: frames, display time, error per frame (the mean absolute animation error, Gamers Nexus's "error per frame"),
   the worst error, and how many frames are off by more than 1 ms;
