@@ -816,3 +816,12 @@ code {
   display: block;
   width: fit-content;
 }
+
+/* The first page's notice: a very early draft, shown as a block of its own */
+.draft-notice {
+  display: block;
+  max-width: 820px;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+}

@@ -17,7 +17,8 @@ const welcome: Slide = {
     const body = document.createElement("div");
     body.className = "slide-body";
     body.innerHTML = `
-      <p class="wip" role="note"><strong>Unfinished work in progress.</strong> Slides, wording and the test may still change.</p>
+      <p class="wip draft-notice" role="note"><strong>A very early draft.</strong> This page shows the direction, not the finished
+        thing: the slides, wording, diagrams, videos and the blind test will all still change, and several slides are unfinished.</p>
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
       <p class="lead">
