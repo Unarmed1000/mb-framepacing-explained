@@ -639,11 +639,22 @@ code {
 }
 
 /* The menu after the viewing guide: the explanation, the test, previous results */
+/* The cards share one width and one height (also when they stack), their buttons lined up at the bottom */
 .menu {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 0 24px;
-  align-items: start;
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-card .menu-actions {
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .menu-card p {

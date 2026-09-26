@@ -33,16 +33,18 @@ function renderMenu(body: HTMLElement): void {
       <div class="card menu-card">
         <h2>Blind test</h2>
         <p>A warm-up, then ${questions().length} pairs of moving boxes: which one moves more smoothly?</p>
+        <p class="previous-note"></p>
         <div class="menu-actions">
           <a class="button" href="#/warm-up">Take the test →</a>
           <button type="button" class="button ghost" data-action="previous">Previous results</button>
         </div>
-        <p class="previous-note"></p>
       </div>
       <div class="card menu-card">
         <h2>How it works</h2>
         <p>What the test shows and how games get it right: ${EXPLANATION_SLIDES.length} slides with diagrams and live video.</p>
-        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
+        <div class="menu-actions">
+          <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
+        </div>
       </div>
     </div>`;
   const history = loadHistory();
