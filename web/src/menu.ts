@@ -1,5 +1,5 @@
-// The menu after the viewing guide: start the explanation (its first slide), take the blind test, or step through the
-// previous results (when this browser has any).
+// The menu after the viewing guide: take the blind test first, or step through the previous results (when this browser has
+// any), then start the explanation (its first slide).
 
 import { loadHistory } from "./blind-test/result";
 import { showResultHistory } from "./blind-test/test-slide";
@@ -31,11 +31,6 @@ function renderMenu(body: HTMLElement): void {
       answers away.</p>
     <div class="menu">
       <div class="card menu-card">
-        <h2>How it works</h2>
-        <p>What the test shows and how games get it right: ${EXPLANATION_SLIDES.length} slides with diagrams and live video.</p>
-        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
-      </div>
-      <div class="card menu-card">
         <h2>Blind test</h2>
         <p>A warm-up, then ${questions().length} pairs of moving boxes: which one moves more smoothly?</p>
         <div class="menu-actions">
@@ -43,6 +38,11 @@ function renderMenu(body: HTMLElement): void {
           <button type="button" class="button ghost" data-action="previous">Previous results</button>
         </div>
         <p class="previous-note"></p>
+      </div>
+      <div class="card menu-card">
+        <h2>How it works</h2>
+        <p>What the test shows and how games get it right: ${EXPLANATION_SLIDES.length} slides with diagrams and live video.</p>
+        <a class="button" href="#/${EXPLANATION_SLIDES[0]?.id ?? ""}">Start the explanation →</a>
       </div>
     </div>`;
   const history = loadHistory();
