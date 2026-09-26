@@ -265,29 +265,29 @@ def text(x: float, y: float, content: str, cls: str = "", anchor: str = "middle"
     return f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{anchor}"{class_attr}>{escape(content)}</text>'
 
 
-def render(diagram: Diagram, background: str | None) -> str:
-    timed = simulate(diagram)
-    refreshes = cells(diagram, timed)
-    # The refresh before the first frame appears: the first frame starts rendering inside it
-    origin = -diagram.frames[0].interval * PERIOD
-
-    def x_of(t: float) -> float:
-        return LEFT + (t - origin) * diagram.scale
-
-    width = x_of(refreshes[-1].end) + RIGHT
-    height = diagram.height
-    legend_y = LEGEND_Y + (height - HEIGHT)
+def _svg_start(title: str, width: float, height: float, background: str | None, description: tuple[str, ...]) -> list[str]:
+    """The SVG element, its card and its title and description lines."""
     parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height}" viewBox="0 0 {width:.0f} {height}" role="img" aria-label="{escape(diagram.title)}">',
-        f"<title>{escape(diagram.title)}</title>",
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height:.0f}" viewBox="0 0 {width:.0f} {height:.0f}" role="img" aria-label="{escape(title)}">',
+        f"<title>{escape(title)}</title>",
         f"<style>{STYLE}</style>",
     ]
     if background:
         parts.append(f'<rect width="100%" height="100%" fill="{escape(background)}"/>')
-    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{width - 1:.0f}" height="{height - 1}" rx="14"/>')
-    parts.append(text(20, 30, diagram.title, "title", "start"))
-    for i, line in enumerate(diagram.description):
+    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{width - 1:.0f}" height="{height - 1:.0f}" rx="14"/>')
+    parts.append(text(20, 30, title, "title", "start"))
+    for i, line in enumerate(description):
         parts.append(text(20, 54 + i * 19, line, "sub", "start"))
+    return parts
+
+
+def _timeline(diagram: Diagram, x_of: Callable[[float], float], shift: float) -> tuple[list[str], set[str]]:
+    """A diagram's timeline, `shift` pixels below where a single diagram draws it: the refresh lines, the render boxes and their
+    present arrows, the display cells and each frame's values. Also returns the display colours it used, for the key."""
+    timed = simulate(diagram)
+    refreshes = cells(diagram, timed)
+    origin = -diagram.frames[0].interval * PERIOD
+    parts: list[str] = []
 
     # The refresh lines: where the first frame starts rendering, every refresh, and the end. The ones a frame can target at its rate
     # (whole swap intervals after the previous frame appeared) are bright; the others, skipped at half rate, are faint
@@ -296,41 +296,43 @@ def render(diagram: Diagram, background: str | None) -> str:
     for number, at in enumerate(lines):
         x = x_of(at)
         target = any(abs(at - t) < EPSILON for t in targetable)
-        parts.append(f'<line class="{"vsync" if target else "vsync-skip"}" x1="{x:.1f}" y1="{VSYNC_Y + 6}" x2="{x:.1f}" y2="{DISPLAY_Y + DISPLAY_H + 5}"/>')
-        parts.append(text(x, AXIS_Y, f"{ms(at)} ms", "axis" if target or at < 0 else "vsync-n-skip"))
+        parts.append(
+            f'<line class="{"vsync" if target else "vsync-skip"}" x1="{x:.1f}" y1="{VSYNC_Y + 6 + shift}" x2="{x:.1f}" y2="{DISPLAY_Y + DISPLAY_H + 5 + shift}"/>'
+        )
+        parts.append(text(x, AXIS_Y + shift, f"{ms(at)} ms", "axis" if target or at < 0 else "vsync-n-skip"))
         if at >= -EPSILON and at < refreshes[-1].end - EPSILON:
             label = f"{'refresh' if diagram.vrr else 'vsync'} {number - (1 if origin < 0 else 0) + 1}"
-            parts.append(text(x, VSYNC_Y, label, "vsync-target" if target else "vsync-n-skip"))
+            parts.append(text(x, VSYNC_Y + shift, label, "vsync-target" if target else "vsync-n-skip"))
 
     # Row labels
-    parts.append(text(20, RENDER_Y + RENDER_H / 2 - 3, "RENDER", "label", "start"))
-    parts.append(text(20, RENDER_Y + RENDER_H / 2 + 13, "predicted display time", "vsync-n", "start"))
-    parts.append(text(20, DISPLAY_Y + DISPLAY_H / 2 + 4, "DISPLAY", "label", "start"))
+    parts.append(text(20, RENDER_Y + RENDER_H / 2 - 3 + shift, "RENDER", "label", "start"))
+    parts.append(text(20, RENDER_Y + RENDER_H / 2 + 13 + shift, "predicted display time", "vsync-n", "start"))
+    parts.append(text(20, DISPLAY_Y + DISPLAY_H / 2 + 4 + shift, "DISPLAY", "label", "start"))
     for i, label in enumerate(diagram.rows):
-        parts.append(text(20, ROWS_Y + i * ROW_STEP, label.upper(), "label", "start"))
+        parts.append(text(20, ROWS_Y + i * ROW_STEP + shift, label.upper(), "label", "start"))
 
     # Render boxes and present arrows
     for t in timed:
         x0, x1 = x_of(t.start) + 6, x_of(t.end) - 6
-        parts.append(f'<rect class="box" x="{x0:.1f}" y="{RENDER_Y}" width="{x1 - x0:.1f}" height="{RENDER_H}" rx="8"/>')
+        parts.append(f'<rect class="box" x="{x0:.1f}" y="{RENDER_Y + shift}" width="{x1 - x0:.1f}" height="{RENDER_H}" rx="8"/>')
         cx = (x0 + x1) / 2
-        parts.append(text(cx, RENDER_Y + 19, t.frame.name, "frame"))
-        parts.append(text(cx, RENDER_Y + 36, f"{ms(t.animation)} ms", "box-time"))
-        ax, tip = x_of(t.end), DISPLAY_Y - 4
-        parts.append(f'<line class="arrow" x1="{ax:.1f}" y1="{ARROW_Y0}" x2="{ax:.1f}" y2="{tip - 8}"/>')
+        parts.append(text(cx, RENDER_Y + 19 + shift, t.frame.name, "frame"))
+        parts.append(text(cx, RENDER_Y + 36 + shift, f"{ms(t.animation)} ms", "box-time"))
+        ax, tip = x_of(t.end), DISPLAY_Y - 4 + shift
+        parts.append(f'<line class="arrow" x1="{ax:.1f}" y1="{ARROW_Y0 + shift}" x2="{ax:.1f}" y2="{tip - 8}"/>')
         parts.append(f'<path class="arrowhead" d="M{ax - 5:.1f},{tip - 9} L{ax + 5:.1f},{tip - 9} L{ax:.1f},{tip} z"/>')
 
-    # Display cells, and each frame's step, display time and animation error where it first appears
+    # Display cells, and each frame's values where it first appears
     previous: Timed | None = None
     for cell in refreshes:
         x0, x1 = x_of(cell.start), x_of(cell.end)
-        parts.append(f'<rect class="{cell.kind}" x="{x0 + 2:.1f}" y="{DISPLAY_Y}" width="{x1 - x0 - 4:.1f}" height="{DISPLAY_H}" rx="6"/>')
+        parts.append(f'<rect class="{cell.kind}" x="{x0 + 2:.1f}" y="{DISPLAY_Y + shift}" width="{x1 - x0 - 4:.1f}" height="{DISPLAY_H}" rx="6"/>')
         label_cls = "cell-text dark-text" if cell.kind == "again" else "cell-text"
         cx = (x0 + x1) / 2
-        parts.append(text(cx, DISPLAY_Y + DISPLAY_H / 2 + 5, cell.timed.frame.name, label_cls))
+        parts.append(text(cx, DISPLAY_Y + DISPLAY_H / 2 + 5 + shift, cell.timed.frame.name, label_cls))
         if cell.first:
             if previous is None:
-                values = ("\u2013",) * len(diagram.rows)
+                values = ("–",) * len(diagram.rows)
                 error = 0.0
             else:
                 step = cell.timed.animation - previous.animation
@@ -341,53 +343,69 @@ def render(diagram: Diagram, background: str | None) -> str:
                     measured = cell.timed.reading - previous.reading
                     values = (f"{ms(measured)} ms", f"{ms(round(measured / PERIOD) * PERIOD)} ms", *values)
             for i, value in enumerate(values):
+                y = ROWS_Y + i * ROW_STEP + shift
                 value_cls = ""
                 if i == len(values) - 1:
                     value_cls = "err" if abs(error) > EPSILON else "zero"
                     if value_cls == "err":
                         pill = len(value) * 7.4 + 18
-                        parts.append(
-                            f'<rect class="err-pill" x="{cx - pill / 2:.1f}" y="{ROWS_Y + i * ROW_STEP - 15}" width="{pill:.1f}" height="21" rx="10.5"/>'
-                        )
-                parts.append(text(cx, ROWS_Y + i * ROW_STEP, value, value_cls))
+                        parts.append(f'<rect class="err-pill" x="{cx - pill / 2:.1f}" y="{y - 15}" width="{pill:.1f}" height="21" rx="10.5"/>')
+                parts.append(text(cx, y, value, value_cls))
             previous = cell.timed
+    return parts, {cell.kind for cell in refreshes}
 
-    # Key: what the render boxes and the arrows mean
-    parts.append(f'<rect class="box" x="20" y="{legend_y - 12}" width="30" height="16" rx="4"/>')
+
+def _key(vrr: bool, used: set[str], legend_y: float) -> list[str]:
+    """The key below the timelines: what the render boxes, arrows and refresh lines mean, the colours used, and the formula."""
+    parts = [f'<rect class="box" x="20" y="{legend_y - 12}" width="30" height="16" rx="4"/>']
     parts.append(text(58, legend_y + 1, "render: as wide as the frame takes, labelled with its predicted display time (its animation time)", "sub", "start"))
     arrow_x, arrow_y = 35.0, legend_y + 26
     parts.append(f'<line class="arrow" x1="{arrow_x:.1f}" y1="{arrow_y - 13}" x2="{arrow_x:.1f}" y2="{arrow_y - 2}"/>')
     parts.append(f'<path class="arrowhead" d="M{arrow_x - 4:.1f},{arrow_y - 3} L{arrow_x + 4:.1f},{arrow_y - 3} L{arrow_x:.1f},{arrow_y + 4} z"/>')
-    if diagram.vrr:
+    if vrr:
         present = "present: the frame is done and handed to the display, which shows it at once"
     else:
         present = "present: the frame is done and waits for the vsync it is meant for"
     parts.append(text(58, arrow_y + 1, present, "sub", "start"))
-    if not diagram.vrr:
+    if not vrr:
         key_x = 58 + len(present) * 6.9 + 36
         parts.append(f'<line class="vsync" x1="{key_x:.1f}" y1="{arrow_y - 13}" x2="{key_x:.1f}" y2="{arrow_y + 4}"/>')
         parts.append(f'<line class="vsync-skip" x1="{key_x + 8:.1f}" y1="{arrow_y - 13}" x2="{key_x + 8:.1f}" y2="{arrow_y + 4}"/>')
         parts.append(text(key_x + 22, arrow_y + 1, "vsync: bright can be targeted at the frame's rate, faint is skipped", "sub", "start"))
-
-    # Legend: only the colours this diagram uses
+    # Only the colours the timelines use
     colours_y = legend_y + 52
     x = 20.0
-    used = {cell.kind for cell in refreshes}
     for kind, label in LEGEND.items():
         if kind in used:
             parts.append(f'<rect class="{kind}" x="{x:.1f}" y="{colours_y - 11}" width="14" height="14" rx="4"/>')
             parts.append(text(x + 22, colours_y + 1, label, "sub", "start"))
             x += 22 + len(label) * 6.9 + 28
-    parts.append(text(20, colours_y + 26, "Animation error = animation time step \u2212 display time: + shown too soon, \u2212 shown too late", "sub", "start"))
+    parts.append(text(20, colours_y + 26, "Animation error = animation time step − display time: + shown too soon, − shown too late", "sub", "start"))
+    return parts
 
+
+def render(diagram: Diagram, background: str | None) -> str:
+    refreshes = cells(diagram, simulate(diagram))
+    # The refresh before the first frame appears: the first frame starts rendering inside it
+    origin = -diagram.frames[0].interval * PERIOD
+
+    def x_of(t: float) -> float:
+        return LEFT + (t - origin) * diagram.scale
+
+    width = x_of(refreshes[-1].end) + RIGHT
+    height = diagram.height
+    parts = _svg_start(diagram.title, width, height, background, diagram.description)
+    timeline, used = _timeline(diagram, x_of, 0)
+    parts += timeline
+    parts += _key(diagram.vrr, used, LEGEND_Y + (height - HEIGHT))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
 
 @dataclass(frozen=True)
 class Comparison:
-    """Diagrams side by side as lanes, with the display drawn the same neutral colour in each, the way a frame rate counter or a
-    frame-time graph sees them: what differs is only in the animation error."""
+    """Diagrams one above the other, each with its full timeline (render, display and the values), on one time axis: the frame
+    rate, frametimes and display times are the same in each, and what differs is only in the animation error."""
 
     name: str
     title: str
@@ -396,68 +414,35 @@ class Comparison:
     footer: str
 
 
-LANE_TOP = 132
-LANE_H = 128
+# Room for a lane's title above its timeline
+LANE_TITLE_H = 36
 
 
 def render_comparison(comparison: Comparison, background: str | None) -> str:
     lanes = [(title, DIAGRAMS_BY_NAME[name]) for title, name in comparison.lanes]
     first = lanes[0][1]
+    origin = -first.frames[0].interval * PERIOD
     end = cells(first, simulate(first))[-1].end
 
     def x_of(t: float) -> float:
-        return LEFT + t * SCALE
+        return LEFT + (t - origin) * first.scale
 
     width = x_of(end) + RIGHT
-    height = LANE_TOP + LANE_H * len(lanes) + 30
-    parts: list[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height}" viewBox="0 0 {width:.0f} {height}" role="img" aria-label="{escape(comparison.title)}">',
-        f"<title>{escape(comparison.title)}</title>",
-        f"<style>{STYLE}</style>",
-    ]
-    if background:
-        parts.append(f'<rect width="100%" height="100%" fill="{escape(background)}"/>')
-    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{width - 1:.0f}" height="{height - 1}" rx="14"/>')
-    parts.append(text(20, 30, comparison.title, "title", "start"))
-    for i, line in enumerate(comparison.description):
-        parts.append(text(20, 54 + i * 19, line, "sub", "start"))
-
-    # One time axis on top, its refresh lines through every lane
-    bottom = LANE_TOP + LANE_H * len(lanes) - 40
-    for k in range(round(end / PERIOD) + 1):
-        x = x_of(k * PERIOD)
-        parts.append(f'<line class="vsync" x1="{x:.1f}" y1="{LANE_TOP - 14}" x2="{x:.1f}" y2="{bottom}"/>')
-        parts.append(text(x, LANE_TOP - 20, f"{ms(k * PERIOD)} ms", "axis"))
-
+    # Each lane: its title, then a single diagram's timeline from its refresh labels down to its last value row
+    lane_h = LANE_TITLE_H + (ROWS_Y + ROW_STEP * (len(ROW_LABELS) - 1) + 14 - (VSYNC_Y - 14))
+    legend_y = VSYNC_Y + LANE_TITLE_H + lane_h * len(lanes) + 6
+    height = legend_y + 96 + 24
+    parts = _svg_start(comparison.title, width, height, background, comparison.description)
+    used: set[str] = set()
     for lane, (title, diagram) in enumerate(lanes):
-        top = LANE_TOP + lane * LANE_H
-        parts.append(text(20, top + 20, title, "lane", "start"))
-        parts.append(text(20, top + 36, f"{1000 / PERIOD:.0f} fps, {ms(PERIOD)} ms frametimes", "vsync-n", "start"))
-        parts.append(text(20, top + 66, "DISPLAY TIME", "label", "start"))
-        parts.append(text(20, top + 92, "ANIMATION ERROR", "label", "start"))
-        previous: Timed | None = None
-        for cell in cells(diagram, simulate(diagram)):
-            x0, x1 = x_of(cell.start), x_of(cell.end)
-            cx = (x0 + x1) / 2
-            parts.append(f'<rect class="neutral" x="{x0 + 2:.1f}" y="{top}" width="{x1 - x0 - 4:.1f}" height="40" rx="6"/>')
-            parts.append(text(cx, top + 18, cell.timed.frame.name, "cell-text"))
-            parts.append(text(cx, top + 34, f"{ms(cell.timed.animation)} ms", "box-time"))
-            if previous is None:
-                display, error_text, error = "–", "–", 0.0
-            else:
-                display = f"{ms(cell.timed.shown - previous.shown)} ms"
-                error = cell.timed.animation - previous.animation - (cell.timed.shown - previous.shown)
-                error_text = f"{ms(error, sign=True)} ms"
-            parts.append(text(cx, top + 66, display, "same" if previous is not None else ""))
-            if abs(error) > EPSILON:
-                pill = len(error_text) * 7.4 + 18
-                parts.append(f'<rect class="err-pill" x="{cx - pill / 2:.1f}" y="{top + 77}" width="{pill:.1f}" height="21" rx="10.5"/>')
-                parts.append(text(cx, top + 92, error_text, "err"))
-            else:
-                parts.append(text(cx, top + 92, error_text, "zero"))
-            previous = cell.timed
-
-    parts.append(text(20, height - 22, comparison.footer, "sub", "start"))
+        shift = LANE_TITLE_H + lane * lane_h
+        parts.append(text(20, VSYNC_Y + shift - 30, title, "lane", "start"))
+        parts.append(text(20 + len(title) * 8.4 + 12, VSYNC_Y + shift - 30, f"{1000 / PERIOD:.0f} fps, {ms(PERIOD)} ms frametimes", "vsync-n", "start"))
+        timeline, kinds = _timeline(diagram, x_of, shift)
+        parts += timeline
+        used |= kinds
+    parts += _key(first.vrr, used, legend_y)
+    parts.append(text(20, height - 18, comparison.footer, "sub", "start"))
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
