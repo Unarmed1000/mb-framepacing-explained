@@ -12,7 +12,8 @@ playing live, and starts with a blind test. It is still work in progress; the [r
    each of its movements and with each of its modes on top; the 20 Hz pairs only at the slow movement (the normal timing on a
    quarter of the path). The questions, their categories and the clips they need are in
    [`trials.json`](../web/src/blind-test/trials.json). The result is scored per category (preferences are not scored), and each
-   answer can be opened again to watch its pair with the reveal. It is kept anonymised and versioned in the browser only, and can
+   answer can be opened again to watch its pair with the reveal. The bad timers go wrong on nearly every frame, so a few seconds
+   are enough; the page says that this is harsher than a typical game, and [why it is still fair](measured-errors.md#the-blind-test). It is kept anonymised and versioned in the browser only, and can
    be downloaded or copied as JSON.
 4. **What you saw, explained**: the two clocks, timer jitter (live, with its chart following the video), why frame rate cannot see
    it, the vsync timer, slow frames, half rate, switching rates, recovering from a spike, VRR, input latency, measuring it on a

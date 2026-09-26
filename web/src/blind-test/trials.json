@@ -1,9 +1,9 @@
 {
-  "testVersion": 11,
+  "testVersion": 16,
   "clip": {
     "width": 1280,
     "height": 384,
-    "arguments": ["--web", "--height", "384", "--box-size", "48"]
+    "arguments": ["--web", "--height", "384", "--box-size", "48", "--jitter-pattern", "random"]
   },
   "motions": ["normal", "fast"],
   "warmup": {
@@ -16,7 +16,7 @@
       "id": "pacing-60",
       "category": "pacing",
       "a": "60",
-      "b": "60-naive-heavy",
+      "b": "60-naive-4ms",
       "smoother": "60"
     },
     {
@@ -46,7 +46,7 @@
       "id": "pref-30-vs-bad-60",
       "category": "preference",
       "a": "30",
-      "b": "60-naive-heavy",
+      "b": "60-naive-4ms",
       "smoother": null
     },
     {

@@ -520,8 +520,13 @@ kbd {
 }
 
 /* Explanation slides */
-.explain .lead {
+.explain .lead,
+.explain .note {
   max-width: 980px;
+}
+
+.card .note {
+  max-width: none;
 }
 
 .diagram {
@@ -558,6 +563,7 @@ kbd {
 }
 
 .note {
+  max-width: 820px;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;

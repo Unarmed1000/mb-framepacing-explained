@@ -41,8 +41,14 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
     <p class="eyebrow">Blind test</p>
     <h1>${questions().length + 1} questions, one answer each</h1>
     <p class="lead">
-      The warm-up first, then ${questions().length} in random order, each pair in the slow and the fast movement. Each pair loops; answer when you are sure. Some pairs are the same clip
+      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement (the 20 fps pairs at a small, slow one). Each pair loops; answer when you are sure. Some pairs are the same clip
       twice, and some have no right answer. Nothing leaves your browser.
+    </p>
+    <p class="note">
+      The badly timed boxes go wrong on nearly every frame, so a few seconds are enough to see it. Each error is the size measured
+      in real games, a few milliseconds, but most games have them less often; setups like multi-GPU SLI have been measured with
+      errors on nearly every frame (<a href="https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/measured-errors.md"
+      target="_blank" rel="noopener">measured in real games ↗</a>).
     </p>
     <p class="setup"></p>
     <p class="history"></p>

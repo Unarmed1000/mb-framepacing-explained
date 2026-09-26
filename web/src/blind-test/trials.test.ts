@@ -99,7 +99,8 @@ describe("the trial definitions", () => {
   it("need identical pairs once and the other pairs in both orders, per motion", () => {
     const pairs = requiredPairs();
     expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
-    expect(pairs.get("fast")).toHaveLength(2 + 3 * 2 + 2);
+    // At fast the warm-up pair (perfect 60 against the ±4 ms timer) is also the pacing question's pair
+    expect(pairs.get("fast")).toHaveLength(2 + 3 * 2);
     expect(pairs.get("slow")).toHaveLength(1 + 3 * 2);
   });
 });
@@ -136,7 +137,7 @@ describe("a run", () => {
   it("shows each pair with each of its modes on top, in one run", () => {
     const run = buildRun(library(), seededRandom(3));
     const pacingFast = run.filter((trial) => trial.definition.id === "pacing-60" && trial.motion === "fast");
-    expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-heavy"]));
+    expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-4ms"]));
     expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast", "slow"]));
   });
 });
