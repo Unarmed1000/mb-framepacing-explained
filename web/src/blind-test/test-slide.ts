@@ -44,7 +44,7 @@ function intro(slide: HTMLElement, library: ClipLibrary): void {
     <p class="eyebrow">Blind test</p>
     <h1>${questions().length + 1} questions, one answer each</h1>
     <p class="lead">
-      The warm-up first, then ${questions().length} in random order: each pair both ways round, at a normal and a fast movement (the preference pair also at a small, slow one). Each pair loops; answer when you are sure. Some pairs are the same clip
+      The warm-up first, then ${questions().length} in random order: each pair both ways round and at different speeds. Each pair loops; answer when you are sure. Some pairs are the same clip
       twice, and some have no right answer. Nothing leaves your browser.
     </p>
     <p class="note">
