@@ -53,7 +53,9 @@ animation error exact instead of estimated from the CPU start (see the [vocabula
 Frame generation (DLSS 3 and later, FSR 3) inserts generated frames between rendered ones. It raises the displayed frame rate, but
 not how often the game reads input, and it holds a rendered frame back to generate the one before it. AMD's advice: run at least
 60 fps before frame generation ([FSR 3](https://gpuopen.com/news/fsr3-announce/)), and "sub-30fps pre-interpolation should be
-absolutely avoided" ([FSR frame generation](https://gpuopen.com/amd-fsr-framegeneration/)). Digital Foundry measured it in their
+absolutely avoided" ([FSR frame generation](https://gpuopen.com/amd-fsr-framegeneration/)). Hardware Unboxed go higher: "a
+starting frame rate of 100 to 120 FPS", and call it "NOT a performance-boosting technology"
+([DLSS 4 review](https://www.techspot.com/article/2945-nvidia-dlss-4/)). Digital Foundry measured it in their
 [DLSS 3 analysis](https://www.youtube.com/watch?v=92ZqYaPXxas).
 
 ## Latency and pacing

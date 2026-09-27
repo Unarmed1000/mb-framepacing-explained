@@ -151,6 +151,13 @@ How they measure: [Inside Digital Foundry: How We Measure Console Frame-Rate](ht
 - [AMD FSR 3 announcement](https://gpuopen.com/news/fsr3-announce/) (2023-08-25) and
   [AMD FSR frame generation](https://gpuopen.com/amd-fsr-framegeneration/) (AMD GPUOpen): the frame rate needed before frame
   generation
+- [A Review of Nvidia's DLSS 4 Multi Frame Generation](https://www.techspot.com/article/2945-nvidia-dlss-4/) (Hardware
+  Unboxed's Tim Schiesser on TechSpot, 2025-01-28, [video](https://www.youtube.com/watch?v=B_fGlVqKs1k)): "frame generation is
+  NOT a performance-boosting technology"; "we recommend a starting frame rate of 100 to 120 FPS", 70 to 80 fps at the least
+- [Frame Generation Doesn't Fix Bad Performance!](https://www.youtube.com/watch?v=Dn9zNs0XZDk) (Hardware Unboxed, 2026) and
+  [their summary](https://x.com/HardwareUnboxed/status/1876528043885539414): "it's a frame smoothing technology, nothing more"
+- ["Fake Frames" Tested: DLSS 4.0, MFG 4X, & NVIDIA's Misleading Review Guide](https://gamersnexus.net/gpus/fake-frames-tested-dlss-40-mfg-4x-nvidias-misleading-review-guide)
+  (Gamers Nexus, 2025): frame generation interpolates between rendered frames, and is for making playable frame rates higher
 
 ## Charts and tools
 
