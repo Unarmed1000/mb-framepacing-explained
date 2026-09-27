@@ -25,7 +25,9 @@ const welcome: Slide = {
         A game, an interface or any real-time animation can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
         before knowing what to look for. Then it explains what you saw, and how apps and games get it right. First, a quick check that your
         screen shows the videos the way they are meant to be seen.
-      </p>`;
+      </p>
+      <p class="note screen-note">Made for a larger display: a computer monitor, a laptop or a TV. The videos are 1280 pixels wide
+        and shown pixel for pixel, which a phone screen cannot do. On a phone, it is well worth coming back on a bigger screen.</p>`;
     const start = document.createElement("a");
     start.className = "button";
     start.href = "#/best-viewing";

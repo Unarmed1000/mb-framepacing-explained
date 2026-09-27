@@ -30,6 +30,14 @@ class ModeTests(unittest.TestCase):
         self.assertEqual(ft.parse_mode("60-naive-1ms"), ft.FrameMode("60-naive-1ms", 60, ft.Timer.NAIVE, ft.Noise.WINDOW, MS))
         self.assertEqual(ft.parse_mode("60-naive-0.5ms").window, MS / 2)
         self.assertEqual(
+            ft.parse_mode("60-naive-5ms-every-1s"),
+            ft.FrameMode("60-naive-5ms-every-1s", 60, ft.Timer.NAIVE, ft.Noise.WINDOW, 5 * MS, every=Fraction(1), burst=8),
+        )
+        self.assertEqual(ft.parse_mode("60-naive-5ms-24f-every-1s").burst, 24)
+        for bad in ("60-naive-5ms-every-0s", "60-naive-5ms-24f", "60-naive-5ms-0f-every-1s", "60-naive-heavy-every-1s", "60-naive-synthetic-every-1s"):
+            with self.assertRaisesRegex(ValueError, "is not a mode"):
+                _ = ft.parse_mode(bad)
+        self.assertEqual(
             ft.parse_mode("60-naive-typical-realistic"), ft.FrameMode("60-naive-typical-realistic", 60, ft.Timer.NAIVE, ft.Noise.TYPICAL, realistic=True)
         )
         bad_names = ("60-late", "60-naive", "naive-typical", "060", "60-naive-busy", "60-naive-0ms", "60-naive-ms", "60-realistic", "60-naive-1ms-realistic")
@@ -42,6 +50,8 @@ class ModeTests(unittest.TestCase):
         self.assertEqual(ft.describe(ft.parse_mode("30-naive-typical"), PARAMETERS), "30 Hz naive timer, typical load")
         self.assertEqual(ft.describe(ft.parse_mode("60-naive-heavy-realistic"), PARAMETERS), "60 Hz naive timer, heavy load (realistic)")
         self.assertEqual(ft.describe(ft.parse_mode("60-naive-4ms"), PARAMETERS), "60 Hz naive timer, ±4 ms mixed")
+        self.assertEqual(ft.describe(ft.parse_mode("60-naive-5ms-every-1s"), PARAMETERS), "60 Hz naive timer, ±5 ms mixed, 8 frames every 1 s")
+        self.assertEqual(ft.describe(ft.parse_mode("60-naive-5ms-24f-every-1s"), PARAMETERS), "60 Hz naive timer, ±5 ms mixed, 24 frames every 1 s")
         self.assertEqual(ft.describe(ft.parse_mode("60-naive-synthetic"), PARAMETERS), "60 Hz naive timer, synthetic ±1 ms mixed")
 
 
@@ -196,6 +206,23 @@ class WindowTests(unittest.TestCase):
         one = ft.wake_delays(ft.parse_mode("60-naive-1ms"), PARAMETERS, CLIP)
         four = ft.wake_delays(ft.parse_mode("60-naive-4ms"), PARAMETERS, CLIP)
         self.assertEqual([4 * wake for wake in one], four)
+
+    def test_bursts_jitter_the_middle_of_every_period_only(self) -> None:
+        parameters = ft.TimingParameters(synthetic_pattern="random")
+        simulated = frames("60-naive-5ms-every-1s", parameters=parameters)
+        errors = [a - Fraction(index, 60) for index, a in enumerate(simulated.animation)]
+        # Eight frames in the middle of every second (the box mid-move), each off by the pattern; every other frame exact
+        bursts = [second * 60 + 26 + index for second in range(8) for index in range(8)]
+        self.assertLessEqual({index for index, error in enumerate(errors) if error}, set(bursts))
+        self.assertEqual([errors[index] for index in bursts], [5 * MS * offset for offset in ft.jitter_offsets(60, 64, "random")])
+        self.assertEqual(max(abs(error) for error in errors), 5 * MS)
+        # A longer burst, still centred
+        longer = frames("60-naive-5ms-24f-every-1s", parameters=parameters)
+        errors = [a - Fraction(index, 60) for index, a in enumerate(longer.animation)]
+        self.assertLessEqual({index for index, error in enumerate(errors) if error}, {second * 60 + 18 + index for second in range(8) for index in range(24)})
+        for bad in ("60-naive-5ms-every-3s", "60-naive-5ms-61f-every-1s"):
+            with self.assertRaisesRegex(ValueError, "does not fit"):
+                _ = frames(bad, parameters=parameters)
 
     def test_synthetic_is_the_pattern_within_its_amount(self) -> None:
         mode = ft.parse_mode("60-naive-synthetic")

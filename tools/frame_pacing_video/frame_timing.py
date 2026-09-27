@@ -17,7 +17,9 @@ Timers (how the animation time is found):
 
 Wake-up noise (how long after the flip the clock is read), in the naive loop:
 - a +-N ms window (1ms, 4ms, ...): read at a random point of a window 2 x N ms wide, so each frame's animation time is up to N ms
-  off the average and dt varies by up to +-2 x N ms: 1ms is small but visible, 4ms a bad case
+  off the average and dt varies by up to +-2 x N ms: 1ms is small but visible, 4ms a bad case. With -every-Ns (e.g.
+  60-naive-5ms-every-1s) only a burst of frames in the middle of every N seconds reads the clock off its average (JITTER_BURST_FRAMES,
+  or as many as -Kf says: 60-naive-5ms-24f-every-1s), and every other frame exactly at it: the jitter in the middle of each move of the box, where it shows most
 - system load (light, typical, heavy): how late the thread wakes depends on what else runs (background work, driver interrupts,
   power states). Usually a short wake-up (0 to 0.3 ms), and in some frames a longer one. By default a demonstration profile: a
   timing error in most frames (TimingParameters.demo_load_share, 95 %), the loads differing in how bad the errors are
@@ -60,6 +62,8 @@ RUN_FRAMES = (4, 10)
 LOAD_SPELL_FRAMES = (3, 10)
 # The demo profile shows its largest range (heavy load: a spike) within this many seconds from the start, where a viewer looks first
 DEMO_LARGEST_WITHIN = 2
+# A window's -every-Ns burst, unless its name gives the length: as many frames as the delta time jitter diagram shows (A to H)
+JITTER_BURST_FRAMES = 8
 
 
 class Timer(StrEnum):
@@ -113,30 +117,36 @@ class FrameMode:
     # A replayed timing diagram (diagram_replay): its frames, late or held exactly as the diagram shows them, repeated to fill the
     # clip, every `every` seconds when set
     diagram: str | None = None
+    # Diagram: how often it plays; window: how often a burst of jittered frames comes, the frames between them exact
     every: Fraction | None = None
+    # A window's burst: how many frames in a row jitter, every `every` seconds
+    burst: int | None = None
 
 
 MODE_PATTERN = re.compile(
-    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms)"
+    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?)?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
 
 
 def parse_mode(name: str) -> FrameMode:
-    """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical) or
-    RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g. 60-diagram-slow-frames)."""
+    """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical; a window in
+    bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s) or RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g. 60-diagram-slow-frames)."""
     match = MODE_PATTERN.fullmatch(name)
-    if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every")):
+    if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every")):
         raise ValueError(
-            f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES}, or "
-            + "RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames)"
+            f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
+            + "bursts: 5ms-every-1s or 5ms-24f-every-1s), or RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames)"
         )
     rate = int(match["rate"])
     if match["diagram"] is not None:
         return FrameMode(name, rate, diagram=match["diagram"], every=None if match["every"] is None else Fraction(match["every"]))
     if match["ms"] is not None:
-        return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, Fraction(match["ms"]) / 1000)
+        if match["burst_every"] is None:
+            return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, Fraction(match["ms"]) / 1000)
+        burst = JITTER_BURST_FRAMES if match["burst"] is None else int(match["burst"])
+        return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, Fraction(match["ms"]) / 1000, every=Fraction(match["burst_every"]), burst=burst)
     noise = match["load"] or match["synthetic"]
     return FrameMode(name, rate, Timer.NAIVE if noise else Timer.IDEAL, Noise(noise) if noise else None, realistic=match["realistic"] is not None)
 
@@ -284,6 +294,18 @@ def jitter_offsets(rate: int, count: int, pattern: str = "mixed") -> tuple[Fract
     return tuple(offsets)
 
 
+def burst_frames(mode: FrameMode, count: int) -> list[int]:
+    """The frames of a window's -every-Ns bursts among `count` frames: its burst length in the middle of every period, where the
+    box is in the middle of a move (a clip starts in the middle of a rest). Raises ValueError when they do not fit the clip."""
+    assert mode.every is not None and mode.burst is not None, mode.name
+    burst = mode.burst
+    period = mode.every * mode.rate
+    if period.denominator != 1 or period < burst or count % period:
+        raise ValueError(f"{mode.name}: a burst of {burst} frames every {float(mode.every):g} s does not fit a clip of {count} frames")
+    offset = (int(period) - burst) // 2
+    return [start + offset + index for start in range(0, count, int(period)) for index in range(burst)]
+
+
 def _microseconds(generator: Pcg32, low: Fraction, high: Fraction) -> Fraction:
     """A delay between `low` and `high` in whole microseconds, evenly."""
     return Fraction(generator.randint(round(low / MICROSECOND), round(high / MICROSECOND)), 1_000_000)
@@ -298,9 +320,12 @@ def wake_delays(mode: FrameMode, parameters: TimingParameters, count: int) -> li
         amount = parameters.synthetic
         return [amount * (1 + offset) for offset in jitter_offsets(mode.rate, count, parameters.synthetic_pattern)]
     if mode.noise is Noise.WINDOW:
-        # Within +-window of the window's middle, following the jitter pattern (mixed: alternating and random quarters)
+        # Within +-window of the window's middle, following the jitter pattern (mixed: alternating and random quarters); in bursts,
+        # the pattern runs through the bursts' frames only, and every other frame reads the clock at the middle
         window = mode.window or Fraction(0)
-        return [window * (1 + offset) for offset in jitter_offsets(mode.rate, count, parameters.synthetic_pattern)]
+        jittered = range(count) if mode.every is None else burst_frames(mode, count)
+        offsets = dict(zip(jittered, jitter_offsets(mode.rate, len(jittered), parameters.synthetic_pattern), strict=True))
+        return [window * (1 + offsets.get(index, Fraction(0))) for index in range(count)]
     generator = Pcg32.from_text(f"wake-up {mode.noise.value}{'' if mode.realistic else ' demo'}, {mode.rate} Hz, {count} frames")
     delays: list[Fraction] = []
     # Realistic: the first half of the clip has single late frames, each drawn on its own; the second half has spells, several
@@ -379,8 +404,10 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     if mode.timer is Timer.IDEAL:
         animation = tuple(index * frame_time for index in range(count))
     else:
-        # dt = now - last, from a clock whose constant latency (the average delay, one frame before the flip) is taken out
-        latency = sum(wakes, Fraction(0)) / count - frame_time
+        # dt = now - last, from a clock whose constant latency (the average delay, one frame before the flip) is taken out; in
+        # bursts, the delay of the exact frames between them, so only the bursts are off
+        average = (mode.window or Fraction(0)) if mode.every is not None else sum(wakes, Fraction(0)) / count
+        latency = average - frame_time
         animation = tuple(sample - latency for sample in samples)
     return SimulatedFrames(flips, samples, animation)
 
@@ -403,5 +430,6 @@ def describe(mode: FrameMode, parameters: TimingParameters) -> str:
     if mode.noise is Noise.SYNTHETIC:
         return f"{mode.rate} Hz naive timer, synthetic ±{format_ms(parameters.synthetic)} {parameters.synthetic_pattern}"
     if mode.noise is Noise.WINDOW:
-        return f"{mode.rate} Hz naive timer, ±{format_ms(mode.window or Fraction(0))} {parameters.synthetic_pattern}"
+        bursts = "" if mode.every is None else f", {mode.burst} frames every {float(mode.every):g} s"
+        return f"{mode.rate} Hz naive timer, ±{format_ms(mode.window or Fraction(0))} {parameters.synthetic_pattern}{bursts}"
     return f"{mode.rate} Hz naive timer, {mode.noise} load{' (realistic)' if mode.realistic else ''}"

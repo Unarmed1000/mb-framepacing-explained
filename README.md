@@ -39,7 +39,7 @@ Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), opti
 > **Watch it rather than read it:** [the page](https://unarmed1000.github.io/mb-framepacing-explained/) shows all of this with live
 > videos and a blind test. What follows is the short version in text.
 
-We say _game_ for anything that animates in real time: games, user interfaces, VR, simulators.
+We say _game_ for anything that animates in real time: games, user interfaces, video playback, VR, simulators.
 
 Every frame a game shows is a picture of one moment of game time, its **animation time**, and it stays on screen for some
 **display time**. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of the game stays on screen

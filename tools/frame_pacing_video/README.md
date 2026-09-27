@@ -44,17 +44,18 @@ timer:
 
 How much sooner or later than usual the naive loop reads the clock:
 
-| Mode                           | Clock read                                                                                                             | Label                                       |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `60-naive-light` …             | **System load**, as a demo: a timing error in 95 % of the frames (`--demo-load-share`), all about 1 ms sooner or later | 60 Hz naive timer, light load               |
-| `60-naive-typical` …           | Half about 1 ms, half up to 2 ms                                                                                       | 60 Hz naive timer, typical load             |
-| `60-naive-heavy` …             | 90 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                                    | 60 Hz naive timer, heavy load               |
-| `60-naive-light-realistic` …   | **Realistic** system load, an idle system: in 3 % of the frames about 1 ms, in 1 % up to 2 ms                          | 60 Hz naive timer, light load (realistic)   |
-| `60-naive-typical-realistic` … | A normal gaming PC: 7 % about 1 ms, 2 % up to 2 ms                                                                     | 60 Hz naive timer, typical load (realistic) |
-| `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)   |
-| `60-naive-1ms` … `-4ms` …      | **A ±N ms window** (any size, e.g. `60-naive-2.5ms`), following the jitter pattern (`--jitter-pattern`)                | 60 Hz naive timer, ±1 ms mixed              |
-| `60-naive-synthetic` …         | The jitter pattern within ±1 ms (`--jitter-ms`), for teaching the metric                                               | 60 Hz naive timer, synthetic ±1 ms mixed    |
-| `60-diagram-slow-frames` …     | **A timing diagram, replayed** (see below)                                                                             | 60 Hz, slow frames (as the diagram)         |
+| Mode                           | Clock read                                                                                                             | Label                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `60-naive-light` …             | **System load**, as a demo: a timing error in 95 % of the frames (`--demo-load-share`), all about 1 ms sooner or later | 60 Hz naive timer, light load                       |
+| `60-naive-typical` …           | Half about 1 ms, half up to 2 ms                                                                                       | 60 Hz naive timer, typical load                     |
+| `60-naive-heavy` …             | 90 % up to 2 ms, 10 % spikes of 4–8 ms, always late                                                                    | 60 Hz naive timer, heavy load                       |
+| `60-naive-light-realistic` …   | **Realistic** system load, an idle system: in 3 % of the frames about 1 ms, in 1 % up to 2 ms                          | 60 Hz naive timer, light load (realistic)           |
+| `60-naive-typical-realistic` … | A normal gaming PC: 7 % about 1 ms, 2 % up to 2 ms                                                                     | 60 Hz naive timer, typical load (realistic)         |
+| `60-naive-heavy-realistic` …   | Background load: 12 % about 1 ms, 6 % up to 2 ms, and in 2 % spikes of 4–8 ms                                          | 60 Hz naive timer, heavy load (realistic)           |
+| `60-naive-1ms` … `-4ms` …      | **A ±N ms window** (any size, e.g. `60-naive-2.5ms`), following the jitter pattern (`--jitter-pattern`)                | 60 Hz naive timer, ±1 ms mixed                      |
+| `60-naive-5ms-32f-every-1s` …  | **The window in bursts** (see below): 32 frames in the middle of every second, the frames between exact                | 60 Hz naive timer, ±5 ms mixed, 32 frames every 1 s |
+| `60-naive-synthetic` …         | The jitter pattern within ±1 ms (`--jitter-ms`), for teaching the metric                                               | 60 Hz naive timer, synthetic ±1 ms mixed            |
+| `60-diagram-slow-frames` …     | **A timing diagram, replayed** (see below)                                                                             | 60 Hz, slow frames (as the diagram)                 |
 
 - **System load:** the clock is read after the frame's first work (input, OS messages), usually about 2 ms plus 0–0.3 ms of noise
   (`--noise-ms`); that constant part is latency. How late the thread gets there depends on what else runs: background work,
@@ -65,9 +66,13 @@ How much sooner or later than usual the naive loop reads the clock:
   using the CPU, with the same share of longer reads in both halves. (A spell's error only shows at its ends, which is why the demo
   profile has none: its second half would look much lighter.) Unity measured 6.854, 7.423 and 6.691 ms at a steady
   144 Hz, whose frames are 6.944 ms.
+- **The window in bursts** (`RATE-naive-Nms-Kf-every-Ss`, e.g. `60-naive-5ms-32f-every-1s`): only K frames in the middle of every
+  S seconds read the clock off its average, following the jitter pattern; every other frame is exact. At the fast speed a move
+  takes a second, so the jitter falls where the box moves fastest and shows most. Without `-Kf` a burst is 8 frames, as many as
+  the delta time jitter diagram shows.
 - **Timing diagrams, replayed** (`RATE-diagram-NAME`, e.g. `60-diagram-slow-frames`, `60-diagram-half-rate-bad-pacing`): the
   frames of one of the [timing diagrams](../timing_diagrams) exactly as the diagram shows them, when each is shown and which
-  animation time it shows, with one diagram refresh per frame of the mode's rate (the diagram's 100 ms is 16.7 ms at 60 Hz).
+  animation time it shows, with one diagram refresh per frame of the mode's rate.
   The diagram is reduced to its smallest repeating unit (slow frames: a frame on time, one a refresh late, the one that catches
   up), repeated back to back; when it does not divide the clip, on-time frames at full rate fill each repetition. `-every-Ns`
   repeats it only every N seconds, with on-time frames between (`60-diagram-slow-frames-every-1s`). Every diagram at a fixed

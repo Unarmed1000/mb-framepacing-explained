@@ -48,12 +48,13 @@ const twoClocks: Slide = {
   title: "Two clocks",
   render() {
     const element = body(
-      "What you just saw",
+      "Stutter at a steady frame rate",
       "Every frame shows a moment",
-      `Every frame a game shows is a picture of one moment of game time, its <strong>animation time</strong>, and it stays on screen
-      for some <strong>display time</strong>. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of
+      `Motion can stutter even when the frame rate never drops, because every frame is timed by two clocks and the frame rate only
+      looks at one of them. Every frame a game shows is a picture of one moment of game time, its <strong>animation time</strong>, and it
+      stays on screen for some <strong>display time</strong>. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of
       the game stays on screen for 16.7 ms. <strong>Animation error</strong> is how far they disagree, per frame, in milliseconds,
-      as PresentMon measures it. A high average frame rate says nothing about it. We say <em>game</em> for anything that animates in real time: games, user interfaces, VR, simulators.`,
+      as PresentMon measures it. A high average frame rate says nothing about it. We say <em>game</em> for anything that animates in real time: games, user interfaces, video playback, VR, simulators.`,
       `<div class="single-holder"></div>
       ${figure(perfectTimer, "Perfect timer: every frame shows the moment it is displayed, so the animation error is 0.")}
       <div class="card">
@@ -90,7 +91,7 @@ const timerJitterSlide: Slide = {
   title: "Delta time jitter",
   render() {
     const element = body(
-      "Two ways it goes wrong · 1",
+      "The first cause of stutter",
       "On time, but showing the wrong moment",
       `Frames reach the screen perfectly evenly, but the animation time advances unevenly: the game reads its wall clock a little
       early or late after each flip, and renders the frame for that reading (<strong>delta time jitter</strong>). Gamers Nexus
@@ -198,10 +199,10 @@ const slowFramesSlide: Slide = {
   title: "Slow frames",
   render: () =>
     body(
-      "Two ways it goes wrong · 2",
+      "The second cause of stutter",
       "When a frame misses its refresh",
-      `The other way round: the animation time advances evenly, but frames reach the screen unevenly (<strong>frame pacing</strong>).
-      A frame over its budget shows a refresh late, a <strong>hitch</strong>: the previous frame is held, the late frame shows a
+      `With the animation time right, stutter has one more cause: frames that reach the screen late or unevenly (<strong>frame
+      pacing</strong>). A frame over its budget shows a refresh late, a <strong>hitch</strong>: the previous frame is held, the late frame shows a
       moment that has already passed, and the next one jumps ahead. The flipbook's pages are drawn evenly, but flipped at an uneven
       tempo.`,
       `${figure(slowFrames, "Slow frames: the previous frame is held, the late frame shows a past moment and the next one jumps ahead.")}`,
@@ -284,7 +285,8 @@ const vrr: Slide = {
     body(
       "G-SYNC, FreeSync",
       "VRR changes when, not which moment",
-      `With variable refresh rate the display refreshes when the frame is ready, instead of the frame waiting for the display. Inside
+      `Everything so far assumed a fixed refresh rate with vsync on. VRR removes the refresh grid: the display refreshes when the
+      frame is ready, instead of the frame waiting for the display. Inside
       the display's range there is no tearing and no rounding to whole refreshes. But it changes <em>when</em> a frame appears, not
       <em>which animation time</em> the game rendered it for.`,
       `${figure(vrrSlowFrames, "The same slow frames on VRR: the errors shrink from 16.7 to 4.2 ms, but the frames are still late.")}
@@ -501,7 +503,11 @@ const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }
       "The second cause of stutter, <strong>bad frame pacing</strong>: frames that reach the screen late or unevenly, and how engines hold and switch rates.",
     slides: [slowFramesSlide, halfRate, switching, recovery],
   },
-  { name: "Display and input", about: "What VRR changes, and how pacing meets input latency.", slides: [vrr, inputLatency] },
+  {
+    name: "Beyond vsync: VRR and input latency",
+    about: "What VRR changes, and how pacing meets input latency.",
+    slides: [vrr, inputLatency],
+  },
   { name: "Go further", about: "How to measure animation error, and where to read more.", slides: [measure, furtherReading] },
 ];
 
@@ -539,15 +545,7 @@ const topics: Slide = {
 };
 
 /** The slides that are not ready yet: each carries a work-in-progress notice, and so does its topic's card. */
-const WORK_IN_PROGRESS: ReadonlySet<Slide> = new Set([
-  slowFramesSlide,
-  halfRate,
-  switching,
-  recovery,
-  vrr,
-  inputLatency,
-  furtherReading,
-]);
+const WORK_IN_PROGRESS: ReadonlySet<Slide> = new Set([halfRate, switching, recovery, vrr, inputLatency, furtherReading]);
 
 /** The notice before the slides that are not ready yet: continue anyway, or go to the measuring slide, which is. */
 const notReady: Slide = {
@@ -557,10 +555,10 @@ const notReady: Slide = {
     body(
       "Work in progress",
       "The rest is not ready yet",
-      `The slides after this one, on frame pacing, VRR, input latency and further reading, are drafts: their text, diagrams and
-      videos are still changing, and some videos are missing. The slide on measuring animation error is ready.`,
+      `The slides after this one, on half rate, switching rates, VRR, input latency and further reading, are drafts: their text,
+      diagrams and videos are still changing, and some videos are missing. The slide on measuring animation error is ready.`,
       `<div class="menu-actions">
-        <a class="button" href="#/slow-frames">Continue anyway →</a>
+        <a class="button" href="#/half-rate">Continue anyway →</a>
         <a class="button ghost" href="#/measure">How to measure animation error →</a>
         <a class="button ghost" href="#/topics">Back to the topics</a>
       </div>`,
