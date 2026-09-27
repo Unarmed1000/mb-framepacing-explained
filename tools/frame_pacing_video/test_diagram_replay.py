@@ -75,12 +75,13 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(holds(simulated)[:9], [1, 2, 2, 2, 2, 2, 2, 1, 1])
         self.assertEqual(sum(holds(simulated)[:9]), 15)
 
-    def test_every_repeats_the_unit_once_per_period_and_plays_on_time_frames_between(self) -> None:
+    def test_every_plays_the_whole_diagram_once_per_period_with_on_time_frames_between(self) -> None:
         simulated = frames("60-diagram-slow-frames-every-1s")
-        # The unit in the middle of each second: the held frame at refresh 28 of 60 (the clip starts in the middle of a rest)
+        # The whole diagram in the middle of each second (the clip starts in the middle of a rest): both its slow frames, A held
+        # from refresh 26 and D from 30 of each 60, so two late frames per second
         held = [flip for flip, hold in zip(simulated.flips, holds(simulated), strict=True) if hold == 2]
-        self.assertEqual(held, [28 + 60 * second for second in range(8)])
-        self.assertEqual(sum(1 for error in errors_ms(simulated) if error < 0), 8)
+        self.assertEqual(held, [start + 60 * second for second in range(8) for start in (26, 30)])
+        self.assertEqual(sum(1 for error in errors_ms(simulated) if error < 0), 16)
         with self.assertRaisesRegex(ValueError, "cannot repeat every 7 refreshes"):
             _ = replay.schedule("slow-frames", Fraction(7, 60), CLIP, 1, Fraction(60))
 

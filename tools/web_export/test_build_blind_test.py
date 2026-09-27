@@ -31,6 +31,14 @@ class PairTests(unittest.TestCase):
         # Never two bad timers
         self.assertFalse([pair for pair in pairs["normal"] if all("naive" in mode for mode in pair)])
 
+    def test_the_explanation_clips_join_their_motion_once(self) -> None:
+        clips = cast(dict[str, object], json.loads(export.EXPLANATION_CLIPS.read_text(encoding="utf-8")))
+        merged = export.with_explanation_clips({"fast": [("60", "60"), ("60", "30")], "normal": [("60", "60")]}, clips)
+        self.assertEqual(merged["normal"], [("60", "60")])
+        self.assertEqual(merged["fast"][:2], [("60", "60"), ("60", "30")])
+        self.assertEqual(merged["fast"].count(("60", "60")), 1)
+        self.assertIn(("60", "60-diagram-slow-frames"), merged["fast"])
+
     def test_generator_command(self) -> None:
         command = export.generator_command("fast", [("60", "30"), ("30", "60")], ["--web"], Path("out"), None)
         self.assertEqual(command[2:], ["--web", "--speed", "fast", "--output-dir", "out", "--pairs", "60:30", "30:60"])

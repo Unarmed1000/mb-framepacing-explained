@@ -4,9 +4,10 @@ clip. So a video shows exactly what its diagram shows: the same frames held or l
 speed.
 
 The diagram is reduced to its smallest repeating unit (slow frames: a frame on time, one a refresh late, the one that catches up;
-bad half rate: a frame held for one refresh, the next for three), which is repeated back to back. When the unit does not divide
-the clip, or with -every-Ns (e.g. 60-diagram-slow-frames-every-1s), on-time frames at full rate fill each repetition up to the
-next one. A VRR diagram cannot be replayed: its frames appear between the refreshes of a fixed rate video.
+bad half rate: a frame held for one refresh, the next for three), which is repeated back to back; when the unit does not divide
+the clip, on-time frames at full rate fill each repetition up to the next one. With -every-Ns (e.g.
+60-diagram-slow-frames-every-1s) the whole diagram plays once every N seconds, in the middle of the period, with on-time frames
+around it. A VRR diagram cannot be replayed: its frames appear between the refreshes of a fixed rate video.
 """
 
 import sys
@@ -39,9 +40,9 @@ def _refreshes(value_ms: float) -> Fraction:
     return Fraction(round(value_ms * 1000), round(diagrams.PERIOD * 1000))
 
 
-def pattern(name: str) -> Pattern:
+def pattern(name: str, whole: bool = False) -> Pattern:
     """The smallest repeating unit of the diagram `name`: the shortest start of it that, repeated, gives every frame the diagram
-    shows. Raises ValueError for an unknown diagram and for a VRR one."""
+    shows; with `whole`, every frame of the diagram as it is. Raises ValueError for an unknown diagram and for a VRR one."""
     diagram = diagrams.DIAGRAMS_BY_NAME.get(name)
     if diagram is None:
         raise ValueError(f"no diagram named {name!r}: use one of {', '.join(replayable())}")
@@ -55,6 +56,8 @@ def pattern(name: str) -> Pattern:
     last = timed[-1]
     length = int(shown[-1]) + last.frame.interval
     frames = list(zip(shown, animation, strict=True))
+    if whole:
+        return Pattern(tuple(int(at) for at in shown), tuple(animation), length)
     for period in range(1, length + 1):
         unit = [(at, moment) for at, moment in frames if at < period]
         tiled = [(at + copy * period, moment + copy * period) for copy in range(length // period + 1) for at, moment in unit]
@@ -74,7 +77,8 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
     time (s). One diagram refresh is `interval` output refreshes. The unit repeats every `every` seconds, or, without, every
     whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest.
     Raises ValueError when the unit does not fit or the repetition does not divide the clip."""
-    unit = pattern(name)
+    # Back to back the smallest unit repeats; once per period the whole diagram plays (slow frames: both late frames)
+    unit = pattern(name, whole=every is not None)
     length = unit.length * interval
     if every is None:
         period = next(size for size in range(length, refreshes + 1) if refreshes % size == 0 and size % interval == 0)

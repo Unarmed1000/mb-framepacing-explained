@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate exactly the clips the web page's blind test needs, web-encoded, into web/public/videos.
+"""Generate exactly the clips the web page needs, web-encoded, into web/public/videos: the blind test's and the explanation slides'.
 
 The questions live in web/src/blind-test/trials.json, the one place both the page and this script read. For every motion (a
 speed of the single-box scene; never the rows) it collects the top/bottom pairs: identical pairs once, every other pair in both
@@ -22,6 +22,8 @@ from typing import cast
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TRIALS = REPO_ROOT / "web" / "src" / "blind-test" / "trials.json"
+# The explanation slides' clips, top and bottom mode of each, in one motion
+EXPLANATION_CLIPS = REPO_ROOT / "web" / "src" / "explain" / "clips.json"
 GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_videos.py"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "web" / "public" / "videos"
 
@@ -48,6 +50,15 @@ def required_pairs(definitions: dict[str, object]) -> dict[str, list[tuple[str, 
     return {motion: list(motion_pairs) for motion, motion_pairs in pairs.items()}
 
 
+def with_explanation_clips(pairs: dict[str, list[tuple[str, str]]], clips: dict[str, object]) -> dict[str, list[tuple[str, str]]]:
+    """The blind test's pairs plus the explanation slides' clips (in their motion, each pair as listed, none twice)."""
+    motion = str(clips["motion"])
+    merged = {name: list(motion_pairs) for name, motion_pairs in pairs.items()}
+    extra = [(top, bottom) for top, bottom in cast(list[list[str]], clips["pairs"])]
+    merged[motion] = list(dict.fromkeys([*merged.get(motion, []), *extra]))
+    return merged
+
+
 def generator_command(motion: str, pairs: list[tuple[str, str]], clip_arguments: list[str], output_dir: Path, ffmpeg: str | None) -> list[str]:
     command = [sys.executable, str(GENERATOR), *clip_arguments, "--speed", motion, "--output-dir", str(output_dir), "--pairs"]
     command += [f"{top}:{bottom}" for top, bottom in pairs]
@@ -66,7 +77,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv, namespace=Arguments())
     definitions = cast(dict[str, object], json.loads(TRIALS.read_text(encoding="utf-8")))
     clip_arguments = cast(list[str], cast(dict[str, object], definitions["clip"])["arguments"])
-    for motion, pairs in required_pairs(definitions).items():
+    clips = cast(dict[str, object], json.loads(EXPLANATION_CLIPS.read_text(encoding="utf-8")))
+    for motion, pairs in with_explanation_clips(required_pairs(definitions), clips).items():
         if motion.startswith("ui"):
             parser.error(f"{TRIALS.name} asks for {motion}: the blind test never uses the rows (ui scroll)")
         bad_pairs = [f"{top}:{bottom}" for top, bottom in pairs if "naive" in top and "naive" in bottom]
