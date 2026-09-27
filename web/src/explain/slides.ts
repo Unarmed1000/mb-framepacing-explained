@@ -127,16 +127,19 @@ const invisible: Slide = {
       <strong>animation error</strong> shows why, because only it looks at the moment each frame shows.`,
       `${figure(perfectVsJitter, "Same frame rate, same frametimes, different motion: only the animation error differs.")}`,
     );
-    element.append(
-      liveComparison(
-        "fast",
-        "60",
-        "60-naive-5ms",
-        "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one " +
-          "stutters.",
-        false,
-      ),
-    );
+    // The video above the diagram, as on the slides before
+    element
+      .querySelector(".lead")!
+      .after(
+        liveComparison(
+          "fast",
+          "60",
+          "60-naive-5ms",
+          "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one " +
+            "stutters.",
+          false,
+        ),
+      );
     return element;
   },
 };
