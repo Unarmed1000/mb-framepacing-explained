@@ -1,31 +1,41 @@
 # The web page
 
 A self-guided, slide-style page in [`web/`](../web) (TypeScript and Vite, no framework) that explains frame pacing with the videos
-playing live, and starts with a blind test. It is a very early draft, live at <https://unarmed1000.github.io/mb-framepacing-explained/>; the [roadmap](roadmap.md) tracks what is left.
+playing live, and starts with two blind tests. It is a very early draft, live at <https://unarmed1000.github.io/mb-framepacing-explained/>; the [roadmap](roadmap.md) tracks what is left.
 
 ## The slides
 
 1. **Welcome**, then **best viewing**: the viewing check (once, on the best viewing slide) and a checklist to fix what it finds (below).
-2. **Menu**: take the blind test, or open the previous results kept in this browser (disabled when there are none), stepping
-   between them with older and newer buttons; then start the explanation ("How it works", from its first slide), or go straight to animation error and how to
-   measure it ("Measure it", the mb-framepacing slide). A result's
-   questions can be watched again; one from an earlier test version lists its answers without the video.
-3. **Warm-up**: one easy pair, a perfect 60 against a ±5 ms timer (the worst measured timer error, on every frame) at the fast movement, answered and then revealed with its
-   animation error chart.
-4. **Blind test**: "Which box has the smoother movement?", 18 questions in random order after the warm-up: perfect 60 against
-   a bad 60 and against a perfect 30, a perfect 30 against a bad 60, and 60 and 30 each against itself. Every pair is asked at the
-   normal and the fast movement and with each of its modes on top, the preference pair also at the slow movement (the normal
-   timing on a quarter of the path). 20 fps is left out. The questions, their categories and the clips they need are in
-   [`trials.json`](../web/src/blind-test/trials.json). The result is scored per category (preferences are not scored), and each
-   answer can be opened again to watch its pair with the reveal. The bad timers go wrong on nearly every frame, so a few seconds
+2. **Menu**: take the blind tests, then start the explanation ("How it works", from its first slide), or go straight to
+   animation error and how to measure it ("Measure it", the mb-framepacing slide).
+3. **Blind tests**: pick one of two, one for each cause of stutter; each card also opens that test's previous results kept in
+   this browser (disabled when there are none), stepping between them with older and newer buttons. A result's questions can be
+   watched again; one changed in a later test version plays today's version of its clip, and one that is gone lists its answer
+   without the video. A test starts with a practice warm-up, an easy pair answered and revealed with its animation error chart,
+   as often as wanted and not saved; the test itself then starts with a scored warm-up question. Every question asks "Which box
+   has the smoother movement?", in random order after the warm-up, each pair at the normal and the fast movement and with each
+   of its modes on top.
+   - **Jitter**, 16 questions after the warm-up (a perfect 60 against a ±5 ms timer, the worst measured timer error, on every
+     frame, at the fast movement): perfect 60 against a bad 60 and against a perfect 30, a perfect 30 against a bad 60, and 60
+     and 30 each against itself. Marked as harder to spot than late frames.
+   - **Late frames**, 14 questions after the warm-up (a perfect 60 against slow frames back to back, at the fast movement):
+     perfect 60 against a 60 whose frames miss their refresh (the slow frames diagram, once a second), adapting the rate against
+     staying at full rate through a busy stretch (fast only), and, with no right answer, that 60 against a perfect 30 and
+     against a perfect 20 (three groups of slow frames in every move, around 30 %, 50 % and 70 % of it). The page asks to watch
+     at least one whole move before answering.
+
+   The questions, their categories and the clips they need are in [`trials.json`](../web/src/blind-test/trials.json). A result
+   is scored per category (preferences are not scored), and each answer can be opened again to watch its pair with the
+   reveal. The bad timers go wrong on nearly every frame, so a few seconds
    are enough; the page says that this is harsher than a typical game, and [why it is still fair](measured-errors.md#the-blind-test). The result is kept anonymised and versioned in the browser only, and can
    be downloaded or copied as JSON.
-5. **What you saw, explained**: a topics page (stutter, its two causes and how it is measured; each topic a link to its first slide), then the two clocks, delta time jitter (live, with its chart following the video), why frame rate cannot see
-   it, the vsync timer, slow frames, half rate, switching rates, recovering from a spike, VRR, input latency, measuring it on a
-   real display with [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), and further reading. The diagrams are the
+
+4. **What you saw, explained**: a topics page (stutter, its two causes and how it is measured; each topic a link to its first slide), then the two clocks, delta time jitter (live, with its chart following the video), why frame rate cannot see
+   it, the vsync timer, slow frames, half rate, measuring it on a
+   real display with [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), and two appendices: staying within the frame budget, and further reading. The diagrams are the
    ones in [`images`](images).
 
-The blind test comes before the explanations, so they cannot give its answers away.
+The blind tests come before the explanations, so they cannot give their answers away.
 
 ## Running it
 

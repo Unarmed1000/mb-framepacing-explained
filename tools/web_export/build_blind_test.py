@@ -46,10 +46,15 @@ def required_pairs(definitions: dict[str, object]) -> dict[str, list[tuple[str, 
         # A trial may limit its movements (20 Hz is only shown with the slower movement); default: all of the test's
         for motion in cast(list[str], trial.get("motions", definitions["motions"])):
             add(motion, str(trial["a"]), str(trial["b"]))
-    warmup = cast(dict[str, object], definitions["warmup"])
-    for motion in cast(list[str], warmup["motions"]):
-        for a, b in cast(list[list[str]], warmup["pairs"]):
-            add(motion, a, b)
+    # The test-wide warm-up, and the tests' own
+    warmups = [cast(dict[str, object], definitions["warmup"])]
+    warmups += [
+        cast(dict[str, object], test["warmup"]) for test in cast(list[dict[str, object]], definitions.get("tests", [])) if isinstance(test.get("warmup"), dict)
+    ]
+    for warmup in warmups:
+        for motion in cast(list[str], warmup["motions"]):
+            for a, b in cast(list[list[str]], warmup["pairs"]):
+                add(motion, a, b)
     return {motion: list(motion_pairs) for motion, motion_pairs in pairs.items()}
 
 

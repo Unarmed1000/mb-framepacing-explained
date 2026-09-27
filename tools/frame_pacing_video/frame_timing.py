@@ -119,6 +119,8 @@ class FrameMode:
     diagram: str | None = None
     # Diagram: how often it plays; window: how often a burst of jittered frames comes, the frames between them exact
     every: Fraction | None = None
+    # Diagram: how many times it plays per `every` period
+    times: int = 1
     # A window's burst: how many frames in a row jitter, every `every` seconds
     burst: int | None = None
     # A busy stretch (adaptive_rate): the policy, full-rate or swappy
@@ -127,7 +129,7 @@ class FrameMode:
 
 MODE_PATTERN = re.compile(
     r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
-    + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
+    + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-busy-(?P<busy>full-rate|swappy))?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
@@ -135,21 +137,22 @@ NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -rea
 
 def parse_mode(name: str) -> FrameMode:
     """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical; a window in
-    bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g.
+    bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
     60-diagram-slow-frames) or RATE-busy-POLICY (a busy stretch at full rate or adapting like Swappy: 60-busy-full-rate,
     60-busy-swappy)."""
     match = MODE_PATTERN.fullmatch(name)
     if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every")):
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
-            + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
+            + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
             + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy)"
         )
     rate = int(match["rate"])
     if match["busy"] is not None:
         return FrameMode(name, rate, busy=match["busy"])
     if match["diagram"] is not None:
-        return FrameMode(name, rate, diagram=match["diagram"], every=None if match["every"] is None else Fraction(match["every"]))
+        every = None if match["every"] is None else Fraction(match["every"])
+        return FrameMode(name, rate, diagram=match["diagram"], every=every, times=1 if match["times"] is None else int(match["times"]))
     if match["ms"] is not None:
         if match["burst_every"] is None:
             return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, Fraction(match["ms"]) / 1000)
@@ -406,7 +409,7 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     if mode.diagram is not None:
         from diagram_replay import schedule  # noqa: PLC0415
 
-        flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps)
+        flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
         # The perfect timer reads no clock: each frame's sample is its own flip
         return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation))
     count = refreshes // interval
@@ -440,7 +443,12 @@ def describe(mode: FrameMode, parameters: TimingParameters) -> str:
     if mode.diagram is not None:
         from diagram_replay import title  # noqa: PLC0415
 
-        every = "" if mode.every is None else f", every {float(mode.every):g} s"
+        if mode.every is None:
+            every = ""
+        elif mode.times == 1:
+            every = f", every {float(mode.every):g} s"
+        else:
+            every = f", {mode.times} times {'a second' if mode.every == 1 else f'every {float(mode.every):g} s'}"
         return f"{mode.rate} Hz, {title(mode.diagram)} (as the diagram{every})"
     if mode.timer is Timer.IDEAL:
         return f"{mode.rate} Hz ideal timer"

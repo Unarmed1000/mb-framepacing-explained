@@ -1,5 +1,5 @@
 {
-  "testVersion": 19,
+  "testVersion": 28,
   "clip": {
     "width": 1280,
     "height": 384,
@@ -11,6 +11,24 @@
     "pairs": [["60", "60-naive-5ms"]],
     "smoother": "60"
   },
+  "tests": [
+    {
+      "id": "jitter",
+      "name": "Jitter",
+      "warmup": true,
+      "categories": ["pacing", "frame-rate", "identical", "preference"]
+    },
+    {
+      "id": "late-frames",
+      "name": "Late frames",
+      "warmup": {
+        "motions": ["fast"],
+        "pairs": [["60", "60-diagram-slow-frames"]],
+        "smoother": "60"
+      },
+      "categories": ["late-frames", "late-preference"]
+    }
+  ],
   "trials": [
     {
       "id": "pacing-60",
@@ -18,6 +36,44 @@
       "a": "60",
       "b": "60-naive-4ms",
       "smoother": "60"
+    },
+    {
+      "id": "late-60",
+      "category": "late-frames",
+      "a": "60",
+      "b": "60-diagram-slow-frames-every-1s",
+      "smoother": "60"
+    },
+    {
+      "id": "adapt-busy",
+      "category": "late-frames",
+      "a": "60-busy-full-rate",
+      "b": "60-busy-swappy",
+      "smoother": "60-busy-swappy",
+      "motions": ["fast"]
+    },
+    {
+      "id": "late-vs-30",
+      "category": "late-preference",
+      "a": "30",
+      "b": "60-diagram-slow-frames-every-1s",
+      "smoother": null
+    },
+    {
+      "id": "late-vs-20",
+      "category": "late-preference",
+      "a": "20",
+      "b": "60-diagram-slow-frames-3x-every-2s",
+      "smoother": null,
+      "motions": ["normal"]
+    },
+    {
+      "id": "late-vs-20",
+      "category": "late-preference",
+      "a": "20",
+      "b": "60-diagram-slow-frames-3x-every-1s",
+      "smoother": null,
+      "motions": ["fast"]
     },
     {
       "id": "rate-60-vs-30",
@@ -31,8 +87,7 @@
       "category": "preference",
       "a": "30",
       "b": "60-naive-4ms",
-      "smoother": null,
-      "motions": ["normal", "fast", "slow"]
+      "smoother": null
     },
     {
       "id": "same-60",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ModeEntry, VideoEntry } from "../manifest";
-import { browserFamily, buildRecord, restoreAnswers, RESULT_FORMAT, type AnsweredTrial } from "./result";
+import { browserFamily, buildRecord, restoreAnswers, restoreEach, RESULT_FORMAT, type AnsweredTrial } from "./result";
 import { preferenceTally, verdict, verdictText } from "./reveal";
 import {
   buildRun,
@@ -202,5 +202,39 @@ describe("restoring a saved result", () => {
       trials: record.trials.map((trial, index) => (index === 3 ? { ...trial, bottom: "60-naive-heavy" } : trial)),
     };
     expect(restoreAnswers(heavy, clips)).toBeNull();
+    // Question by question: the changed one plays today's clip of its question (a flawed 60 against the same perfect half, on
+    // the same side), the others as they were
+    const each = restoreEach(heavy, clips);
+    expect(each.every((answer) => answer !== null)).toBe(true);
+    expect(each.map((answer) => answer?.similar === true)).toEqual(record.trials.map((_, index) => index === 3));
+    const original = record.trials[3]!;
+    const today = each[3]!.trial.clip.video;
+    for (const half of ["top", "bottom"] as const)
+      if (original[half] !== "60-naive-heavy" && heavy.trials[3]![half] !== "60-naive-heavy")
+        expect(today[half].mode).toBe(original[half]);
+  });
+
+  it("shows a changed question with today's clip at its own movement", () => {
+    // 20 against a 60 with late frames has a clip per movement: a saved fast answer gets the fast one, never the normal one's
+    const clips = library();
+    const fast = buildRun(clips, seededRandom(5)).find(
+      (each) => each.definition.id === "late-vs-20" && each.motion === "fast" && each.clip.video.top.mode === "20",
+    )!;
+    const record = buildRecord(
+      [{ trial: fast, answer: "top", answerMs: 1, health: { presented: 1, dropped: 0, late: 0, early: 0 } }],
+      null,
+      "hash",
+      new Date("2026-09-26T12:00:00Z"),
+      "Edg/1",
+      "late-frames",
+    );
+    const old = { ...record, trials: record.trials.map((each) => ({ ...each, bottom: "60-diagram-slow-frames-every-1s" })) };
+    const [restored] = restoreEach(old, clips);
+    expect(restored?.similar).toBe(true);
+    expect(restored?.trial.motion).toBe("fast");
+    expect([restored?.trial.clip.video.top.mode, restored?.trial.clip.video.bottom.mode]).toEqual([
+      "20",
+      "60-diagram-slow-frames-3x-every-1s",
+    ]);
   });
 });

@@ -3,6 +3,7 @@
 import type { ViewingReport } from "../checks/viewing";
 import type { PlaybackHealth } from "../video/pixel-video";
 import {
+  allWarmups,
   DEFINITIONS,
   isCorrect,
   score,
@@ -31,6 +32,8 @@ export interface AnsweredTrial {
   answer: Answer;
   answerMs: number;
   health: PlaybackHealth | SavedPlayback;
+  /** A saved answer shown with today's version of its question's clip, as the one it was asked with no longer exists. */
+  similar?: boolean;
 }
 
 /** How many video frames were off the 60 fps rhythm: dropped, late or early. */
@@ -54,6 +57,8 @@ export interface TrialRecord {
 export interface ResultRecord {
   format: number;
   testVersion: number;
+  /** Which of the tests (TestDefinition id); absent in results from before there was a choice. */
+  test?: string;
   /** A hash of the clips' manifests: results made with different clips are never mixed. */
   clipsHash: string;
   /** The day only (UTC), no time. */
@@ -85,10 +90,12 @@ export function buildRecord(
   clipsHash: string,
   date: Date,
   userAgent: string,
+  test?: string,
 ): ResultRecord {
   return {
     format: RESULT_FORMAT,
     testVersion: DEFINITIONS.testVersion,
+    ...(test === undefined ? {} : { test }),
     clipsHash,
     date: date.toISOString().slice(0, 10),
     viewing: viewing && {
@@ -137,32 +144,75 @@ export function restoreAnswers(
   library: ClipLibrary,
   definitions: Definitions = DEFINITIONS,
 ): AnsweredTrial[] | null {
-  const answers: AnsweredTrial[] = [];
-  for (const saved of record.trials) {
-    const modes = [saved.top, saved.bottom].sort().join(":");
-    let definition: TrialDefinition | undefined;
-    if (saved.category === "warm-up") {
-      const pair = definitions.warmup.pairs.find((warmup) => [...warmup].sort().join(":") === modes);
-      if (pair)
-        definition = { id: "warm-up", category: "warm-up", a: pair[0], b: pair[1], smoother: definitions.warmup.smoother };
-    } else {
-      definition = definitions.trials.find(
-        (trial) =>
-          trial.category === saved.category &&
-          [trial.a, trial.b].sort().join(":") === modes &&
-          (saved.id === `${trial.id}-${saved.motion}` || saved.id === `${trial.id}-${saved.motion}-top-${saved.top}`),
-      );
+  // Every question exactly as it was asked: none gone, none shown with today's clip instead
+  const answers = restoreEach(record, library, definitions);
+  return answers.every((answer) => answer !== null && !answer.similar) ? (answers as AnsweredTrial[]) : null;
+}
+
+/** Each of a saved result's answers as a question again, or null where its trial or clip no longer exists (changed in a later
+ * test version): so what still exists can be watched again. */
+export function restoreEach(
+  record: ResultRecord,
+  library: ClipLibrary,
+  definitions: Definitions = DEFINITIONS,
+): (AnsweredTrial | null)[] {
+  return record.trials.map((saved) => restoreOne(saved, library, definitions));
+}
+
+function restoreOne(saved: TrialRecord, library: ClipLibrary, definitions: Definitions): AnsweredTrial | null {
+  const modes = [saved.top, saved.bottom].sort().join(":");
+  let definition: TrialDefinition | undefined;
+  if (saved.category === "warm-up") {
+    for (const warmup of allWarmups(definitions)) {
+      const pair = warmup.pairs.find((each) => [...each].sort().join(":") === modes);
+      if (pair && !definition)
+        definition = { id: "warm-up", category: "warm-up", a: pair[0], b: pair[1], smoother: warmup.smoother };
     }
-    const clip = library.find(saved.motion, saved.top, saved.bottom);
-    if (!definition || !clip) return null;
-    answers.push({
-      trial: { definition, id: saved.id, position: saved.position, motion: saved.motion, clip },
-      answer: saved.answer,
-      answerMs: saved.answerMs,
-      health: savedHealth(saved.playback),
-    });
+  } else {
+    definition = definitions.trials.find(
+      (trial) =>
+        trial.category === saved.category &&
+        [trial.a, trial.b].sort().join(":") === modes &&
+        (saved.id === `${trial.id}-${saved.motion}` || saved.id === `${trial.id}-${saved.motion}-top-${saved.top}`),
+    );
   }
-  return answers;
+  const clip = library.find(saved.motion, saved.top, saved.bottom);
+  const answer = { answer: saved.answer, answerMs: saved.answerMs, health: savedHealth(saved.playback) };
+  if (definition && clip)
+    return { trial: { definition, id: saved.id, position: saved.position, motion: saved.motion, clip }, ...answer };
+  // Its clip is gone: today's question like it, in the same category and with the same perfect half, its other half on the same
+  // side (each pair is a flawed 60 against a perfect rate, or the same clip twice, so the flawed one is what changes)
+  const similar = similarQuestion(saved, definitions);
+  const today = similar && library.find(saved.motion, similar.top, similar.bottom);
+  if (!similar || !today) return null;
+  return {
+    trial: { definition: similar.definition, id: saved.id, position: saved.position, motion: saved.motion, clip: today },
+    ...answer,
+    similar: true,
+  };
+}
+
+/** Today's question like a saved one whose clip is gone: in its category and asked at its movement, keeping the saved half that
+ * one of its modes still is (the one with the question's id first), and the other half on the same side; null when there is
+ * none. */
+function similarQuestion(
+  saved: TrialRecord,
+  definitions: Definitions,
+): { definition: TrialDefinition; top: string; bottom: string } | null {
+  if (saved.category === "warm-up") return null;
+  const halves = [saved.top, saved.bottom];
+  const candidates = definitions.trials.filter(
+    (trial) =>
+      trial.category === saved.category &&
+      trial.a !== trial.b &&
+      (trial.motions ?? definitions.motions).includes(saved.motion) &&
+      halves.some((half) => half === trial.a || half === trial.b),
+  );
+  const definition = candidates.find((trial) => saved.id.startsWith(`${trial.id}-${saved.motion}`)) ?? candidates[0];
+  if (!definition) return null;
+  const kept = halves.find((half) => half === definition.a || half === definition.b)!;
+  const other = kept === definition.a ? definition.b : definition.a;
+  return { definition, top: saved.top === kept ? kept : other, bottom: saved.bottom === kept ? kept : other };
 }
 
 /** A short, stable hash of the manifests' text (SHA-256, first 16 hex digits), or "unavailable" outside a secure context. */

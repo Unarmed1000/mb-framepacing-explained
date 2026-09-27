@@ -12,15 +12,19 @@ class PairTests(unittest.TestCase):
     def test_pairs_of_the_real_definitions(self) -> None:
         definitions = cast(dict[str, object], json.loads(export.TRIALS.read_text(encoding="utf-8")))
         pairs = export.required_pairs(definitions)
-        self.assertEqual(sorted(pairs), ["fast", "normal", "slow"])
-        # Normal and fast: 2 identical pairs once and 3 other pairs in both orders; at fast also the warm-up pair
-        self.assertEqual(len(pairs["normal"]), 2 + 3 * 2)
-        self.assertEqual(len(pairs["fast"]), 2 + 3 * 2 + 2)
+        self.assertEqual(sorted(pairs), ["fast", "normal"])
+        # Normal and fast: 2 identical pairs once and 6 other pairs in both orders; at fast also adapting the rate and the two
+        # warm-up pairs (the jitter test's and the late frames test's)
+        self.assertEqual(len(pairs["normal"]), 2 + 6 * 2)
+        self.assertEqual(len(pairs["fast"]), 2 + 7 * 2 + 2 + 2)
         self.assertIn(("60", "60-naive-5ms"), pairs["fast"])
-        # Slow (a quarter of the path): only the preference pair, both ways round
-        self.assertEqual(pairs["slow"], [("30", "60-naive-4ms"), ("60-naive-4ms", "30")])
-        # No 20 fps
-        self.assertFalse([pair for motion_pairs in pairs.values() for pair in motion_pairs if "20" in pair])
+        # 20 fps only in the late frames test, against three groups of slow frames in every move (normal: 2 s, fast: 1 s)
+        self.assertEqual(
+            [pair for pair in pairs["normal"] if "20" in pair], [("20", "60-diagram-slow-frames-3x-every-2s"), ("60-diagram-slow-frames-3x-every-2s", "20")]
+        )
+        self.assertEqual(
+            [pair for pair in pairs["fast"] if "20" in pair], [("20", "60-diagram-slow-frames-3x-every-1s"), ("60-diagram-slow-frames-3x-every-1s", "20")]
+        )
         self.assertIn(("60", "60-naive-4ms"), pairs["fast"])
         self.assertIn(("60-naive-4ms", "60"), pairs["fast"])
         # Every bad timer is the ±4 ms one, the warm-up's ±5 ms (errors on nearly every frame, so a viewer sees them within

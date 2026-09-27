@@ -4,7 +4,10 @@ import definitions from "./trials.json";
 import { loadManifestText, type VideoEntry } from "../manifest";
 
 export type Answer = "top" | "bottom" | "same";
-export type Category = "warm-up" | "pacing" | "frame-rate" | "preference" | "identical";
+export type Category = "warm-up" | "pacing" | "late-frames" | "frame-rate" | "preference" | "late-preference" | "identical";
+
+/** The categories with no right answer: a choice between two different weaknesses. */
+export const isPreference = (category: Category): boolean => category === "preference" || category === "late-preference";
 
 export interface TrialDefinition {
   id: string;
@@ -16,17 +19,54 @@ export interface TrialDefinition {
   smoother: string | null;
   /** The movements this trial uses (default: the test's), e.g. slow: the normal timing on a shorter path. */
   motions?: string[];
+  /** Asked once per movement, with a random one of its modes on top, instead of once with each. */
+  once?: boolean;
+}
+
+/** A warm-up: an easy pair, in its movements, and which mode is smoother. */
+export interface Warmup {
+  motions: string[];
+  pairs: [string, string][];
+  smoother: string;
+}
+
+/** One of the blind tests a visitor can choose: its trials by category, and its warm-up: true for the test-wide one, a warm-up
+ * of its own, or false for none. */
+export interface TestDefinition {
+  id: string;
+  name: string;
+  warmup: boolean | Warmup;
+  categories: Category[];
 }
 
 export interface Definitions {
   testVersion: number;
+  tests: TestDefinition[];
   clip: { width: number; height: number; arguments: string[] };
   motions: string[];
-  warmup: { motions: string[]; pairs: [string, string][]; smoother: string };
+  warmup: Warmup;
   trials: TrialDefinition[];
 }
 
 export const DEFINITIONS = definitions as Definitions;
+
+/** The warm-up a test starts with, or null for none; without a test, the test-wide one. */
+export function warmupOf(test?: TestDefinition, definitions: Definitions = DEFINITIONS): Warmup | null {
+  if (test === undefined || test.warmup === true) return definitions.warmup;
+  return test.warmup === false ? null : test.warmup;
+}
+
+/** Every warm-up: the test-wide one and the tests' own. */
+export function allWarmups(definitions: Definitions = DEFINITIONS): Warmup[] {
+  return [definitions.warmup, ...definitions.tests.flatMap((test) => (typeof test.warmup === "object" ? [test.warmup] : []))];
+}
+
+/** The test with this id; a missing one is an error. */
+export function testById(id: string, definitions: Definitions = DEFINITIONS): TestDefinition {
+  const test = definitions.tests.find((each) => each.id === id);
+  if (!test) throw new Error(`no blind test named ${id}`);
+  return test;
+}
 
 /** A clip of the test: its folder (relative to the page) and its manifest entry. */
 export interface Clip {
@@ -126,35 +166,51 @@ function placed(definition: TrialDefinition, position: number, motion: string, t
   return { definition, id, position, motion, clip };
 }
 
-/** The warm-up trial alone: a random warm-up pair, motion and top/bottom (for the practice slide and a run's first question). */
-export function buildWarmup(library: ClipLibrary, random: () => number, definitions: Definitions = DEFINITIONS): Trial {
-  const [a, b] = pick(definitions.warmup.pairs, random);
-  const warmup: TrialDefinition = { id: "warm-up", category: "warm-up", a, b, smoother: definitions.warmup.smoother };
-  return placed(warmup, 0, pick(definitions.warmup.motions, random), random() < 0.5 ? a : b, library);
+/** The warm-up trial alone: a random pair, motion and top/bottom of `warmup` (for the practice slide and a run's first
+ * question). */
+export function buildWarmup(
+  library: ClipLibrary,
+  random: () => number,
+  definitions: Definitions = DEFINITIONS,
+  warmup: Warmup = definitions.warmup,
+): Trial {
+  const [a, b] = pick(warmup.pairs, random);
+  const trial: TrialDefinition = { id: "warm-up", category: "warm-up", a, b, smoother: warmup.smoother };
+  return placed(trial, 0, pick(warmup.motions, random), random() < 0.5 ? a : b, library);
 }
 
 /** A question after the warm-up: a trial, its movement, and which of its modes is on top. */
 export interface Question {
   definition: TrialDefinition;
   motion: string;
-  top: string;
+  /** The mode on top, or null for a trial asked once: the run picks one at random. */
+  top: string | null;
 }
 
 /** Every question after the warm-up: each trial in each of its movements (normal and fast; the preference also slow) and, when its two
- * modes differ, with each of them on top once. */
-export function questions(definitions: Definitions = DEFINITIONS): Question[] {
-  return definitions.trials.flatMap((definition) =>
-    (definition.motions ?? definitions.motions).flatMap((motion) =>
-      (definition.a === definition.b ? [definition.a] : [definition.a, definition.b]).map((top) => ({ definition, motion, top })),
-    ),
+ * modes differ, with each of them on top once, or, for a trial asked once, one of them; with a `test`, only its trials. */
+export function questions(definitions: Definitions = DEFINITIONS, test?: TestDefinition): Question[] {
+  const tops = (definition: TrialDefinition): (string | null)[] =>
+    definition.a === definition.b ? [definition.a] : definition.once ? [null] : [definition.a, definition.b];
+  const trials = test ? definitions.trials.filter((trial) => test.categories.includes(trial.category)) : definitions.trials;
+  return trials.flatMap((definition) =>
+    (definition.motions ?? definitions.motions).flatMap((motion) => tops(definition).map((top) => ({ definition, motion, top }))),
   );
 }
 
-/** A run: the warm-up always first, then every question once, in random order. */
-export function buildRun(library: ClipLibrary, random: () => number, definitions: Definitions = DEFINITIONS): Trial[] {
-  const run = [buildWarmup(library, random, definitions)];
-  shuffled(questions(definitions), random).forEach(({ definition, motion, top }, index) => {
-    run.push(placed(definition, index + 1, motion, top, library));
+/** A run: the warm-up first (unless the `test` has none), then every question once, in random order; with a `test`, only its
+ * questions. */
+export function buildRun(
+  library: ClipLibrary,
+  random: () => number,
+  definitions: Definitions = DEFINITIONS,
+  test?: TestDefinition,
+): Trial[] {
+  const warmup = warmupOf(test, definitions);
+  const run = warmup ? [buildWarmup(library, random, definitions, warmup)] : [];
+  shuffled(questions(definitions, test), random).forEach(({ definition, motion, top }, index) => {
+    const chosen = top ?? (random() < 0.5 ? definition.a : definition.b);
+    run.push(placed(definition, index + 1, motion, chosen, library));
   });
   return run;
 }
@@ -210,6 +266,7 @@ export function requiredPairs(definitions: Definitions = DEFINITIONS): Map<strin
   };
   for (const trial of definitions.trials)
     for (const motion of trial.motions ?? definitions.motions) add(motion, trial.a, trial.b);
-  for (const motion of definitions.warmup.motions) for (const [a, b] of definitions.warmup.pairs) add(motion, a, b);
+  for (const warmup of allWarmups(definitions))
+    for (const motion of warmup.motions) for (const [a, b] of warmup.pairs) add(motion, a, b);
   return new Map([...pairs].map(([motion, set]) => [motion, [...set].map((pair) => pair.split(":") as [string, string])]));
 }

@@ -85,6 +85,15 @@ class ReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cannot repeat every 7 refreshes"):
             _ = replay.schedule("slow-frames", Fraction(7, 60), CLIP, 1, Fraction(60))
 
+    def test_kx_plays_the_whole_diagram_k_times_per_period_apart(self) -> None:
+        simulated = frames("60-diagram-slow-frames-3x-every-1s")
+        # Three whole diagrams a second, around 30 %, 50 % and 70 % of it: six late frames, none held longer than a refresh extra
+        held = [flip for flip, hold in zip(simulated.flips, holds(simulated), strict=True) if hold == 2]
+        self.assertEqual(held, [start + 60 * second for second in range(8) for start in (14, 18, 26, 30, 38, 42)])
+        self.assertEqual(max(holds(simulated)), 2)
+        with self.assertRaisesRegex(ValueError, "do not fit apart"):
+            _ = replay.schedule("slow-frames", Fraction(1, 2), CLIP, 1, Fraction(60), 3)
+
     def test_the_late_frames_fall_where_the_box_moves(self) -> None:
         # A held or late frame where the box rests shows nothing: every one must be in the middle of a move, at every box speed
         for speed_name in ("normal", "fast", "slow"):

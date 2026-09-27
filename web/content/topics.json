@@ -13,17 +13,12 @@
     {
       "name": "Stutter from late frames",
       "about": "The second cause of stutter, **bad frame pacing**: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with adapting the rate to the frames.",
-      "slides": ["slow-frames", "missed-frames", "adapt-rate", "lower-target", "half-rate", "other-rates"]
-    },
-    {
-      "name": "Beyond vsync: VRR and input latency",
-      "about": "What VRR changes, and how pacing meets input latency.",
-      "slides": ["vrr", "input-latency"]
+      "slides": ["slow-frames", "missed-frames", "adapt-rate", "other-rates", "lower-target", "half-rate"]
     },
     {
       "name": "Go further",
-      "about": "Why the average frame rate hides stutter, how to measure animation error, and where to read more.",
-      "slides": ["average-frame-rate", "measure", "further-reading"]
+      "about": "How to measure animation error on a real display.",
+      "slides": ["measure"]
     },
     {
       "name": "Appendix: staying within the frame budget",
@@ -38,11 +33,16 @@
         "artifact-flicker",
         "artifact-transparent"
       ]
+    },
+    {
+      "name": "Appendix: further reading",
+      "about": "The sources and where to read more.",
+      "slides": ["further-reading"]
     }
   ],
   "parked": {
     "name": "Stuff we might use",
     "about": "Set aside to be reworked later.",
-    "slides": ["switching", "recovery"]
+    "slides": ["vrr", "input-latency", "average-frame-rate"]
   }
 }

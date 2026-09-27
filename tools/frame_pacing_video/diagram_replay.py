@@ -7,7 +7,8 @@ The diagram is reduced to its smallest repeating unit (slow frames: a frame on t
 bad half rate: a frame held for one refresh, the next for three), which is repeated back to back; when the unit does not divide
 the clip, on-time frames at full rate fill each repetition up to the next one. With -every-Ns (e.g.
 60-diagram-slow-frames-every-1s) the whole diagram plays once every N seconds, in the middle of the period, with on-time frames
-around it. A VRR diagram cannot be replayed: its frames appear between the refreshes of a fixed rate video.
+around it; -Kx-every-Ns plays it K times per period, spread over the middle 40 % of it (60-diagram-slow-frames-3x-every-1s: at
+30 %, 50 % and 70 % of each second, where the fast box moves quickly, apart from each other). A VRR diagram cannot be replayed: its frames appear between the refreshes of a fixed rate video.
 """
 
 import sys
@@ -72,11 +73,16 @@ def title(name: str) -> str:
     return heading[0].lower() + heading[1:]
 
 
-def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction) -> tuple[list[int], list[Fraction]]:
+# The share of a period its copies are spread over, around its middle, with -Kx-every-Ns
+SPREAD = Fraction(2, 5)
+
+
+def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> tuple[list[int], list[Fraction]]:
     """The frames of a clip of `refreshes` output refreshes replaying the diagram: the refresh each is flipped on and its animation
     time (s). One diagram refresh is `interval` output refreshes. The unit repeats every `every` seconds, or, without, every
-    whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest.
-    Raises ValueError when the unit does not fit or the repetition does not divide the clip."""
+    whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest. With
+    `every`, `times` copies play per period, spread over its middle SPREAD. Raises ValueError when the unit does not fit, the
+    copies overlap or the repetition does not divide the clip."""
     # Back to back the smallest unit repeats; once per period the whole diagram plays (slow frames: both late frames)
     unit = pattern(name, whole=every is not None)
     length = unit.length * interval
@@ -91,17 +97,23 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
             raise ValueError(f"the {name} diagram ({length} refreshes) cannot repeat every {period} refreshes in a {refreshes}-refresh clip")
     # The unit sits in the middle of its period, on-time frames around it: a clip starts in the middle of a rest of the box's
     # motion, and a period that divides the clip ends in one too, so a unit at a period's start would fall where nothing moves
-    offset = (period - length) // 2 // interval * interval
+    centres = [Fraction(1, 2)] if times == 1 else [Fraction(1, 2) - SPREAD / 2 + SPREAD * copy / (times - 1) for copy in range(times)]
+    offsets = [int(centre * period - Fraction(length, 2)) // interval * interval for centre in centres]
+    if offsets[0] < 0 or offsets[-1] + length > period or any(b < a + length for a, b in zip(offsets, offsets[1:], strict=False)):
+        raise ValueError(f"{times} copies of the {name} diagram ({length} refreshes) do not fit apart in {period} refreshes")
     flips: list[int] = []
     moments: list[Fraction] = []
     for start in range(0, refreshes, period):
-        for at in range(start, start + offset, interval):
-            flips.append(at)
-            moments.append(Fraction(at))
-        for at, moment in zip(unit.shown, unit.animation, strict=True):
-            flips.append(start + offset + at * interval)
-            moments.append(start + offset + moment * interval)
-        for at in range(start + offset + length, start + period, interval):
-            flips.append(at)
-            moments.append(Fraction(at))
+        at = start
+        for offset in offsets:
+            for filler in range(at, start + offset, interval):
+                flips.append(filler)
+                moments.append(Fraction(filler))
+            for shown, moment in zip(unit.shown, unit.animation, strict=True):
+                flips.append(start + offset + shown * interval)
+                moments.append(start + offset + moment * interval)
+            at = start + offset + length
+        for filler in range(at, start + period, interval):
+            flips.append(filler)
+            moments.append(Fraction(filler))
     return flips, [moment / fps for moment in moments]

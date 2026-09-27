@@ -1,7 +1,6 @@
 import "./styles.css";
 
 import { blindTestSlide } from "./blind-test/test-slide";
-import { warmupSlide } from "./blind-test/warmup";
 import { viewingCheckCard } from "./checks/viewing";
 import { EXPLANATION_SLIDES } from "./explain/slides";
 import { menuSlide } from "./menu";
@@ -24,13 +23,13 @@ const welcome: Slide = {
     body.className = "slide-body";
     body.innerHTML = `
       <p class="wip draft-notice" role="note"><strong>A very early draft.</strong> This page shows the direction, not the finished
-        thing: the slides, wording, diagrams, videos and the blind test will all still change, and several slides are unfinished.</p>
+        thing: the slides, wording, diagrams, videos and the blind tests will all still change, and several slides are unfinished.</p>
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
       <p class="byline">By <a href="${AUTHOR_LINK}" target="_blank" rel="noopener">${AUTHOR}</a> ·
         <a href="${ORGANISATION_LINK}" target="_blank" rel="noopener">${ORGANISATION}</a></p>
       <p class="lead">
-        A game, an interface or any real-time animation can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
+        A game, an interface or any real-time animation can run at a perfect 60 fps and still stutter. This page starts with two blind tests: videos you compare yourself,
         before knowing what to look for. Then it explains what you saw, and how apps and games get it right. First, a quick check that your
         screen shows the videos the way they are meant to be seen.
       </p>
@@ -91,16 +90,14 @@ const bestViewing: Slide = {
   },
 };
 
-const warmup: Slide = { id: "warm-up", title: "Warm-up", render: warmupSlide };
-const blindTest: Slide = { id: "blind-test", title: "Blind test", render: blindTestSlide };
-
 // The blind test comes before the explanations, so they cannot give its answers away
 startSlides(
   document.querySelector<HTMLElement>("#app")!,
-  [welcome, bestViewing, menuSlide, warmup, blindTest, ...EXPLANATION_SLIDES],
+  [welcome, bestViewing, menuSlide, blindTestSlide, ...EXPLANATION_SLIDES],
   [
     { href: "#/menu", label: "Menu" },
     { href: "#/topics", label: "Topics" },
   ],
-  `by ${AUTHOR}, ${ORGANISATION}`,
+  `by <a href="${AUTHOR_LINK}" target="_blank" rel="noopener">${AUTHOR}</a>, ` +
+    `<a href="${ORGANISATION_LINK}" target="_blank" rel="noopener">${ORGANISATION}</a>`,
 );

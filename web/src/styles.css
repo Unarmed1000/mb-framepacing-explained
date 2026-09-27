@@ -390,6 +390,26 @@ kbd {
   stroke-width: 2;
 }
 
+/* The blind test picker: each card's start button at its bottom, so both line up */
+.test-choice .card {
+  display: flex;
+  flex-direction: column;
+}
+
+.test-choice .choice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: auto;
+}
+
+.test-choice .choice-actions .history {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--muted);
+}
+
 /* Playback controls under a video */
 .playback {
   display: flex;
@@ -963,6 +983,16 @@ code {
   color: var(--muted);
   font-size: 13px;
   white-space: nowrap;
+}
+
+.credit a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.credit a:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 .byline {

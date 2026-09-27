@@ -2,7 +2,7 @@
 
 **[▶ Frame pacing, explained: open the page](https://unarmed1000.github.io/mb-framepacing-explained/)**
 
-A game, an interface or any real-time animation can run at a steady 60 fps and still stutter. The page lets you see that for yourself: first a blind test, where you
+A game, an interface or any real-time animation can run at a steady 60 fps and still stutter. The page lets you see that for yourself: first two blind tests, where you
 compare moving boxes and pick the smoother one before knowing what to look for, then slides that explain what you saw, with the
 videos playing live next to timing diagrams. It is a very early draft that shows the direction; several slides are unfinished.
 

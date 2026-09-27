@@ -5,9 +5,10 @@ eyebrow: Other rates
 
 # Any rate that divides the refresh rate
 
-Half rate is one case of a general rule: a frame rate can be paced evenly when it divides the display's refresh rate, so every
-frame is held for the same whole number of refreshes, the same way as at 30 fps. On a 120 Hz display that gives 60, 40 and
-30 fps. Digital Foundry on [Ratchet & Clank's 40 fps mode](https://www.youtube.com/watch?v=QXi7uO7wxdc): "the same consistency
+A frame rate can be paced evenly when it divides the display's refresh rate: every frame is held for the same whole number of
+refreshes. Half rate, 30 fps on a 60 Hz display, is one case; on a 120 Hz display there are 60, 40 and 30 fps. The more rates
+divide the refresh rate, the more steps a game has to step down to and back up from, and the more room a rule like
+[Swappy's](#/adapt-rate) has to adapt. Digital Foundry on [Ratchet & Clank's 40 fps mode](https://www.youtube.com/watch?v=QXi7uO7wxdc): "the same consistency
 but smoother" than 30 fps on 60 Hz. A rate that does not divide, like 60 fps on 144 Hz or 40 fps on 60 Hz, cannot be even
 however well it is paced: its frames alternate between two hold lengths.
 

@@ -4,11 +4,17 @@
 import { errorChart } from "../charts/error-chart";
 import type { PixelVideo, PlaybackHealth } from "../video/pixel-video";
 import type { SavedPlayback } from "./result";
-import { isCorrect, type Answer, type Category, type Trial } from "./trials";
+import { isCorrect, isPreference, type Answer, type Category, type Trial } from "./trials";
 
-/** A mode in a few words, from its name (60, 60-naive-4ms, ...), for the preference answers: "perfect 30 fps", "jittery 60 fps". */
+/** A mode in a few words, from its name (60, 60-naive-4ms, 60-diagram-slow-frames-every-1s, ...), for the preference answers:
+ * "perfect 30 fps", "jittery 60 fps", "60 fps with late frames". */
 export function choiceName(mode: string): string {
-  return `${mode.includes("naive") ? "jittery" : "perfect"} ${Number.parseInt(mode, 10)} fps`;
+  const rate = Number.parseInt(mode, 10);
+  if (mode.includes("naive")) return `jittery ${rate} fps`;
+  if (mode.includes("-diagram-slow-frames")) return `${rate} fps with late frames`;
+  if (mode.endsWith("-busy-swappy")) return `${rate} fps adapting its rate`;
+  if (mode.endsWith("-busy-full-rate")) return `${rate} fps with late frames in a busy stretch`;
+  return `perfect ${rate} fps`;
 }
 
 /** What a preference answer chose, from the pair's modes: the chosen box's mode in a few words, or "no difference". */
@@ -49,7 +55,7 @@ export function tallyByMotion(choices: readonly { motion: string; choice: string
 export function preferenceTally(answers: readonly { trial: Trial; answer: Answer }[]): string[] {
   return tallyByMotion(
     answers
-      .filter(({ trial }) => trial.definition.category === "preference")
+      .filter(({ trial }) => isPreference(trial.definition.category))
       .map(({ trial, answer }) => ({ motion: trial.motion, choice: preferenceChoice(trial, answer) })),
   );
 }
@@ -77,7 +83,28 @@ export function explanation(trial: Trial): string {
     case "identical":
       return `Both halves were the same clip (${top.label}). Most people see a difference that is not there.`;
     case "preference":
-      return `${which} There is no right answer here: each has a different weakness, and your choice shows which one you notice more.`;
+      return (
+        `${which} There is no right answer here: each has a different weakness, and your choice shows which one you notice more. ` +
+        "I expect most people to pick the jittery 60: halving the frame rate costs more smoothness than this much jitter does. " +
+        "Jitter is a flaw of a frame rate, not a reason to drop to a lower one; fix the timer instead."
+      );
+    case "late-preference":
+      return (
+        `${which} There is no right answer here: one is the higher frame rate but has late frames, the other is lower but ` +
+        "even; your choice shows which you notice more."
+      );
+    case "late-frames": {
+      const smootherHalf = smoother === top.mode ? "top" : "bottom";
+      if (trial.definition.id === "adapt-busy")
+        return (
+          `${which} The ${smootherHalf} box adapted its rate: through the busy stretch it dropped to an even half rate, and ` +
+          "went back up after it. The other stayed at full rate, and every frame that missed its refresh was a hitch."
+        );
+      return (
+        `${which} The ${smootherHalf} box's frames all reached the screen on time. In the other one, frames missed their ` +
+        "refresh: the frame before was held, and the late one showed a moment already past, then the next caught up: a hitch."
+      );
+    }
     case "frame-rate":
       return top.timer === "ideal" && bottom.timer === "ideal"
         ? `${which} Both were evenly paced; the 60 shows twice as many frames, so its motion is smoother. A lower frame rate is not stutter, but it is less smooth.`

@@ -13,6 +13,8 @@ import {
   seededRandom,
   type Answer,
   type Trial,
+  testById,
+  warmupOf,
 } from "./trials";
 
 const mode = (name: string): ModeEntry => ({
@@ -47,20 +49,34 @@ function library(): ClipLibrary {
 }
 
 describe("the trial definitions", () => {
-  it("hold 5 trials with unique ids: 2 identical, 1 pacing, 1 frame rate, 1 preference", () => {
+  it("hold 9 trials: 2 identical, 1 pacing, 2 late frames, 1 frame rate, 1 preference, 2 late frames preferences", () => {
+    // 60 with late frames against 20 has a clip of its own at each movement (three groups of late frames in every move: 2 s at
+    // normal, 1 s at fast), so two definitions with one id
     const ids = DEFINITIONS.trials.map((trial) => trial.id);
-    expect(new Set(ids).size).toBe(5);
+    expect(new Set(ids).size).toBe(9);
+    expect(ids.filter((id) => id === "late-vs-20")).toHaveLength(2);
     const count = (category: string): number => DEFINITIONS.trials.filter((trial) => trial.category === category).length;
-    expect([count("identical"), count("pacing"), count("frame-rate"), count("preference")]).toEqual([2, 1, 1, 1]);
+    expect([
+      count("identical"),
+      count("pacing"),
+      count("late-frames"),
+      count("frame-rate"),
+      count("preference"),
+      count("late-preference"),
+    ]).toEqual([2, 1, 2, 1, 1, 3]);
   });
 
-  it("never show 20 fps; ask every trial at the normal and the fast movement, the preference also at the slow one", () => {
-    expect(DEFINITIONS.trials.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("20")))).toEqual([]);
+  it("never show 20 fps in the jitter test; ask every trial at the normal and the fast movement, adapting the rate at the fast one only", () => {
+    // No 20 fps in the jitter test; the late frames test compares a 60 with late frames against an even 20
+    const jitter = testById("jitter");
+    const inJitter = DEFINITIONS.trials.filter((trial) => jitter.categories.includes(trial.category));
+    expect(inJitter.filter((trial) => [trial.a, trial.b].some((mode) => mode.startsWith("20")))).toEqual([]);
     expect(DEFINITIONS.motions).toEqual(["normal", "fast"]);
+    const motions = new Map<string, string[]>();
     for (const trial of DEFINITIONS.trials)
-      expect(trial.motions ?? DEFINITIONS.motions).toEqual(
-        trial.category === "preference" ? ["normal", "fast", "slow"] : ["normal", "fast"],
-      );
+      motions.set(trial.id, [...(motions.get(trial.id) ?? []), ...(trial.motions ?? DEFINITIONS.motions)]);
+    for (const [id, each] of motions) expect(each).toEqual(id === "adapt-busy" ? ["fast"] : ["normal", "fast"]);
+    expect(DEFINITIONS.trials.filter((trial) => trial.once)).toEqual([]);
   });
 
   it("never compare two bad timers", () => {
@@ -76,32 +92,31 @@ describe("the trial definitions", () => {
 
   it("need identical pairs once and the other pairs in both orders, per motion", () => {
     const pairs = requiredPairs();
-    expect(pairs.get("normal")).toHaveLength(2 + 3 * 2);
-    // At fast also the warm-up pair (perfect 60 against the ±5 ms timer), its own
-    expect(pairs.get("fast")).toHaveLength(2 + 3 * 2 + 2);
-    // Slow: only the preference pair, both ways round
-    expect(pairs.get("slow")).toEqual([
-      ["30", "60-naive-4ms"],
-      ["60-naive-4ms", "30"],
-    ]);
+    expect(pairs.get("normal")).toHaveLength(2 + 6 * 2);
+    // At fast also adapting the rate and the two warm-up pairs (perfect 60 against the ±5 ms timer, and against back-to-back
+    // late frames), their own
+    expect(pairs.get("fast")).toHaveLength(2 + 7 * 2 + 2 + 2);
+    // Never the slow movement (the short path near the centre)
+    expect([...pairs.keys()].sort()).toEqual(["fast", "normal"]);
   });
 });
 
 describe("a run", () => {
-  it("starts with the warm-up, then every pair in each of its movements and both top/bottom orders", () => {
+  it("starts with the warm-up, then every pair in each of its movements and both top/bottom orders (one for a trial asked once)", () => {
     const run = buildRun(library(), seededRandom(1));
-    expect(run).toHaveLength(19);
+    expect(run).toHaveLength(31);
     expect(run[0]?.definition.category).toBe("warm-up");
     expect(run[0]?.motion).toBe("fast");
     const ids = run.slice(1).map((trial) => trial.id);
-    expect(new Set(ids).size).toBe(18);
+    expect(new Set(ids).size).toBe(30);
     for (const trial of DEFINITIONS.trials) {
       for (const motion of trial.motions ?? DEFINITIONS.motions) {
         if (trial.a === trial.b) expect(ids).toContain(`${trial.id}-${motion}`);
+        else if (trial.once) expect(ids.filter((id) => id.startsWith(`${trial.id}-${motion}-top-`))).toHaveLength(1);
         else for (const top of [trial.a, trial.b]) expect(ids).toContain(`${trial.id}-${motion}-top-${top}`);
       }
     }
-    expect(run.map((trial) => trial.position)).toEqual([...Array(19).keys()]);
+    expect(run.map((trial) => trial.position)).toEqual([...Array(31).keys()]);
   });
 
   it("puts the questions in a different random order from run to run", () => {
@@ -119,7 +134,7 @@ describe("a run", () => {
     const run = buildRun(library(), seededRandom(3));
     const pacingFast = run.filter((trial) => trial.definition.id === "pacing-60" && trial.motion === "fast");
     expect(new Set(pacingFast.map((trial) => trial.clip.video.top.mode))).toEqual(new Set(["60", "60-naive-4ms"]));
-    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast", "slow"]));
+    expect(new Set(run.map((trial) => trial.motion))).toEqual(new Set(["normal", "fast"]));
   });
 });
 
@@ -138,14 +153,42 @@ describe("scoring", () => {
   it("counts scored categories only", () => {
     const answers = run.map((trial) => ({ trial, answer: (expectedAnswer(trial) ?? "top") as Answer }));
     const result = score(answers);
-    expect(result.overall).toEqual({ correct: 13, of: 13 });
+    expect(result.overall).toEqual({ correct: 19, of: 19 });
     expect(result.byCategory).toEqual({
       "warm-up": { correct: 1, of: 1 },
       pacing: { correct: 4, of: 4 },
+      // Slow frames at two speeds and adapting the rate at one, both ways round
+      "late-frames": { correct: 6, of: 6 },
       "frame-rate": { correct: 4, of: 4 },
       identical: { correct: 4, of: 4 },
     });
-    expect(score(run.map((trial) => ({ trial, answer: "same" as Answer }))).overall).toEqual({ correct: 4, of: 13 });
+    expect(score(run.map((trial) => ({ trial, answer: "same" as Answer }))).overall).toEqual({ correct: 4, of: 19 });
+  });
+});
+
+describe("the two tests", () => {
+  it("split the trials: every category in exactly one test, the warm-up only in the jitter one", () => {
+    const categories = DEFINITIONS.tests.flatMap((test) => test.categories);
+    expect(new Set(categories).size).toBe(categories.length);
+    expect(new Set(categories)).toEqual(new Set(DEFINITIONS.trials.map((trial) => trial.category)));
+    // Each its own warm-up: the jitter test the test-wide one, late frames a perfect 60 against back-to-back late frames
+    expect(DEFINITIONS.tests.map((test) => [test.id, warmupOf(test)?.pairs])).toEqual([
+      ["jitter", DEFINITIONS.warmup.pairs],
+      ["late-frames", [["60", "60-diagram-slow-frames"]]],
+    ]);
+  });
+
+  it("run only their own questions after their own warm-up: jitter 18, late frames 14", () => {
+    const jitter = buildRun(library(), seededRandom(2), DEFINITIONS, testById("jitter"));
+    expect(jitter).toHaveLength(17);
+    expect(jitter[0]?.definition.category).toBe("warm-up");
+    expect(jitter.some((trial) => trial.definition.category === "late-frames")).toBe(false);
+    const late = buildRun(library(), seededRandom(2), DEFINITIONS, testById("late-frames"));
+    expect(late).toHaveLength(15);
+    expect(late[0]?.clip.video.bottom.mode === "60" ? late[0].clip.video.top.mode : late[0]?.clip.video.bottom.mode).toBe(
+      "60-diagram-slow-frames",
+    );
+    expect(late.slice(1).every((trial) => ["late-frames", "late-preference"].includes(trial.definition.category))).toBe(true);
   });
 });
 
@@ -161,10 +204,6 @@ describe("loading the clips", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-    expect(fetched.sort()).toEqual([
-      "videos/box/fast/manifest.json",
-      "videos/box/normal/manifest.json",
-      "videos/box/slow/manifest.json",
-    ]);
+    expect(fetched.sort()).toEqual(["videos/box/fast/manifest.json", "videos/box/normal/manifest.json"]);
   });
 });
