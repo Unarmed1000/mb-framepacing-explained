@@ -1,12 +1,12 @@
 ---
 title: A lower target
-eyebrow: Strategy 1
+eyebrow: Strategy 2
 ---
 
 # Run at a lower target frame rate
 
-For when optimizing cannot get the app to hold the higher target, and frames would miss it often rather than in a rare spike. The
-first strategy then avoids the miss instead of handling it: run at a frame rate every frame can hold with room to spare, and hold
+For when optimizing cannot get the app to hold the higher target, and frames would miss it often rather than in a rare spike. This
+strategy then avoids the miss instead of handling it: run at a frame rate every frame can hold with room to spare, and hold
 it. If 60 fps on a 60 Hz display does not fit, 30 fps gives every frame twice the time. A 120 Hz display has steps in between: 60
 and 40 fps. Below, the price: the same motion at 60 and at 30 fps, both perfectly paced.
 

@@ -3,7 +3,7 @@
 // (see web/content/README.md), plus:
 // - front matter: `title` (the short name, in the navigation), `eyebrow` (the small heading above the title), `draft: true`;
 // - blocks, `:::name args` to `:::`: card (a card, args its heading), links (a card of links), guide (cards side by side),
-//   figures (diagrams side by side), video (a live clip, args `single|pair MOTION TOP BOTTOM [top|bottom] [chart|nochart]`, its
+//   figures (diagrams side by side), video (a live clip, args `single|pair MOTION TOP BOTTOM [top|bottom] [chart|nochart] [frames] [controls]` or `file NAME [HEIGHT] [controls]`, its
 //   caption inside);
 // - lines filled in when the slide is shown: `::strip HZ FPS` (a refresh strip) and `::topics` (the topics page's cards);
 // - `{.note}` or `{.more}` at the end of a paragraph: a note, or a row of links to read more.

@@ -31,18 +31,18 @@ The rest is Markdown: **bold**, _italic_, `code`, [links](https://example.com), 
 
 ## Additions to Markdown
 
-| Syntax                                      | What it gives                                                                                                                                                   |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `:::card Heading` … `:::`                   | A card with that heading (leave it out for a card without one)                                                                                                  |
-| `:::guide` … `:::`                          | The cards inside side by side                                                                                                                                   |
-| `:::figures` … `:::`                        | The diagrams inside side by side                                                                                                                                |
-| `:::links Heading` … `:::`                  | A card of links, a list of `- [Title](https://…) what it is`                                                                                                    |
-| `:::video single MOTION TOP BOTTOM …` `:::` | A live clip: one box of the clip with `TOP` above and `BOTTOM` below (`top` or `bottom`, `chart` for its animation error chart), the text inside as its caption |
-| `:::video file NAME` `:::`                  | A rendered video (clips.json's `rendered`), the text inside as its caption                                                                                      |
-| `:::video pair MOTION TOP BOTTOM …` `:::`   | Both boxes of the clip, with their chart unless `nochart`                                                                                                       |
-| `::strip HZ FPS`                            | A refresh strip: `FPS` on an `HZ` display                                                                                                                       |
-| `A paragraph. {.note}`                      | A note, in smaller text                                                                                                                                         |
-| `[A](…) [B](…) {.more}`                     | A row of links to read more                                                                                                                                     |
+| Syntax                                         | What it gives                                                                                                                                                   |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `:::card Heading` … `:::`                      | A card with that heading (leave it out for a card without one)                                                                                                  |
+| `:::guide` … `:::`                             | The cards inside side by side                                                                                                                                   |
+| `:::figures` … `:::`                           | The diagrams inside side by side                                                                                                                                |
+| `:::links Heading` … `:::`                     | A card of links, a list of `- [Title](https://…) what it is`                                                                                                    |
+| `:::video single MOTION TOP BOTTOM …` `:::`    | A live clip: one box of the clip with `TOP` above and `BOTTOM` below (`top` or `bottom`, `chart` for its animation error chart), the text inside as its caption |
+| `:::video file NAME [HEIGHT] [controls]` `:::` | A rendered video (clips.json's `rendered`), the text inside as its caption; HEIGHT when it is not 384 pixels; `controls` playback controls                      |
+| `:::video pair MOTION TOP BOTTOM …` `:::`      | Both boxes of the clip, with their chart unless `nochart`; `frames` adds a frame time chart; `controls` playback controls                                       |
+| `::strip HZ FPS`                               | A refresh strip: `FPS` on an `HZ` display                                                                                                                       |
+| `A paragraph. {.note}`                         | A note, in smaller text                                                                                                                                         |
+| `[A](…) [B](…) {.more}`                        | A row of links to read more                                                                                                                                     |
 
 Put a blank line before and after each `:::` line. A clip's modes are the video tool's (`60`, `60-naive-5ms`,
 `60-diagram-slow-frames-every-1s`, …, see [tools/frame_pacing_video](../../tools/frame_pacing_video)); every clip a slide uses

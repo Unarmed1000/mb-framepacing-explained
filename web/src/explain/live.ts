@@ -3,13 +3,15 @@
 import { folderFor } from "../blind-test/trials";
 import { missingClips } from "../blind-test/warmup";
 import { errorChart } from "../charts/error-chart";
+import { frameChart } from "../charts/frame-chart";
 import { loadManifest, type VideoEntry } from "../manifest";
+import { playbackControls } from "../video/controls";
 import { PixelVideo } from "../video/pixel-video";
 
 /** The lane height of a single box's chart, in the chart's units (the pairs' charts use 92). */
 const SINGLE_LANE_HEIGHT = 56;
 
-/** The rendered videos' size and frame rate, as the render scale video's generator makes them. */
+/** The rendered videos' usual size and frame rate, as their generators make them. */
 const RENDERED = { width: 1280, height: 384, fps: 60 };
 
 /** The clip of a motion with `top` above and `bottom` below (the single box, never the rows). */
@@ -17,8 +19,17 @@ export function findClip(videos: readonly VideoEntry[], top: string, bottom: str
   return videos.find((video) => video.scene === "box" && video.top.mode === top && video.bottom.mode === bottom);
 }
 
-/** A clip at 1:1 device pixels with a caption and, unless `chart` is false, its animation error chart following it. */
-export function liveComparison(motion: string, top: string, bottom: string, caption: string, chart = true): HTMLElement {
+/** A clip at 1:1 device pixels with a caption and, unless `chart` is false, its animation error chart following it; with
+ * `frames`, also a chart of how long each frame stays on screen; with `controls`, playback controls under it. */
+export function liveComparison(
+  motion: string,
+  top: string,
+  bottom: string,
+  caption: string,
+  chart = true,
+  frames = false,
+  controls = false,
+): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live";
   const folder = folderFor(motion);
@@ -30,39 +41,54 @@ export function liveComparison(motion: string, top: string, bottom: string, capt
       const text = document.createElement("p");
       text.className = "live-caption";
       text.textContent = caption;
-      if (chart) {
-        const errors = errorChart(
-          [
-            { title: "Top", mode: video.top },
-            { title: "Bottom", mode: video.bottom },
-          ],
-          video.frameCount,
-          video.fps,
-        );
-        player.onFrame = (mediaTime) => errors.setTime(mediaTime);
+      const lanes = [
+        { title: "Top", mode: video.top },
+        { title: "Bottom", mode: video.bottom },
+      ];
+      const charts = [
+        ...(chart ? [errorChart(lanes, video.frameCount, video.fps)] : []),
+        ...(frames ? [frameChart(lanes, video.frameCount, video.fps)] : []),
+      ];
+      player.onFrame = (mediaTime) => {
+        for (const each of charts) each.setTime(mediaTime);
+      };
+      const cards = charts.map((each) => {
         const card = document.createElement("div");
         card.className = "card chart-card";
-        card.append(errors.svg);
-        holder.replaceChildren(player.element, text, card, player.readout);
-      } else holder.replaceChildren(player.element, text, player.readout);
+        card.append(each.svg);
+        return card;
+      });
+      const bar = controls ? [playbackControls(player, video.fps, video.frameCount)] : [];
+      holder.replaceChildren(player.element, ...bar, text, ...cards, player.readout);
       player.play();
     })
     .catch((error: unknown) => holder.replaceChildren(missingClips(error)));
   return holder;
 }
 
-/** A rendered video (clips.json's "rendered", made by tools/frame_pacing_video/generate_render_scale_video.py): the whole frame at
- * 1:1 device pixels, with a caption. */
-export function renderedClip(name: string, caption: string): HTMLElement {
+/** A rendered video (clips.json's "rendered", made by its generator in tools/frame_pacing_video): the whole frame at 1:1 device
+ * pixels, with a caption; `height` when it is not the usual 384; with `controls`, playback controls under it. */
+export function renderedClip(name: string, caption: string, height = RENDERED.height, controls = false): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live";
   const src = `videos/rendered/${name}.mp4`;
-  const player = new PixelVideo(src, RENDERED, RENDERED.fps, { label: caption });
+  const player = new PixelVideo(src, { width: RENDERED.width, height }, RENDERED.fps, { label: caption });
   const text = document.createElement("p");
   text.className = "live-caption";
   text.textContent = caption;
   player.video.addEventListener("error", () => holder.replaceChildren(missingClips(new Error(`${src} is missing`))));
   holder.replaceChildren(player.element, text, player.readout);
+  if (controls) {
+    // Its length is known once the video's metadata is
+    player.video.addEventListener(
+      "loadedmetadata",
+      () => {
+        const frames = Math.round(player.video.duration * RENDERED.fps);
+        player.element.after(playbackControls(player, RENDERED.fps, frames));
+      },
+      { once: true },
+    );
+  }
   player.play();
   return holder;
 }

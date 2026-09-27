@@ -7,9 +7,15 @@
     ["60", "60-diagram-slow-frames-every-1s"],
     ["60-diagram-half-rate-even", "60-diagram-half-rate-bad-pacing"],
     ["60-diagram-switching-naive-every-1s", "60-diagram-switching-hysteresis-every-1s"],
+    ["60-busy-full-rate", "60-busy-swappy"],
     ["60-diagram-recovery-half-rate-every-1s", "60-diagram-recovery-targeting-every-1s"]
   ],
   "rendered": [
+    {
+      "name": "adaptive-history",
+      "generator": "generate_adaptive_history.py",
+      "arguments": []
+    },
     {
       "name": "render-scale",
       "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured"]

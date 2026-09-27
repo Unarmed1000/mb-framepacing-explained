@@ -60,8 +60,16 @@ function video(args: readonly string[], caption: string): HTMLElement {
   const [kind, motion = "", top = "", bottom = "", ...flags] = args;
   if (kind === "single")
     return singleBox(motion, top, bottom, flags.includes("top") ? "top" : "bottom", caption, flags.includes("chart"));
-  if (kind === "pair") return liveComparison(motion, top, bottom, caption, !flags.includes("nochart"));
-  if (kind === "file") return renderedClip(motion, caption);
+  if (kind === "pair") {
+    const [chart, frames, controls] = [!flags.includes("nochart"), flags.includes("frames"), flags.includes("controls")];
+    return liveComparison(motion, top, bottom, caption, chart, frames, controls);
+  }
+  if (kind === "file") {
+    // After the name: a height (a number) and flags, in any order
+    const rest = [top, bottom, ...flags].filter(Boolean);
+    const height = rest.find((arg) => /^\d+$/.test(arg));
+    return renderedClip(motion, caption, height ? Number(height) : undefined, rest.includes("controls"));
+  }
   throw new Error(`a video is single, pair or file, not ${kind ?? "nothing"}`);
 }
 

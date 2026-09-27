@@ -390,6 +390,68 @@ kbd {
   stroke-width: 2;
 }
 
+/* Playback controls under a video */
+.playback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 10px 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.playback-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.playback .control {
+  min-width: 38px;
+  padding: 5px 9px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.playback .control:hover {
+  border-color: var(--accent);
+}
+
+.playback .speed[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.playback .scrub {
+  flex: 1 1 240px;
+  accent-color: var(--accent);
+}
+
+.playback-time {
+  min-width: 170px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Frame chart: a step per frame at its time on screen */
+.chart-step {
+  stroke: var(--green);
+  stroke-width: 2.5;
+}
+
+.chart-step.late {
+  stroke: var(--red);
+}
+
+.chart-riser {
+  stroke: #ffffff;
+  stroke-opacity: 0.3;
+  stroke-width: 1;
+}
+
 /* Blind test: intro and results */
 .setup,
 .history,

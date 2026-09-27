@@ -37,8 +37,10 @@ export class PixelVideo {
    * the way (below the answers), so it does not draw the eye. */
   readonly readout: HTMLParagraphElement;
   readonly health: PlaybackHealth = { presented: 0, dropped: 0, late: 0, early: 0 };
-  /** Called with the video's media time for every presented frame (to move chart playheads). */
+  /** Called with the video's media time for every presented frame (to move chart playheads), and after a seek. */
   onFrame: ((mediaTime: number) => void) | null = null;
+  /** More callbacks like onFrame (the playback controls). */
+  private readonly frameListeners: ((mediaTime: number) => void)[] = [];
   private lastPresented: number | null = null;
   private lastExpected: number | null = null;
   private lastMediaTime: number | null = null;
@@ -82,6 +84,8 @@ export class PixelVideo {
     requestAnimationFrame(layout);
     // A pause, seek, stall or hidden tab is a gap in playback, not a late frame: start the frame tracking over after one
     for (const event of ["play", "pause", "seeking", "waiting"]) this.video.addEventListener(event, () => this.restartTracking());
+    // A seek while paused presents no frame to the frame callback: tell the listeners where the video is now
+    this.video.addEventListener("seeked", () => this.frameShown(this.video.currentTime));
     document.addEventListener("visibilitychange", () => this.restartTracking());
     this.watchFrames();
   }
@@ -125,6 +129,16 @@ export class PixelVideo {
     return exact;
   }
 
+  /** Also call `listener` with the media time of every presented frame, and after a seek. */
+  addFrameListener(listener: (mediaTime: number) => void): void {
+    this.frameListeners.push(listener);
+  }
+
+  private frameShown(mediaTime: number): void {
+    this.onFrame?.(mediaTime);
+    for (const listener of this.frameListeners) listener(mediaTime);
+  }
+
   play(): void {
     void this.video.play();
   }
@@ -159,7 +173,7 @@ export class PixelVideo {
       this.health.presented += 1;
       this.lastPresented = metadata.presentedFrames;
       this.lastExpected = metadata.expectedDisplayTime;
-      this.onFrame?.(metadata.mediaTime);
+      this.frameShown(metadata.mediaTime);
       video.requestVideoFrameCallback(step);
     };
     this.restartTracking();

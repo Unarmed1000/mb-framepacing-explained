@@ -12,8 +12,8 @@
     },
     {
       "name": "Stutter from late frames",
-      "about": "The second cause of stutter, **bad frame pacing**: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with a lower target frame rate.",
-      "slides": ["slow-frames", "missed-frames", "lower-target", "half-rate", "other-rates", "adapt-rate"]
+      "about": "The second cause of stutter, **bad frame pacing**: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with adapting the rate to the frames.",
+      "slides": ["slow-frames", "missed-frames", "adapt-rate", "lower-target", "half-rate", "other-rates"]
     },
     {
       "name": "Beyond vsync: VRR and input latency",

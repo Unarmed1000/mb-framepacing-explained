@@ -121,25 +121,33 @@ class FrameMode:
     every: Fraction | None = None
     # A window's burst: how many frames in a row jitter, every `every` seconds
     burst: int | None = None
+    # A busy stretch (adaptive_rate): the policy, full-rate or swappy
+    busy: str | None = None
 
 
 MODE_PATTERN = re.compile(
     r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
-    + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?)?"
+    + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
+    + r"|-busy-(?P<busy>full-rate|swappy))?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
 
 
 def parse_mode(name: str) -> FrameMode:
     """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical; a window in
-    bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s) or RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g. 60-diagram-slow-frames)."""
+    bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[-every-Ns] (a replayed timing diagram, e.g.
+    60-diagram-slow-frames) or RATE-busy-POLICY (a busy stretch at full rate or adapting like Swappy: 60-busy-full-rate,
+    60-busy-swappy)."""
     match = MODE_PATTERN.fullmatch(name)
     if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every")):
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
-            + "bursts: 5ms-every-1s or 5ms-24f-every-1s), or RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames)"
+            + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
+            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy)"
         )
     rate = int(match["rate"])
+    if match["busy"] is not None:
+        return FrameMode(name, rate, busy=match["busy"])
     if match["diagram"] is not None:
         return FrameMode(name, rate, diagram=match["diagram"], every=None if match["every"] is None else Fraction(match["every"]))
     if match["ms"] is not None:
@@ -390,6 +398,11 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     interval = swap_interval(mode, parameters.fps)
     if refreshes % interval:
         raise ValueError(f"{refreshes} refreshes are not a whole number of {mode.rate} Hz frames")
+    if mode.busy is not None:
+        from adaptive_rate import schedule as busy_schedule  # noqa: PLC0415
+
+        flips, animation = busy_schedule(mode.busy, refreshes, parameters.fps)
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation))
     if mode.diagram is not None:
         from diagram_replay import schedule  # noqa: PLC0415
 
@@ -420,6 +433,10 @@ def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
 
 def describe(mode: FrameMode, parameters: TimingParameters) -> str:
     """The text written next to a box, for example "60 Hz naive timer, heavy load"."""
+    if mode.busy is not None:
+        from adaptive_rate import title as busy_title  # noqa: PLC0415
+
+        return f"{mode.rate} Hz, {busy_title(mode.busy)}"
     if mode.diagram is not None:
         from diagram_replay import title  # noqa: PLC0415
 
