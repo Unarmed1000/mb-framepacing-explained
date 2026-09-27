@@ -128,7 +128,8 @@ class FrameMode:
 
 
 MODE_PATTERN = re.compile(
-    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
+    r"(?P<rate>[1-9][0-9]*)(?:-naive-(?P<storm_ms>[0-9]+(?:\.[0-9]+)?)ms-diagram-(?P<storm_diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<storm_times>[1-9])x)?-every-(?P<storm_every>[0-9]+(?:\.[0-9]+)?)s)?"
+    + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-busy-(?P<busy>full-rate|swappy))?"
 )
@@ -138,16 +139,22 @@ NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -rea
 def parse_mode(name: str) -> FrameMode:
     """A mode from its name: RATE (the ideal timer, e.g. 60), RATE-naive-NOISE (e.g. 60-naive-1ms, 60-naive-typical; a window in
     bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
-    60-diagram-slow-frames) or RATE-busy-POLICY (a busy stretch at full rate or adapting like Swappy: 60-busy-full-rate,
-    60-busy-swappy)."""
+    60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
+    frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
+    full rate or adapting like Swappy: 60-busy-full-rate, 60-busy-swappy)."""
     match = MODE_PATTERN.fullmatch(name)
-    if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every")):
+    if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every", "storm_ms", "storm_every")):
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
             + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
             + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy)"
         )
     rate = int(match["rate"])
+    if match["storm_ms"] is not None:
+        every = None if match["storm_every"] is None else Fraction(match["storm_every"])
+        times = 1 if match["storm_times"] is None else int(match["storm_times"])
+        window = Fraction(match["storm_ms"]) / 1000
+        return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, window, diagram=match["storm_diagram"], every=every, times=times)
     if match["busy"] is not None:
         return FrameMode(name, rate, busy=match["busy"])
     if match["diagram"] is not None:
@@ -204,11 +211,13 @@ class TimingParameters:
 @dataclass(frozen=True)
 class SimulatedFrames:
     """The frames of one clip, in order: the output refresh each is flipped on, the wall clock reading of the naive loop (seconds;
-    the first frame is shown at 0), and the animation time each shows."""
+    the first frame is shown at 0), the animation time each shows, and the refresh each is rendered for (a frame flipped later is
+    late)."""
 
     flips: tuple[int, ...]
     samples: tuple[Fraction, ...]
     animation: tuple[Fraction, ...]
+    targets: tuple[int, ...]
 
 
 def swap_interval(mode: FrameMode, fps: Fraction) -> int:
@@ -334,7 +343,7 @@ def wake_delays(mode: FrameMode, parameters: TimingParameters, count: int) -> li
         # Within +-window of the window's middle, following the jitter pattern (mixed: alternating and random quarters); in bursts,
         # the pattern runs through the bursts' frames only, and every other frame reads the clock at the middle
         window = mode.window or Fraction(0)
-        jittered = range(count) if mode.every is None else burst_frames(mode, count)
+        jittered = range(count) if mode.burst is None else burst_frames(mode, count)
         offsets = dict(zip(jittered, jitter_offsets(mode.rate, len(jittered), parameters.synthetic_pattern), strict=True))
         return [window * (1 + offsets.get(index, Fraction(0))) for index in range(count)]
     generator = Pcg32.from_text(f"wake-up {mode.noise.value}{'' if mode.realistic else ' demo'}, {mode.rate} Hz, {count} frames")
@@ -405,13 +414,22 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
         from adaptive_rate import schedule as busy_schedule  # noqa: PLC0415
 
         flips, animation = busy_schedule(mode.busy, refreshes, parameters.fps)
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation))
+        targets = tuple(round(moment * parameters.fps) for moment in animation)
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets)
     if mode.diagram is not None:
         from diagram_replay import schedule  # noqa: PLC0415
 
         flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
+        targets = tuple(round(moment * parameters.fps) for moment in animation)
+        if mode.timer is Timer.NAIVE:
+            # The perfect storm: the diagram's frames, each read off the clock by its wake-up delay around the window's middle, as
+            # the naive timer does; late frames stay late, and every frame shows a moment a little off
+            window = mode.window or Fraction(0)
+            offsets = [wake - window for wake in wake_delays(mode, parameters, len(flips))]
+            animation = [moment + offset for moment, offset in zip(animation, offsets, strict=True)]
+            return SimulatedFrames(tuple(flips), tuple(animation), tuple(animation), targets)
         # The perfect timer reads no clock: each frame's sample is its own flip
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation))
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets)
     count = refreshes // interval
     frame_time = Fraction(interval) / parameters.fps
     wakes = wake_delays(mode, parameters, count)
@@ -422,10 +440,11 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     else:
         # dt = now - last, from a clock whose constant latency (the average delay, one frame before the flip) is taken out; in
         # bursts, the delay of the exact frames between them, so only the bursts are off
-        average = (mode.window or Fraction(0)) if mode.every is not None else sum(wakes, Fraction(0)) / count
+        average = (mode.window or Fraction(0)) if mode.burst is not None else sum(wakes, Fraction(0)) / count
         latency = average - frame_time
         animation = tuple(sample - latency for sample in samples)
-    return SimulatedFrames(flips, samples, animation)
+    # Every frame of this loop makes its vsync: it is flipped on the refresh it is rendered for
+    return SimulatedFrames(flips, samples, animation, flips)
 
 
 def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
@@ -449,7 +468,8 @@ def describe(mode: FrameMode, parameters: TimingParameters) -> str:
             every = f", every {float(mode.every):g} s"
         else:
             every = f", {mode.times} times {'a second' if mode.every == 1 else f'every {float(mode.every):g} s'}"
-        return f"{mode.rate} Hz, {title(mode.diagram)} (as the diagram{every})"
+        jitter = "" if mode.timer is Timer.IDEAL else f" and naive timer ±{format_ms(mode.window or Fraction(0))}"
+        return f"{mode.rate} Hz, {title(mode.diagram)} (as the diagram{every}){jitter}"
     if mode.timer is Timer.IDEAL:
         return f"{mode.rate} Hz ideal timer"
     if mode.noise is Noise.SYNTHETIC:

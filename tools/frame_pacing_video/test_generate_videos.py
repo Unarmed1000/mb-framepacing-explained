@@ -238,6 +238,18 @@ class TimingTests(unittest.TestCase):
         late = gv.refreshes_late(settings, MODE("60-diagram-slow-frames"), SPEEDS["normal"])
         self.assertEqual(set(late), {0, 1})
 
+    def test_the_perfect_storm_has_the_diagrams_late_frames_and_the_naive_timers_jitter(self) -> None:
+        settings, speed = settings_for(), SPEEDS["normal"]
+        storm, slow = MODE("60-naive-5ms-diagram-slow-frames-every-1s"), MODE("60-diagram-slow-frames-every-1s")
+        self.assertEqual(storm.window, Fraction(5, 1000))
+        # The same frames flipped on the same refreshes, late as often
+        self.assertEqual(gv.simulated_frames(settings, storm, speed).flips, gv.simulated_frames(settings, slow, speed).flips)
+        self.assertEqual(gv.refreshes_late(settings, storm, speed), gv.refreshes_late(settings, slow, speed))
+        # And every frame's moment a little off: animation error on nearly every frame, not only around the late ones
+        errors = gv.animation_errors(settings, storm, speed)
+        self.assertGreater(sum(error != 0 for error in errors), len(errors) * 9 // 10)
+        self.assertIn("naive timer ±5 ms", settings.label(storm))
+
     def test_heavy_load_makes_millisecond_spikes(self) -> None:
         errors = gv.animation_errors(settings_for(), MODE("60-naive-heavy"), SPEEDS["normal"])
         self.assertGreater(max(abs(error) for error in errors), Fraction(3, 1000))

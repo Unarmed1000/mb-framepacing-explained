@@ -73,7 +73,7 @@ from typing import IO, Protocol, cast
 
 from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
-from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, Timer, TimingParameters, describe, parse_mode, simulate
+from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
 
 type Rgb = tuple[int, int, int]
@@ -519,13 +519,10 @@ def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[
 
 
 def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[int]:
-    """How many refreshes after the one it was rendered for each frame of the clip is flipped: 0 on time. Every timer but the naive
-    one renders a frame for the refresh it should appear on, its animation time; the naive timer renders for a clock reading, and
-    every frame of its loop makes its vsync, so its frames are on time however far off the moment they show."""
+    """How many refreshes after the one it was rendered for each frame of the clip is flipped: 0 on time. A naive timer's frame is
+    on time however far off the moment it shows, unless it is also late (the perfect storm)."""
     frames = simulated_frames(settings, mode, speed)
-    if mode.timer is Timer.NAIVE:
-        return [0] * len(frames.flips)
-    return [flip - round(animation * settings.fps) for flip, animation in zip(frames.flips, frames.animation, strict=True)]
+    return [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
 
 
 def row_offset(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> float:

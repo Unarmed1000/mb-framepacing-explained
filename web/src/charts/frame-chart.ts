@@ -1,5 +1,5 @@
-// How long each frame stays on screen (its display time), one lane per half of the video, as steps: a frame on time in green, a late one in red,
-// with a playhead that follows playback. The same card and scale conventions as the animation error chart.
+// How long each frame stays on screen (its display time), one lane per half of the video, as steps: in green, or in red when it
+// stays longer than planned because the next frame came late, with a playhead that follows playback. The same card and scale conventions as the animation error chart.
 
 import type { Lane } from "./error-chart";
 
@@ -38,6 +38,14 @@ export function refreshesOnScreen(refresh: readonly number[], refreshes: number)
   return refresh.map((at, index) => (refresh[index + 1] ?? refreshes + (refresh[0] ?? 0)) - at);
 }
 
+/** Whether each frame stays on screen longer than planned, at the rate the game is aiming for: the next frame is late (`late`,
+ * refreshes after the one each was rendered for), so the display holds this one. A frame of a 60 Hz game held for 33.3 ms is one,
+ * however the game planned its next frame after a miss; one of a steady half rate is not. The last frame's next is the first
+ * frame of the next loop. */
+export function heldTooLong(late: readonly number[]): boolean[] {
+  return late.map((_, index) => (late[index + 1] ?? late[0] ?? 0) > 0);
+}
+
 /** A chart of the lanes' display times on one shared scale; `refreshes` is the clip length in output refreshes. */
 export function frameChart(lanes: readonly Lane[], refreshes: number, fps: number): FrameChart {
   const height = TOP + lanes.length * LANE_H + (lanes.length - 1) * GAP + 36;
@@ -51,7 +59,7 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
   const limit = (longest + 0.5) * refreshMs;
   svg.append(
     label(LEFT, 20, "DISPLAY TIME: HOW LONG EACH FRAME IS ON SCREEN", "chart-label"),
-    label(WIDTH - RIGHT, 20, "green on time, red late", "chart-note", "end"),
+    label(WIDTH - RIGHT, 20, "green as planned, red held too long", "chart-note", "end"),
   );
 
   lanes.forEach((lane, index) => {
@@ -74,19 +82,18 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
     }
     svg.append(element("line", { x1: LEFT, x2: WIDTH - RIGHT, y1: base, y2: base, class: "chart-zero" }));
     const { refresh, late } = lane.mode.frames;
+    const held = heldTooLong(late);
     const steps = onScreen[index] ?? [];
     steps.forEach((count, frame) => {
       const at = refresh[frame] ?? 0;
       const level = y(count * refreshMs);
-      // Flipped after the refresh it was rendered for
-      const shownLate = (late[frame] ?? 0) > 0;
       svg.append(
         element("line", {
           x1: x(at),
           x2: x(Math.min(refreshes, at + count)),
           y1: level,
           y2: level,
-          class: shownLate ? "chart-step late" : "chart-step",
+          class: held[frame] ? "chart-step late" : "chart-step",
         }),
       );
       const next = steps[frame + 1];

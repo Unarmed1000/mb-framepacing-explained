@@ -23,9 +23,8 @@ the topics interactively. Notes: [the web page](web-page.md).
       conditions.
 - [ ] Later: classify each clip's animation sequence from its animation error: how much of it has stutter, and the other
       categories (jitter, hitches, ...), which can overlap; show it as shares of the sequence and as marked stretches on the chart.
-- [ ] A "Reading a measurement" card on the measure slide, once mb-framepacing shows the views it points at: animation error while
-      the display time stays flat is delta time jitter, where it jumps is bad pacing; misses bunched into stretches or scattered
-      decide the strategy.
+- [x] A "Reading a measurement" card on the measure slide: animation error while the display time stays flat is delta time
+      jitter, where it jumps is bad pacing; misses bunched into stretches or scattered decide the strategy.
 
 ## Videos
 

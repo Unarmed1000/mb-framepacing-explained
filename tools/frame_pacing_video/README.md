@@ -79,6 +79,9 @@ How much sooner or later than usual the naive loop reads the clock:
   refresh rate can be replayed: `perfect-timer`, `timer-jitter`, `slow-frames`, `half-rate-even`, `half-rate-bad-pacing`,
   `switching-naive`, `switching-hysteresis`, `recovery-half-rate`, `recovery-targeting`. The VRR diagram cannot: its frames
   appear between refreshes, which needs a much finer video (about 240 fps) and a display to match.
+- **The perfect storm** (`RATE-naive-Nms-diagram-NAME…`, e.g. `60-naive-5ms-diagram-slow-frames-every-1s`): a replayed diagram
+  and the naive timer's ±N ms window at once. The frames are flipped as the diagram shows them, late ones included, and every
+  frame's animation time is off by its clock reading, as in a real measurement where both causes of stutter mix.
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
   really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also

@@ -21,6 +21,31 @@ the screen (its display time). The ways to measure it differ in where they get e
 
 :::
 
+## Reading a measurement
+
+Look at the animation error next to the display times, frame by frame. A real measurement rarely shows one cause alone: below,
+the perfect storm, both causes of stutter in one box, against a perfect 60 fps.
+
+:::video pair fast 60 60-naive-5ms-diagram-slow-frames-every-1s frames
+
+Top: perfect 60 fps, a flat display time and no animation error. Bottom: the perfect storm, a naive timer that reads the clock up
+to 5 ms early or late, and two frames in the middle of every move that miss their refresh.
+
+:::
+
+:::card What to look for
+
+- **Error while the display time stays flat,** as through most of the bottom lane: the frames reach the screen on time but show
+  the wrong moment. That is [delta time jitter](#/timer-jitter), fixed by the [vsync timer](#/vsync-timer).
+- **Error where the display time jumps,** as in the middle of every move: frames reach the screen late, the display time steps up
+  to 33.3 ms where a frame is held. That is bad [frame pacing](#/slow-frames), and the next question is where the misses fall.
+- **Where the misses fall:** single spikes, now and then, need the one miss handled; misses bunched into busy stretches, as on
+  [adapting the rate](#/adapt-rate), call for a lower rate there or [a lower target](#/lower-target).
+- **How small is 0:** an error within the measurement's resolution cannot be told from 0. For a capture that is one capture
+  period: 2 ms at 500 fps.
+
+:::
+
 ## mb-framepacing: measured on the display
 
 Made for developers, to check their own application on the real output and to automate the checks: its command line captures a

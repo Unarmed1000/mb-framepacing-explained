@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { refreshesOnScreen } from "./frame-chart";
+import { heldTooLong, refreshesOnScreen } from "./frame-chart";
 
 describe("refreshesOnScreen", () => {
   it("counts the refreshes to the next frame, the last one's to the first frame of the next loop", () => {
@@ -10,5 +10,17 @@ describe("refreshesOnScreen", () => {
 
   it("wraps to a first frame that is not on refresh 0", () => {
     expect(refreshesOnScreen([1, 3], 4)).toEqual([2, 2]);
+  });
+});
+
+describe("heldTooLong", () => {
+  it("is the frame before a later one: the display holds it", () => {
+    // A frame on time, the next one a refresh late, then on time again: the first is held
+    expect(heldTooLong([0, 1, 0, 0])).toEqual([true, false, false, false]);
+  });
+
+  it("is every frame before a late one, in a run of misses too, and wraps to the next loop", () => {
+    expect(heldTooLong([0, 1, 1, 0])).toEqual([true, true, false, false]);
+    expect(heldTooLong([1, 0, 0])).toEqual([false, false, true]);
   });
 });
