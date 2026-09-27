@@ -22,8 +22,8 @@ const welcome: Slide = {
     const body = document.createElement("div");
     body.className = "slide-body";
     body.innerHTML = `
-      <p class="wip draft-notice" role="note"><strong>A very early draft.</strong> This page shows the direction, not the finished
-        thing: the slides, wording, diagrams, videos and the blind tests will all still change, and several slides are unfinished.</p>
+      <p class="wip draft-notice" role="note"><strong>A draft.</strong> The slides, wording, diagrams, videos and the blind tests may
+        still change, and a few parts are unfinished.</p>
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
       <p class="byline">By <a href="${AUTHOR_LINK}" target="_blank" rel="noopener">${AUTHOR}</a> ·

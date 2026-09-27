@@ -23,9 +23,10 @@ Swappy: [Android's Frame Pacing library](https://developer.android.com/games/sdk
 [its rule, in SwappyCommon.cpp (updateSwapInterval)](https://android.googlesource.com/platform/frameworks/opt/gamesdk/+/refs/heads/main/games-frame-pacing/common/SwappyCommon.cpp)
 {.more}
 
-Reading the frame time chart: each step is one frame, as long as it stays on screen. A flat line is smooth motion, at 16.7 ms full
+Reading the display time chart: each step is one frame, as long as it stays on screen. A flat line is smooth motion, at 16.7 ms full
 rate, at 33.3 ms half rate; a line jumping between the two is stutter, frames on screen for uneven times. A red step is a frame
-shown later than it was meant for, the same frames that show as bars in the animation error chart above it. Top: the line jumps
+shown after the refresh it was rendered for. Where a frame is later than the one before it, the animation error chart above shows
+a bar; a run of frames all one refresh late moves evenly, only delayed. Top: the line jumps
 for the whole busy stretch. Bottom: it jumps for half a second, until the rule has seen enough misses, then holds at 33.3 ms and
 steps back down to 16.7 ms once the stretch is over. {.note}
 

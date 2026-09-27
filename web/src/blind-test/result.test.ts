@@ -21,7 +21,7 @@ const mode = (name: string): ModeEntry => ({
   noise: null,
   noiseWindowMs: null,
   label: name,
-  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [] },
+  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [], late: [] },
 });
 
 function trial(id: string, top: string, bottom: string, position = 1): Trial {

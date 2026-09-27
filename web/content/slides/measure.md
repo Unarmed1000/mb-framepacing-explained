@@ -23,6 +23,9 @@ the screen (its display time). The ways to measure it differ in where they get e
 
 ## mb-framepacing: measured on the display
 
+Made for developers, to check their own application on the real output and to automate the checks: its command line captures a
+run from start to end, analyses it and writes the results as JSON and CSV, ready for a script to compare against a limit.
+
 :::guide
 
 :::card How it works

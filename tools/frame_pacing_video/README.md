@@ -320,8 +320,9 @@ Settings that would break the loop or the pacing are rejected with an error; not
     **every frame of the clip**: the output refresh it is flipped on (`frames.refresh`), when the naive loop read the clock
     (`frames.sampleMs`, the first frame is shown at 0), the dt its animation advanced by (`frames.dtMs`) and its **animation
     error** in ms (`frames.animationErrorMs`), computed like PresentMon's `MsAnimationError`: positive = shown too soon,
-    negative = shown too late. The first frame follows the last one of the previous loop. A web page can draw the dt and error
-    graphs next to the video from it.
+    negative = shown too late, and how many refreshes after the one it was rendered for it is flipped (`frames.late`, 0 on
+    time; the naive timer's frames are always on time). The first frame follows the last one of the previous loop. A web page
+    can draw the dt and error graphs next to the video from it.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
   RGB-to-YUV conversion reproduces the background and boxes exactly and moves in-between grays (edges, text) by at most one step.

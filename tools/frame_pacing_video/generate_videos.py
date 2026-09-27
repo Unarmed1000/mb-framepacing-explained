@@ -73,7 +73,7 @@ from typing import IO, Protocol, cast
 
 from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
-from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
+from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, Timer, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
 
 type Rgb = tuple[int, int, int]
@@ -516,6 +516,16 @@ def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[
             previous_shown, previous_animation = schedule.shown[index - 1], schedule.animation[index - 1]
         errors.append((animation - previous_animation) - (shown - previous_shown) * refresh)
     return errors
+
+
+def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[int]:
+    """How many refreshes after the one it was rendered for each frame of the clip is flipped: 0 on time. Every timer but the naive
+    one renders a frame for the refresh it should appear on, its animation time; the naive timer renders for a clock reading, and
+    every frame of its loop makes its vsync, so its frames are on time however far off the moment they show."""
+    frames = simulated_frames(settings, mode, speed)
+    if mode.timer is Timer.NAIVE:
+        return [0] * len(frames.flips)
+    return [flip - round(animation * settings.fps) for flip, animation in zip(frames.flips, frames.animation, strict=True)]
 
 
 def row_offset(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> float:
@@ -995,12 +1005,14 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         "noiseWindowMs": None if mode.window is None else _json_number(mode.window * 1000),
         "label": settings.label(mode),
         # Every frame of the clip: the output refresh it is flipped on, when the naive loop read the clock (ms, the first frame is
-        # shown at 0), the dt its animation advanced by, and its animation error (PresentMon's MsAnimationError)
+        # shown at 0), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError) and how many refreshes
+        # after the one it was rendered for it is flipped (0: on time)
         "frames": {
             "refresh": list(frames.flips),
             "sampleMs": _milliseconds(frames.samples),
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
+            "late": refreshes_late(settings, mode, speed),
         },
     }
 

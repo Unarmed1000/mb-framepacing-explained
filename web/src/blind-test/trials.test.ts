@@ -24,7 +24,7 @@ const mode = (name: string): ModeEntry => ({
   noise: null,
   noiseWindowMs: null,
   label: name,
-  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [] },
+  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [], late: [] },
 });
 
 /** A library holding exactly the clips the definitions require. */

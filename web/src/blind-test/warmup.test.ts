@@ -10,7 +10,7 @@ const mode = (name: string, timer: "ideal" | "naive", noise: string | null): Mod
   noise,
   noiseWindowMs: noise === "window" ? 4 : null,
   label: name,
-  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [] },
+  frames: { refresh: [], animationErrorMs: [], dtMs: [], sampleMs: [], late: [] },
 });
 
 const perfect = mode("60", "ideal", null);

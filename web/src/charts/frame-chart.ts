@@ -1,7 +1,6 @@
-// How long each frame stays on screen, one lane per half of the video, as steps: a frame on time in green, a late one in red,
+// How long each frame stays on screen (its display time), one lane per half of the video, as steps: a frame on time in green, a late one in red,
 // with a playhead that follows playback. The same card and scale conventions as the animation error chart.
 
-import type { ModeEntry } from "../manifest";
 import type { Lane } from "./error-chart";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -39,13 +38,7 @@ export function refreshesOnScreen(refresh: readonly number[], refreshes: number)
   return refresh.map((at, index) => (refresh[index + 1] ?? refreshes + (refresh[0] ?? 0)) - at);
 }
 
-/** Whether a frame of `mode` reached the screen late: its animation error is not 0. A naive timer's error is in the moment a
- * frame shows, not in when it shows (delta time jitter): its frames reach the screen on time. */
-export function isLate(mode: Pick<ModeEntry, "timer">, animationErrorMs: number): boolean {
-  return mode.timer !== "naive" && Math.abs(animationErrorMs) > 1e-9;
-}
-
-/** A chart of the lanes' frame times on one shared scale; `refreshes` is the clip length in output refreshes. */
+/** A chart of the lanes' display times on one shared scale; `refreshes` is the clip length in output refreshes. */
 export function frameChart(lanes: readonly Lane[], refreshes: number, fps: number): FrameChart {
   const height = TOP + lanes.length * LANE_H + (lanes.length - 1) * GAP + 36;
   const svg = element("svg", { viewBox: `0 0 ${WIDTH} ${height}`, class: "error-chart frame-chart", role: "img" });
@@ -57,7 +50,7 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
   const longest = Math.max(2, ...onScreen.flat());
   const limit = (longest + 0.5) * refreshMs;
   svg.append(
-    label(LEFT, 20, "FRAME TIME: HOW LONG EACH FRAME IS ON SCREEN", "chart-label"),
+    label(LEFT, 20, "DISPLAY TIME: HOW LONG EACH FRAME IS ON SCREEN", "chart-label"),
     label(WIDTH - RIGHT, 20, "green on time, red late", "chart-note", "end"),
   );
 
@@ -80,19 +73,20 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
       svg.append(label(LEFT - 8, y(ms) + 4, `${ms.toFixed(1)} ms`, "chart-note", "end"));
     }
     svg.append(element("line", { x1: LEFT, x2: WIDTH - RIGHT, y1: base, y2: base, class: "chart-zero" }));
-    const { refresh, animationErrorMs } = lane.mode.frames;
+    const { refresh, late } = lane.mode.frames;
     const steps = onScreen[index] ?? [];
     steps.forEach((count, frame) => {
       const at = refresh[frame] ?? 0;
       const level = y(count * refreshMs);
-      const late = isLate(lane.mode, animationErrorMs[frame] ?? 0);
+      // Flipped after the refresh it was rendered for
+      const shownLate = (late[frame] ?? 0) > 0;
       svg.append(
         element("line", {
           x1: x(at),
           x2: x(Math.min(refreshes, at + count)),
           y1: level,
           y2: level,
-          class: late ? "chart-step late" : "chart-step",
+          class: shownLate ? "chart-step late" : "chart-step",
         }),
       );
       const next = steps[frame + 1];

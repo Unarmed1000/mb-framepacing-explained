@@ -229,6 +229,15 @@ class TimingTests(unittest.TestCase):
                 if noise == "typical":
                     self.assertTrue(all(abs(error) < Fraction(25, 10_000) for error in errors), rate)
 
+    def test_a_frame_is_late_when_flipped_after_the_refresh_it_was_rendered_for(self) -> None:
+        settings = settings_for()
+        # Evenly paced, and the naive timer's frames all make their vsync: none late, however far off their animation time
+        for name in ("60", "30", "60-naive-5ms"):
+            self.assertEqual(set(gv.refreshes_late(settings, MODE(name), SPEEDS["normal"])), {0}, name)
+        # Slow frames: a few frames a refresh late, the rest on time
+        late = gv.refreshes_late(settings, MODE("60-diagram-slow-frames"), SPEEDS["normal"])
+        self.assertEqual(set(late), {0, 1})
+
     def test_heavy_load_makes_millisecond_spikes(self) -> None:
         errors = gv.animation_errors(settings_for(), MODE("60-naive-heavy"), SPEEDS["normal"])
         self.assertGreater(max(abs(error) for error in errors), Fraction(3, 1000))

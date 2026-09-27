@@ -5,6 +5,8 @@ export interface ModeFrames {
   refresh: number[];
   /** The animation error of each frame, PresentMon's MsAnimationError (positive: shown too soon). */
   animationErrorMs: number[];
+  /** How many refreshes after the one it was rendered for each frame is flipped: 0 on time. */
+  late: number[];
   dtMs: number[];
   sampleMs: number[];
 }
