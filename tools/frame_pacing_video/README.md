@@ -331,6 +331,17 @@ Settings that would break the loop or the pacing are rejected with an error; not
 mpv. A later tool will convert the clips for the web. **Show them at native size** (1:1 pixels): scaling blurs the steps the
 videos are meant to show.
 
+## Render scale and upscaler videos
+
+`generate_render_scale_video.py` makes the page's appendix videos: rotating, textured 3D objects rendered with OpenGL (moderngl,
+headless) at a lower render scale and scaled up, with the HUD and UI at the output resolution. Its patterns follow the dynamic
+resolution model, jump between scales, hold a fixed scale (`fixed`), or compare a plain bilinear upscale with AMD's FSR 1
+(`fsr`, from the MIT-licensed headers in [`fsr1/`](fsr1)). The page's build renders the ones it uses (`rendered` in
+`web/src/explain/clips.json`).
+
+It needs OpenGL 3.3, and **FSR 1 needs OpenGL 4.3, which macOS does not have: the `fsr` pattern cannot be generated on macOS**
+at the moment. Windows and Linux (on a build server through Mesa's EGL) have both.
+
 ## Tests
 
 ```powershell

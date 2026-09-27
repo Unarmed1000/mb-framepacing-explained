@@ -12,7 +12,9 @@ The render scale follows the dynamic resolution chart's model (tools/timing_diag
 so the changes are easy to follow, then rises back to full resolution and holds it. --pattern model-low stretches that curve down
 to MODEL_LOW, still within the ranges games use; --pattern jumps and --pattern low instead jump between full resolution and a half or a quarter, holding each for
 JUMP_FRAMES. --pattern fixed is render scale, a scale that never changes: the frame cut across the middle, through
-every object, the top half at full resolution and the bottom half at --scale, for the whole clip. The objects are flat-shaded, or with --textured carry textures (bricks on the cubes, a fine checkerboard on the
+every object, the top half at full resolution and the bottom half at --scale, for the whole clip. --pattern fsr cuts the same
+way, both halves at --scale: above scaled up with the plain bilinear filter, below with AMD's FSR 1 (its EASU upscale and RCAS
+sharpening, from the headers in fsr1/, MIT licence). The objects are flat-shaded, or with --textured carry textures (bricks on the cubes, a fine checkerboard on the
 octahedron): fine surface detail is what a lower resolution loses first, so the change shows more. With --ui the frame also
 carries a game's UI panel twice: on the left drawn at the render resolution and scaled up with the scene, on the right drawn at
 the output resolution after scaling up, so the one blurs as the resolution drops and the other stays sharp. --pattern fixed
@@ -21,11 +23,11 @@ with --ui has no cut: the whole frame is at --scale, and the two panels are the 
 Every clip loops seamlessly: every object turns a whole number of times in it, the textures do not change over time, and the render
 scale starts where it ends (the model) or jumps there as it does in the middle (jumps, low).
 
-OpenGL 3.3 comes from the system: the GPU driver on Windows, macOS and a Linux desktop; on Linux without a display (a build server),
+OpenGL 3.3 comes from the system (4.3 for FSR 1, so not on macOS): the GPU driver on Windows, macOS and a Linux desktop; on Linux without a display (a build server),
 EGL with Mesa's software renderer (Debian and Ubuntu: apt install libegl1 libgl1-mesa-dri).
 
 Run from the repository's .venv:
-  python tools/frame_pacing_video/generate_render_scale_video.py [--pattern model|model-low|jumps|low|fixed] [--scale S] [--textured] [--ui]
+  python tools/frame_pacing_video/generate_render_scale_video.py [--pattern model|model-low|jumps|low|fixed|fsr] [--scale S] [--textured] [--ui]
     [--output FILE]
     [--ffmpeg PATH]
 """
@@ -58,6 +60,8 @@ JUMP_FRAMES = 120  # 2 s at each resolution
 # The low resolution each jumping pattern drops to, per axis, and the lowest the stretched model reaches
 JUMP_LOW = {"jumps": 0.5, "low": 0.25}
 FIXED_FRAMES = 240  # 4 s
+FSR_DIR = Path(__file__).resolve().parent / "fsr1"  # AMD's FSR 1 headers
+FSR_SHARPNESS = 0.2  # RCAS: stops below its strongest sharpening
 MODEL_LOW = 0.6  # games' 60 fps modes mostly stay above about 58 % (Digital Foundry's measurements)
 MSAA_SAMPLES = 4
 ANISOTROPY = 16.0
@@ -124,6 +128,49 @@ void main() {
 }
 """
 
+QUAD_VERTEX_SHADER = """
+#version 430
+in vec2 in_position;
+void main() {
+    gl_Position = vec4(in_position, 0.0, 1.0);
+}
+"""
+
+# FSR 1's two passes around AMD's headers: the callbacks they read the image through, and the pass itself at every output pixel
+EASU_SHADER = """
+#define FSR_EASU_F 1
+uniform sampler2D source;
+uniform uvec4 con0;
+uniform uvec4 con1;
+uniform uvec4 con2;
+uniform uvec4 con3;
+AF4 FsrEasuRF(AF2 p) { return textureGather(source, p, 0); }
+AF4 FsrEasuGF(AF2 p) { return textureGather(source, p, 1); }
+AF4 FsrEasuBF(AF2 p) { return textureGather(source, p, 2); }
+FSR_HEADER
+out vec4 fragment;
+void main() {
+    AF3 colour;
+    FsrEasuF(colour, AU2(gl_FragCoord.xy), con0, con1, con2, con3);
+    fragment = vec4(colour, 1.0);
+}
+"""
+
+RCAS_SHADER = """
+#define FSR_RCAS_F 1
+uniform sampler2D source;
+uniform uvec4 con;
+AF4 FsrRcasLoadF(ASU2 p) { return texelFetch(source, p, 0); }
+void FsrRcasInputF(inout AF1 r, inout AF1 g, inout AF1 b) {}
+FSR_HEADER
+out vec4 fragment;
+void main() {
+    AF1 r, g, b;
+    FsrRcasF(r, g, b, AU2(gl_FragCoord.xy), con);
+    fragment = vec4(r, g, b, 1.0);
+}
+"""
+
 BACKGROUND_VERTEX_SHADER = """
 #version 330
 in vec2 in_position;
@@ -168,6 +215,32 @@ def scales(pattern: str) -> list[float]:
     if len(values) > MODEL_FRAMES:
         raise ValueError(f"the render scale needs {len(values)} frames, more than the clip's {MODEL_FRAMES}")
     return values + [MAX_SCALE] * (MODEL_FRAMES - len(values))
+
+
+def fsr_shader(body: str) -> str:
+    """An FSR 1 pass as a GLSL 4.3 fragment shader: AMD's headers, 32-bit, with the pass's callbacks between them."""
+    common = (FSR_DIR / "ffx_a.h").read_text(encoding="utf-8")
+    fsr = (FSR_DIR / "ffx_fsr1.h").read_text(encoding="utf-8")
+    source = "#version 430\n#define A_GPU 1\n#define A_GLSL 1\n" + common + body.replace("FSR_HEADER", fsr)
+    # The headers name each other in comments only, and moderngl would try to resolve those includes
+    return source.replace("#include", "include")
+
+
+def float_bits(value: float) -> int:
+    """A 32-bit float's bits as an unsigned integer, as FSR 1 passes its constants."""
+    return struct.unpack("<I", struct.pack("<f", value))[0]
+
+
+def easu_constants(width: int, height: int, out_w: int, out_h: int) -> tuple[tuple[int, ...], ...]:
+    """FsrEasuCon from ffx_fsr1.h: the whole input image, `width` x `height`, scaled up to `out_w` x `out_h`."""
+    sx, sy = width / out_w, height / out_h
+    rx, ry = 1 / width, 1 / height
+    return (
+        tuple(float_bits(v) for v in (sx, sy, 0.5 * sx - 0.5, 0.5 * sy - 0.5)),
+        tuple(float_bits(v) for v in (rx, ry, rx, -ry)),
+        tuple(float_bits(v) for v in (-rx, 2 * ry, rx, 2 * ry)),
+        (float_bits(0.0), float_bits(4 * ry), 0, 0),
+    )
 
 
 def normalised(v: Vec) -> Vec:
@@ -256,21 +329,22 @@ def grained(image: Image.Image, generator: random.Random) -> Image.Image:
 # The renderer
 
 
-def open_context() -> moderngl.Context:
-    """A headless OpenGL 3.3 context: the system's driver, or on Linux without a display, EGL (Mesa's software renderer)."""
+def open_context(require: int) -> moderngl.Context:
+    """A headless OpenGL context of at least version `require` (330: 3.3): the system's driver, or on Linux without a display,
+    EGL (Mesa's software renderer)."""
     try:
-        return moderngl.create_standalone_context(require=330)
+        return moderngl.create_standalone_context(require=require)
     except Exception:
         if not sys.platform.startswith("linux"):
             raise
-        return moderngl.create_standalone_context(require=330, backend="egl")  # pyright: ignore[reportArgumentType]  # the stub types it as a dict
+        return moderngl.create_standalone_context(require=require, backend="egl")  # pyright: ignore[reportArgumentType]  # the stub types it as a dict
 
 
 class Renderer:
     """The scene in OpenGL: the objects' meshes and textures, the shaders, and a multisampled framebuffer per render size."""
 
-    def __init__(self) -> None:
-        self.ctx: moderngl.Context = open_context()
+    def __init__(self, require: int = 330) -> None:
+        self.ctx: moderngl.Context = open_context(require)
         self.objects: moderngl.Program = self.ctx.program(vertex_shader=OBJECT_VERTEX_SHADER, fragment_shader=OBJECT_FRAGMENT_SHADER)
         self.background: moderngl.Program = self.ctx.program(vertex_shader=BACKGROUND_VERTEX_SHADER, fragment_shader=BACKGROUND_FRAGMENT_SHADER)
         quad = self.ctx.buffer(struct.pack("8f", -1, -1, 1, -1, -1, 1, 1, 1))
@@ -281,6 +355,7 @@ class Renderer:
         }
         self.textures: dict[tuple[str, Colour], moderngl.Texture] = {}
         self.targets: dict[tuple[int, int], tuple[moderngl.Framebuffer, moderngl.Framebuffer]] = {}
+        self.fsr: tuple[moderngl.Program, moderngl.Program, moderngl.VertexArray, moderngl.VertexArray] | None = None
 
     def texture(self, kind: str, colour: Colour) -> moderngl.Texture:
         """A texture with its mipmaps, built by the driver, filtered trilinearly and anisotropically, repeating."""
@@ -304,6 +379,43 @@ class Renderer:
             resolved = self.ctx.framebuffer(color_attachments=[self.ctx.renderbuffer((width, height), 4)])
             self.targets[(width, height)] = (samples, resolved)
         return self.targets[(width, height)]
+
+    def fsr1(self, image: Image.Image, out_w: int, out_h: int) -> Image.Image:
+        """`image` scaled up to `out_w` x `out_h` with FSR 1: EASU, then RCAS on its result. Needs an OpenGL 4.3 context."""
+        if self.fsr is None:
+            quad = self.ctx.buffer(struct.pack("8f", -1, -1, 1, -1, -1, 1, 1, 1))
+            easu = self.ctx.program(vertex_shader=QUAD_VERTEX_SHADER, fragment_shader=fsr_shader(EASU_SHADER))
+            rcas = self.ctx.program(vertex_shader=QUAD_VERTEX_SHADER, fragment_shader=fsr_shader(RCAS_SHADER))
+            self.fsr = (
+                easu,
+                rcas,
+                self.ctx.vertex_array(easu, [(quad, "2f", "in_position")]),  # pyright: ignore[reportUnknownMemberType]
+                self.ctx.vertex_array(rcas, [(quad, "2f", "in_position")]),  # pyright: ignore[reportUnknownMemberType]
+            )
+        easu, rcas, easu_quad, rcas_quad = self.fsr
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        # The image's rows go in top first, so the texture's first row is the image's top; the output reads back the same way
+        source = self.ctx.texture(image.size, 3, image.tobytes(), alignment=1)
+        source.repeat_x = source.repeat_y = False
+        upscaled = self.ctx.texture((out_w, out_h), 4)
+        upscaled.repeat_x = upscaled.repeat_y = False
+        target = self.ctx.framebuffer(color_attachments=[upscaled])
+        target.use()
+        source.use(location=0)
+        easu["source"].value = 0  # pyright: ignore[reportAttributeAccessIssue]
+        for name, value in zip(("con0", "con1", "con2", "con3"), easu_constants(*image.size, out_w, out_h), strict=True):
+            easu[name].value = value  # pyright: ignore[reportAttributeAccessIssue]
+        easu_quad.render(moderngl.TRIANGLE_STRIP)
+        sharpened = self.ctx.framebuffer(color_attachments=[self.ctx.renderbuffer((out_w, out_h), 4)])
+        sharpened.use()
+        upscaled.use(location=0)
+        rcas["source"].value = 0  # pyright: ignore[reportAttributeAccessIssue]
+        rcas["con"].value = (float_bits(2**-FSR_SHARPNESS), 0, 0, 0)  # pyright: ignore[reportAttributeAccessIssue]
+        rcas_quad.render(moderngl.TRIANGLE_STRIP)
+        result = Image.frombytes("RGB", (out_w, out_h), sharpened.read(components=3, alignment=1))
+        for resource in (source, upscaled, target, sharpened):
+            resource.release()
+        return result
 
     def render(self, width: int, height: int, frame: int, frames: int, textured: bool) -> Image.Image:
         """The scene at `width` x `height`, at `frame` of a clip of `frames` frames, flat or `textured`."""
@@ -344,14 +456,16 @@ class Renderer:
         return Image.frombytes("RGB", (width, height), pixels).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
 
-def draw_hud(frame: Image.Image, scale: float, top: int = 14) -> None:
-    """The HUD at the output resolution, from `top`: the render scale and size, and the render box inside the output."""
+def draw_hud(frame: Image.Image, scale: float, top: int = 14, upscaler: str = "") -> None:
+    """The HUD at the output resolution, from `top`: the render scale (and the `upscaler`, when named) and size, and the render
+    box inside the output."""
     draw = ImageDraw.Draw(frame)
     width, height = round(frame.width * scale), round(frame.height * scale)
     font = ImageFont.load_default(size=18)
     small = ImageFont.load_default(size=13)
     draw.rounded_rectangle([16, top, 452, top + 58], radius=8, fill=(18, 21, 25))
-    draw.text((28, top + 6), f"Render scale {round(scale * 100)} %", fill=(230, 237, 243), font=font)
+    title = f"Render scale {round(scale * 100)} %" + (f", {upscaler}" if upscaler else "")
+    draw.text((28, top + 6), title, fill=(230, 237, 243), font=font)
     draw.text((28, top + 32), f"renders {width} x {height}, scaled up to {frame.width} x {frame.height}", fill=(139, 148, 158), font=small)
     # The render box inside the output, to scale
     box_h = 29
@@ -394,19 +508,27 @@ def draw_ui_labels(frame: Image.Image) -> None:
         draw.text((x + 8, y - 24), label, fill=(88, 166, 255), font=font)
 
 
-def split_frames(renderer: Renderer, scale: float, textured: bool) -> list[bytes]:
+def split_frames(renderer: Renderer, scale: float, textured: bool, fsr: bool = False) -> list[bytes]:
     """The fixed pattern: every frame at full resolution above the middle and at `scale`, scaled up, below it, with a line
-    between."""
+    between. With `fsr` both halves are at `scale`: above scaled up bilinearly, below with FSR 1."""
     width, height = round(OUTPUT_W * scale), round(OUTPUT_H * scale)
     half = OUTPUT_H // 2
     out: list[bytes] = []
     for index in range(FIXED_FRAMES):
-        frame = renderer.render(OUTPUT_W, OUTPUT_H, index, FIXED_FRAMES, textured)
-        scaled = renderer.render(width, height, index, FIXED_FRAMES, textured).resize((OUTPUT_W, OUTPUT_H), Image.Resampling.BILINEAR)  # pyright: ignore[reportUnknownMemberType]
-        frame.paste(scaled.crop((0, half, OUTPUT_W, OUTPUT_H)), (0, half))
+        small = renderer.render(width, height, index, FIXED_FRAMES, textured)
+        scaled = small.resize((OUTPUT_W, OUTPUT_H), Image.Resampling.BILINEAR)  # pyright: ignore[reportUnknownMemberType]
+        if fsr:
+            frame, below = scaled, renderer.fsr1(small, OUTPUT_W, OUTPUT_H)
+        else:
+            frame, below = renderer.render(OUTPUT_W, OUTPUT_H, index, FIXED_FRAMES, textured), scaled
+        frame.paste(below.crop((0, half, OUTPUT_W, OUTPUT_H)), (0, half))
         ImageDraw.Draw(frame).line([(0, half), (OUTPUT_W, half)], fill=(230, 237, 243), width=2)
-        draw_hud(frame, MAX_SCALE)
-        draw_hud(frame, scale, OUTPUT_H - 14 - 58)
+        if fsr:
+            draw_hud(frame, scale, upscaler="bilinear")
+            draw_hud(frame, scale, OUTPUT_H - 14 - 58, "FSR 1")
+        else:
+            draw_hud(frame, MAX_SCALE)
+            draw_hud(frame, scale, OUTPUT_H - 14 - 58)
         out.append(frame.tobytes())
     return out
 
@@ -441,23 +563,25 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the dynamic resolution example video (H.264, for the web page).")
     _ = parser.add_argument(
         "--pattern",
-        choices=("model", "model-low", *JUMP_LOW, "fixed"),
+        choices=("model", "model-low", *JUMP_LOW, "fixed", "fsr"),
         default="model",
         help="the render scale: the chart's model, the same down to 60 %% (model-low), jumps to half (jumps) or a quarter (low), "
-        + "or full resolution and --scale, the frame cut across the middle (fixed)",
+        + "full resolution and --scale, the frame cut across the middle (fixed), or --scale bilinear and FSR 1, cut the same (fsr)",
     )
-    _ = parser.add_argument("--scale", type=float, default=0.5, help="the fixed pattern's render scale per axis (default: 0.5)")
+    _ = parser.add_argument("--scale", type=float, default=0.5, help="the fixed and fsr patterns' render scale per axis (default: 0.5)")
     _ = parser.add_argument("--textured", action="store_true", help="textures on the objects: bricks and a fine checkerboard")
     _ = parser.add_argument("--ui", action="store_true", help="a game UI panel twice: at the render resolution and at the output resolution")
     _ = parser.add_argument("--output", type=Path, default=None, help=f"the video file (default: {DEFAULT_OUTPUT_DIR}/dynamic-resolution-PATTERN.mp4)")
     _ = parser.add_argument("--ffmpeg", default=None, help="FFmpeg executable or its folder (default: MB_FFMPEG, local.toml, then PATH)")
     args = parser.parse_args(namespace=Arguments())
     ffmpeg = find_ffmpeg(args.ffmpeg).path
-    pattern = f"fixed-{round(args.scale * 100)}" if args.pattern == "fixed" else args.pattern
+    pattern = f"{args.pattern}-{round(args.scale * 100)}" if args.pattern in ("fixed", "fsr") else args.pattern
     suffix = ("-textured" if args.textured else "") + ("-ui" if args.ui else "")
     output = args.output or DEFAULT_OUTPUT_DIR / f"dynamic-resolution-{pattern}{suffix}.mp4"
     output.parent.mkdir(parents=True, exist_ok=True)
-    if args.pattern == "fixed" and not args.ui:
+    if args.pattern == "fsr":
+        video = split_frames(Renderer(430), args.scale, args.textured, fsr=True)
+    elif args.pattern == "fixed" and not args.ui:
         video = split_frames(Renderer(), args.scale, args.textured)
     else:
         values = [args.scale] * FIXED_FRAMES if args.pattern == "fixed" else scales(args.pattern)

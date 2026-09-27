@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="472" viewBox="0 0 1180 472" role="img" aria-label="A temporal upscaler, roughly">
+<title>A temporal upscaler, roughly</title>
+<style>
+  text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+         font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
+  .card { fill: #1f242b; fill-opacity: 0.94; stroke: #8b949e; stroke-opacity: 0.25; stroke-width: 1; }
+  .title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { fill: #8b949e; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
+  .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
+  .axis { font-size: 12px; fill: #c9d1d9; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.34; stroke-width: 1; stroke-dasharray: 3 4; }
+  .vsync-skip { stroke: #ffffff; stroke-opacity: 0.09; stroke-width: 1; stroke-dasharray: 2 6; }
+  .vsync-target { font-size: 11px; font-weight: 600; fill: #c9d1d9; letter-spacing: 0.04em; }
+  .vsync-n-skip { font-size: 11px; fill: #545b64; letter-spacing: 0.04em; }
+  .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
+  .frame { font-size: 14px; font-weight: 700; }
+  .box-time { fill: #b1bac4; font-size: 12px; }
+  .arrow { stroke: #8b949e; stroke-width: 1.2; }
+  .arrowhead { fill: #8b949e; }
+  .ok { fill: #2ea043; }
+  .hold { fill: #2ea043; fill-opacity: 0.45; }
+  .again { fill: #d29922; }
+  .off { fill: #e5534b; }
+  .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
+  .dark-text { fill: #1c1f24; }
+  .zero { fill: #6e7681; }
+  .err { fill: #ff7b72; font-weight: 600; }
+  .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .neutral { fill: #3d444d; }
+  .lane { font-size: 15px; font-weight: 600; }
+  .same { fill: #7ee787; font-weight: 600; }
+
+  .input { fill: #58a6ff; fill-opacity: 0.22; stroke: #58a6ff; stroke-width: 1.5; }
+  .history { fill: #2ea043; fill-opacity: 0.10; stroke: #2ea043; stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .upscaler { fill: #8b949e; fill-opacity: 0.10; stroke: #8b949e; stroke-width: 1.5; }
+  .output { fill: #2ea043; fill-opacity: 0.16; stroke: #2ea043; stroke-width: 1.5; }
+  .arrow { stroke: #c9d1d9; stroke-width: 2; fill: none; }
+  .loop { stroke: #2ea043; stroke-width: 2; fill: none; stroke-dasharray: 6 4; }
+  .arrow-head { fill: #c9d1d9; }
+  .loop-head { fill: #2ea043; }
+  .box-text { font-size: 13px; font-weight: 600; fill: #e6edf3; }
+  .box-sub { font-size: 11px; fill: #8b949e; }
+  .step { font-size: 13px; font-weight: 600; fill: #e6edf3; }
+  .step-sub { font-size: 12px; fill: #8b949e; }
+  .network { font-size: 12px; fill: #d29922; }
+  .loop-text { font-size: 12px; fill: #2ea043; }
+</style>
+<rect class="card" x="0.5" y="0.5" width="1179" height="471" rx="14"/>
+<text x="20.0" y="30.0" text-anchor="start" class="title">A temporal upscaler, roughly</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">DLSS and FSR 2 and later: every frame renders fewer pixels, and the upscaler adds them to the frames before it. A plain scale up</text>
+<text x="20.0" y="73.0" text-anchor="start" class="sub">(and FSR 1) only has the current frame; a temporal upscaler has the history, so it can rebuild detail the current frame lacks.</text>
+<text x="40.0" y="136.0" text-anchor="start" class="label">THIS FRAME, RENDER RESOLUTION</text>
+<rect class="input" x="40" y="150" width="230" height="44" rx="4"/>
+<text x="52.0" y="169.0" text-anchor="start" class="box-text">Colour, jittered</text>
+<text x="52.0" y="185.0" text-anchor="start" class="box-sub">the camera shifted a fraction of a pixel</text>
+<line class="arrow" x1="278" y1="172.0" x2="342" y2="172.0"/>
+<polygon class="arrow-head" points="352,172.0 340,166.0 340,178.0"/>
+<rect class="input" x="40" y="206" width="230" height="44" rx="4"/>
+<text x="52.0" y="225.0" text-anchor="start" class="box-text">Depth</text>
+<text x="52.0" y="241.0" text-anchor="start" class="box-sub">how far away each pixel is</text>
+<line class="arrow" x1="278" y1="228.0" x2="342" y2="228.0"/>
+<polygon class="arrow-head" points="352,228.0 340,222.0 340,234.0"/>
+<rect class="input" x="40" y="262" width="230" height="44" rx="4"/>
+<text x="52.0" y="281.0" text-anchor="start" class="box-text">Motion vectors</text>
+<text x="52.0" y="297.0" text-anchor="start" class="box-sub">where each pixel was last frame</text>
+<line class="arrow" x1="278" y1="284.0" x2="342" y2="284.0"/>
+<polygon class="arrow-head" points="352,284.0 340,278.0 340,290.0"/>
+<text x="40.0" y="338.0" text-anchor="start" class="label">LAST OUTPUT, DISPLAY RESOLUTION</text>
+<rect class="history" x="40" y="352" width="230" height="44" rx="4"/>
+<text x="52.0" y="371.0" text-anchor="start" class="box-text">History</text>
+<text x="52.0" y="387.0" text-anchor="start" class="box-sub">the frames before, built up</text>
+<line class="arrow" x1="278" y1="374.0" x2="342" y2="374.0"/>
+<polygon class="arrow-head" points="352,374.0 340,368.0 340,380.0"/>
+<text x="360.0" y="136.0" text-anchor="start" class="label">THE UPSCALER</text>
+<rect class="upscaler" x="360" y="150" width="420" height="246" rx="6"/>
+<text x="376.0" y="176.0" text-anchor="start" class="step">1 · Move the history</text>
+<text x="376.0" y="193.0" text-anchor="start" class="step-sub">along the motion vectors, to where it is now</text>
+<text x="376.0" y="221.0" text-anchor="start" class="step">2 · Reject what no longer fits</text>
+<text x="376.0" y="238.0" text-anchor="start" class="step-sub">uncovered or changed pixels, using the depth</text>
+<text x="376.0" y="266.0" text-anchor="start" class="step">3 · Blend in this frame's samples</text>
+<text x="376.0" y="283.0" text-anchor="start" class="step-sub">each jitter lands in a different place in the pixel,</text>
+<text x="376.0" y="300.0" text-anchor="start" class="step-sub">so over frames there are more samples than pixels</text>
+<text x="376.0" y="360.0" text-anchor="start" class="network">DLSS and FSR 4: a trained neural network does 2 and 3.</text>
+<text x="376.0" y="378.0" text-anchor="start" class="network">FSR 2 and 3: hand-written (analytical) rules.</text>
+<line class="arrow" x1="788" y1="273.0" x2="852" y2="273.0"/>
+<polygon class="arrow-head" points="862,273.0 850,267.0 850,279.0"/>
+<text x="870.0" y="136.0" text-anchor="start" class="label">OUTPUT, DISPLAY RESOLUTION</text>
+<rect class="output" x="870" y="150" width="270" height="246" rx="6"/>
+<text x="1005.0" y="269.0" text-anchor="middle" class="box-text">This frame</text>
+<text x="1005.0" y="287.0" text-anchor="middle" class="box-sub">then post-processing and the UI</text>
+<text x="1005.0" y="303.0" text-anchor="middle" class="box-sub">at the display resolution</text>
+<polyline class="loop" points="1005.0,404 1005.0,432 155.0,432 155.0,414"/>
+<polygon class="loop-head" points="155.0,404 149.0,416 161.0,416"/>
+<text x="580.0" y="424.0" text-anchor="middle" class="loop-text">kept as the next frame's history</text>
+</svg>

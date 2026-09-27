@@ -15,6 +15,10 @@
       "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured"]
     },
     {
+      "name": "upscaler-fsr1",
+      "arguments": ["--pattern", "fsr", "--scale", "0.5", "--textured"]
+    },
+    {
       "name": "render-scale-ui",
       "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured", "--ui"]
     },

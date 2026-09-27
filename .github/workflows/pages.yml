@@ -24,11 +24,12 @@ jobs:
         with:
           python-version: "3.14"
 
-      # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl)
+      # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl). moderngl's
+      # glcontext has no wheel for this Python yet, so pip builds it: it needs the X11 and EGL headers
       - name: Install FFmpeg, Pillow and OpenGL
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri
+          sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
           python -m pip install "Pillow>=12" "moderngl>=5.12"
           python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
 
