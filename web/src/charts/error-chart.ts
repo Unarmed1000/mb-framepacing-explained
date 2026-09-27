@@ -14,6 +14,8 @@ const GAP = 52;
 export interface Lane {
   title: string;
   mode: ModeEntry;
+  /** Leave the mode's name out of the lane's heading, where it would give away what the slide has not explained yet. */
+  hideMode?: boolean;
 }
 
 function element<K extends keyof SVGElementTagNameMap>(
@@ -58,10 +60,12 @@ export function errorChart(lanes: readonly Lane[], refreshes: number, fps: numbe
     const y = (value: number): number => zero - (value / limit) * (laneHeight / 2);
     // The lane's title and mode on a line of their own above it, so a long mode name never runs into the bars
     const heading = label(LEFT, top - 12, lane.title, "chart-lane");
-    const mode = document.createElementNS(SVG, "tspan");
-    mode.setAttribute("class", "chart-note");
-    mode.textContent = ` · ${lane.mode.label}`;
-    heading.append(mode);
+    if (!lane.hideMode) {
+      const mode = document.createElementNS(SVG, "tspan");
+      mode.setAttribute("class", "chart-note");
+      mode.textContent = ` · ${lane.mode.label}`;
+      heading.append(mode);
+    }
     svg.append(heading);
     for (const value of [limit, -limit]) {
       svg.append(element("line", { x1: LEFT, x2: WIDTH - RIGHT, y1: y(value), y2: y(value), class: "chart-grid" }));

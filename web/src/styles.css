@@ -145,6 +145,33 @@ h2 {
   margin: 20px 0;
 }
 
+/* A card that folds out: its heading is the button */
+.fold summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.fold summary::before {
+  content: "▸";
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.fold[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.fold[open] summary {
+  margin-bottom: 12px;
+}
+
 /* Buttons */
 .button {
   display: inline-flex;

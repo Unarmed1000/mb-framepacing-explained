@@ -3,7 +3,7 @@
     {
       "name": "Stutter at a steady frame rate",
       "about": "Animation error, and the first cause of stutter: **delta time jitter**.",
-      "slides": ["two-clocks", "timer-jitter", "invisible"]
+      "slides": ["usual-numbers", "two-clocks", "timer-jitter", "invisible"]
     },
     {
       "name": "Fixing delta time jitter",
@@ -22,7 +22,8 @@
     },
     {
       "name": "Appendix: staying within the frame budget",
-      "about": "Not pacing strategies, but ways to keep frames within their budget: render scale, dynamic resolution and better upscalers.",
+      "appendix": true,
+      "about": "Not pacing strategies, but ways to keep frames within their budget: render scale, dynamic resolution and better upscalers such as DLSS and FSR.",
       "slides": [
         "render-scale",
         "dynamic-resolution",
@@ -36,6 +37,7 @@
     },
     {
       "name": "Appendix: further reading",
+      "appendix": true,
       "about": "The sources and where to read more.",
       "slides": ["further-reading"]
     }

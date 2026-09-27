@@ -13,6 +13,8 @@ interface Topic {
   name: string;
   about: string;
   slides: readonly string[];
+  /** After the explanation, behind the appendix page. */
+  appendix?: boolean;
 }
 
 const FILES = import.meta.glob<{ meta: SlideMeta; html: string }>("../../content/slides/*.md", { eager: true });
@@ -31,11 +33,12 @@ const PARKED: Topic = topicData.parked;
 /** A topic's description: plain text with **bold**, from topics.json. */
 const about = (text: string): string => text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
-/** The topics page's cards: each one link to its topic's first slide, marked when some of its slides are drafts. */
-function topicCards(): HTMLElement {
+/** The topics' cards, on the topics page and the appendix page: each one link to its topic's first slide, marked when some of
+ * its slides are drafts. */
+function topicCards(topics: readonly Topic[]): HTMLElement {
   const grid = document.createElement("div");
   grid.className = "topics";
-  for (const topic of TOPICS) {
+  for (const topic of topics) {
     const card = document.createElement("a");
     card.className = "card topic-card";
     card.href = `#/${topic.slides[0] ?? ""}`;
@@ -54,15 +57,15 @@ function topicCards(): HTMLElement {
 }
 
 /** A `:::video` block's clip: `single MOTION TOP BOTTOM [top|bottom] [chart]` shows one box of the clip, `pair MOTION TOP BOTTOM
- * [nochart]` both, `file NAME` a rendered video, each with the block's text as the caption. The clips are listed in clips.json, for
- * the export. */
+ * [nochart] [frames] [controls] [nomodes]` both, `file NAME` a rendered video, each with the block's text as the caption. The
+ * clips are listed in clips.json, for the export. */
 function video(args: readonly string[], caption: string): HTMLElement {
   const [kind, motion = "", top = "", bottom = "", ...flags] = args;
   if (kind === "single")
     return singleBox(motion, top, bottom, flags.includes("top") ? "top" : "bottom", caption, flags.includes("chart"));
   if (kind === "pair") {
     const [chart, frames, controls] = [!flags.includes("nochart"), flags.includes("frames"), flags.includes("controls")];
-    return liveComparison(motion, top, bottom, caption, chart, frames, controls);
+    return liveComparison(motion, top, bottom, caption, chart, frames, controls, !flags.includes("nomodes"));
   }
   if (kind === "file") {
     // After the name: a height (a number) and flags, in any order
@@ -86,7 +89,8 @@ function fill(element: HTMLElement): void {
         holder.outerHTML = refreshStrip(Number(args[0]), Number(args[1]));
         break;
       case "topics":
-        holder.replaceWith(topicCards());
+        // `::topics appendix`: only the appendix's topics
+        holder.replaceWith(topicCards(args[0] === "appendix" ? TOPICS.filter((topic) => topic.appendix) : TOPICS));
         break;
     }
   }
@@ -144,10 +148,17 @@ function withTopic(id: string, topic: Topic, position: number): Slide {
   };
 }
 
-/** The explanation slides, in order: the topics first, then every topic's slides, and the set-aside slides last. */
+/** Every slide of the topics, in order, each with its topic line. */
+const slidesOf = (topics: readonly Topic[]): Slide[] =>
+  topics.flatMap((topic) => topic.slides.map((id, position) => withTopic(id, topic, position)));
+
+/** The explanation slides, in order: the topics first, then every topic's slides, the appendix page before the appendix's
+ * topics, and the set-aside slides last. */
 export const EXPLANATION_SLIDES: readonly Slide[] = [
   markdownSlide("topics"),
-  ...TOPICS.flatMap((topic) => topic.slides.map((id, position) => withTopic(id, topic, position))),
+  ...slidesOf(TOPICS.filter((topic) => !topic.appendix)),
+  markdownSlide("appendix"),
+  ...slidesOf(TOPICS.filter((topic) => topic.appendix)),
   markdownSlide("parked"),
   ...PARKED.slides.map((id, position) => withTopic(id, PARKED, position)),
 ];

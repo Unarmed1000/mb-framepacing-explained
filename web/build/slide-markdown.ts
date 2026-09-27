@@ -2,10 +2,11 @@
 // its body as the slide's HTML with the page's classes, so the published page needs no Markdown code. A slide is plain Markdown
 // (see web/content/README.md), plus:
 // - front matter: `title` (the short name, in the navigation), `eyebrow` (the small heading above the title), `draft: true`;
-// - blocks, `:::name args` to `:::`: card (a card, args its heading), links (a card of links), guide (cards side by side),
-//   figures (diagrams side by side), video (a live clip, args `single|pair MOTION TOP BOTTOM [top|bottom] [chart|nochart] [frames] [controls]` or `file NAME [HEIGHT] [controls]`, its
+// - blocks, `:::name args` to `:::`: card (a card, args its heading), fold (a card that folds out, args its heading), links (a card of links), guide (cards side by side),
+//   figures (diagrams side by side), video (a live clip, args `single|pair MOTION TOP BOTTOM [top|bottom] [chart|nochart] [frames] [controls] [nomodes]` or `file NAME [HEIGHT] [controls]`, its
 //   caption inside);
-// - lines filled in when the slide is shown: `::strip HZ FPS` (a refresh strip) and `::topics` (the topics page's cards);
+// - lines filled in when the slide is shown: `::strip HZ FPS` (a refresh strip) and `::topics` (the topics page's cards;
+//   `::topics appendix` only the appendix's);
 // - `{.note}` or `{.more}` at the end of a paragraph: a note, or a row of links to read more.
 // The first paragraph after the title is the lead, and a paragraph with only an image is a diagram.
 
@@ -38,11 +39,15 @@ export function frontMatter(source: string): { meta: SlideMeta; body: string } {
 
 const BLOCKS: Readonly<Record<string, (args: string) => string>> = {
   card: (args) => `<div class="card">${args ? `<h2>${escape(args)}</h2>` : ""}`,
+  fold: (args) => `<details class="card fold"><summary><h2>${escape(args)}</h2></summary>`,
   links: (args) => `<div class="card" data-links>${args ? `<h2>${escape(args)}</h2>` : ""}`,
   guide: () => `<div class="guide">`,
   figures: () => `<div class="figures">`,
   video: (args) => `<div data-live="video" data-args="${escape(args)}">`,
 };
+
+/** The closing tag of a block that is not a div. */
+const CLOSING: Readonly<Record<string, string>> = { fold: "</details>" };
 
 /** The blocks and live lines as HTML, with blank lines around each tag so that the Markdown between them stays Markdown. */
 export function expandDirectives(body: string): string {
@@ -57,8 +62,9 @@ export function expandDirectives(body: string): string {
       return ["", start((block[2] ?? "").trim()), ""];
     }
     if (/^:::\s*$/.test(line)) {
-      if (open.pop() === undefined) throw new Error(`line ${index + 1}: this ::: closes no block`);
-      return ["", "</div>", ""];
+      const name = open.pop();
+      if (name === undefined) throw new Error(`line ${index + 1}: this ::: closes no block`);
+      return ["", CLOSING[name] ?? "</div>", ""];
     }
     const live = /^::(strip|topics)\s*(.*)$/.exec(line);
     if (live) return ["", `<div data-live="${live[1] ?? ""}" data-args="${escape((live[2] ?? "").trim())}"></div>`, ""];

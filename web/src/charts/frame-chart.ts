@@ -1,6 +1,7 @@
 // How long each frame stays on screen, one lane per half of the video, as steps: a frame on time in green, a late one in red,
 // with a playhead that follows playback. The same card and scale conventions as the animation error chart.
 
+import type { ModeEntry } from "../manifest";
 import type { Lane } from "./error-chart";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -38,6 +39,12 @@ export function refreshesOnScreen(refresh: readonly number[], refreshes: number)
   return refresh.map((at, index) => (refresh[index + 1] ?? refreshes + (refresh[0] ?? 0)) - at);
 }
 
+/** Whether a frame of `mode` reached the screen late: its animation error is not 0. A naive timer's error is in the moment a
+ * frame shows, not in when it shows (delta time jitter): its frames reach the screen on time. */
+export function isLate(mode: Pick<ModeEntry, "timer">, animationErrorMs: number): boolean {
+  return mode.timer !== "naive" && Math.abs(animationErrorMs) > 1e-9;
+}
+
 /** A chart of the lanes' frame times on one shared scale; `refreshes` is the clip length in output refreshes. */
 export function frameChart(lanes: readonly Lane[], refreshes: number, fps: number): FrameChart {
   const height = TOP + lanes.length * LANE_H + (lanes.length - 1) * GAP + 36;
@@ -59,10 +66,12 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
     const base = top + LANE_H;
     const y = (ms: number): number => base - (ms / limit) * LANE_H;
     const heading = label(LEFT, top - 12, lane.title, "chart-lane");
-    const mode = document.createElementNS(SVG, "tspan");
-    mode.setAttribute("class", "chart-note");
-    mode.textContent = ` · ${lane.mode.label}`;
-    heading.append(mode);
+    if (!lane.hideMode) {
+      const mode = document.createElementNS(SVG, "tspan");
+      mode.setAttribute("class", "chart-note");
+      mode.textContent = ` · ${lane.mode.label}`;
+      heading.append(mode);
+    }
     svg.append(heading);
     // A line per whole number of refreshes: 16.7 ms, 33.3 ms at 60 Hz
     for (let count = 1; count <= longest; count++) {
@@ -76,7 +85,7 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
     steps.forEach((count, frame) => {
       const at = refresh[frame] ?? 0;
       const level = y(count * refreshMs);
-      const late = Math.abs(animationErrorMs[frame] ?? 0) > 1e-9;
+      const late = isLate(lane.mode, animationErrorMs[frame] ?? 0);
       svg.append(
         element("line", {
           x1: x(at),

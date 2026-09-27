@@ -20,7 +20,8 @@ export function findClip(videos: readonly VideoEntry[], top: string, bottom: str
 }
 
 /** A clip at 1:1 device pixels with a caption and, unless `chart` is false, its animation error chart following it; with
- * `frames`, also a chart of how long each frame stays on screen; with `controls`, playback controls under it. */
+ * `frames`, also a chart of how long each frame stays on screen; with `controls`, playback controls under it; with `modes`
+ * false, the charts do not name the modes. */
 export function liveComparison(
   motion: string,
   top: string,
@@ -29,6 +30,7 @@ export function liveComparison(
   chart = true,
   frames = false,
   controls = false,
+  modes = true,
 ): HTMLElement {
   const holder = document.createElement("div");
   holder.className = "live";
@@ -42,8 +44,8 @@ export function liveComparison(
       text.className = "live-caption";
       text.textContent = caption;
       const lanes = [
-        { title: "Top", mode: video.top },
-        { title: "Bottom", mode: video.bottom },
+        { title: "Top", mode: video.top, hideMode: !modes },
+        { title: "Bottom", mode: video.bottom, hideMode: !modes },
       ];
       const charts = [
         ...(chart ? [errorChart(lanes, video.frameCount, video.fps)] : []),

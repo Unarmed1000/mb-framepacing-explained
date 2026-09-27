@@ -9,9 +9,10 @@ eyebrow: Delta time jitter
 to the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
 **animation error** shows why, because only it looks at the moment each frame shows.
 
-:::video pair fast 60 60-naive-5ms nochart
+:::video pair fast 60 60-naive-5ms frames
 
-The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one stutters.
+The two boxes from the start of this topic, now with both charts. The frame times are still identical, every frame on screen for
+exactly one refresh; the animation error is 0 for the top box and off in every frame of the bottom one, the one that stutters.
 
 :::
 

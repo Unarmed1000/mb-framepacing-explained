@@ -6,8 +6,8 @@ import clips from "./clips.json";
 // The slides' Markdown as text (?raw: not through the slide plugin)
 const SOURCES = import.meta.glob<string>("../../content/slides/*.md", { query: "?raw", import: "default", eager: true });
 const FILES = new Map(Object.entries(SOURCES).map(([path, source]) => [path.replace(/^.*\/|\.md$/g, ""), source]));
-/** The slides that are not in a topic: the topics page and the page before the set-aside ones. */
-const PAGES = ["topics", "parked"];
+/** The slides that are not in a topic: the topics page, the page before the appendix and the page before the set-aside ones. */
+const PAGES = ["topics", "appendix", "parked"];
 
 describe("the slides' content", () => {
   it("has a file for every slide of the topics, and every file is shown", () => {
@@ -69,6 +69,9 @@ describe("the slide Markdown", () => {
 
   it("expands blocks, and refuses unknown or unclosed ones", () => {
     expect(expandDirectives(":::card Heading\n\ntext\n\n:::")).toContain('<div class="card"><h2>Heading</h2>');
+    expect(expandDirectives(":::fold Heading\n\ntext\n\n:::")).toMatch(
+      /<details class="card fold"><summary><h2>Heading<\/h2><\/summary>[\s\S]*<\/details>/,
+    );
     expect(expandDirectives("::strip 120 40")).toContain('<div data-live="strip" data-args="120 40"></div>');
     expect(() => expandDirectives(":::box")).toThrow(/no block named/);
     expect(() => expandDirectives(":::card")).toThrow(/not closed/);
