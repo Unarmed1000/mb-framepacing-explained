@@ -184,6 +184,49 @@ thing that moves a box: it leaves the lines, ahead or behind.
 - **Drawing:** the boxes in virtual pixels (`--pixel-size`), in front of the lines; the lines and labels at native 1:1 video pixels.
   The labels start right of the furthest any box swings.
 
+## Single box and the frame marker
+
+`--single MODE…` makes one video per mode instead of top/bottom pairs: the box alone, halfway down the frame, without the divider
+(`single_fast_60-naive-5ms.mp4`, in `box-single/…`). The manifest gives each video one `box` instead of `top` and `bottom`.
+
+`--marker` adds [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing)'s frame marker to those videos, so mb-framepacing can
+import them and measure their animation error, and its numbers can be checked against the generator's. They go to
+`box-single-marker/…`, apart from the web page's clips.
+
+- **What it carries:** at every refresh, the index of the frame on screen (a held frame keeps its index, so mb-framepacing sees one
+  presented frame), the animation time it shows, and the frame pacer's plan for it: its intended display time (the refresh it was
+  rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 166 667 ticks at
+  60 fps, 333 333 at 30), all in 100 ns ticks; run id 1. The index counts on across loops; the manifest's `markerFirstFrameIndex`
+  is the clip's first frame.
+- **Start and end:** 3 refreshes of start marker before the clip (named after the mode, cut to the marker's 60 bytes) and 3 of end
+  marker after it, showing the previous and next loop's frames. The measured run is then exactly the clip, and the video 6
+  refreshes longer; it no longer loops seamlessly.
+- **Where:** mb-framepacing's recommended place, 32 px from the top-left corner, left of the box's path, in pure black and white,
+  modules of `--marker-module-px` video pixels (3; 2 is enough lossless, `--web` needs 3).
+- **The library:** `mb_framemarker/`, a copy of mb-framepacing's Python marker library (`marker/python`, BSD 3-Clause, its
+  `LICENSE` inside). It draws the same pixels as mb-framepacing's C++ and C# libraries; its tests check that against
+  mb-framepacing's golden images when they are found (`MB_FRAMEMARKER_TEST_DATA`, or a `test-data/markers` folder above), and are
+  skipped otherwise. Update it by copying the folder from mb-framepacing.
+
+The page's scenarios as marked clips, then measured and compared, clip by clip:
+
+```powershell
+.venv\Scripts\python tools/frame_pacing_video/generate_videos.py --single 60 30 60-naive-5ms 60-diagram-slow-frames-every-1s `
+  60-diagram-half-rate-even 60-diagram-half-rate-bad-pacing 60-busy-full-rate 60-busy-swappy `
+  60-naive-5ms-diagram-slow-frames-every-1s --marker --speed fast
+cd out/frame_pacing_video/box-single-marker/fast
+mb-framepacing import single_fast_60-naive-5ms.mp4 --analyze -o single_fast_60-naive-5ms   # as the manifest's "measure" says
+python ../../../../tools/frame_pacing_video/check_marker_run.py manifest.json single_fast_60-naive-5ms.mp4 single_fast_60-naive-5ms/analysis
+```
+
+`check_marker_run.py` checks that every frame of the clip was presented and that mb-framepacing's animation error of each frame is
+the manifest's `animationErrorMs` (within 0.01 ms). Every one of the clips above agrees: the numbers behind the web page's charts are
+what mb-framepacing measures.
+
+`export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`): a folder per
+scenario, named after its mode, with `video.mp4` and its own `manifest.json`, 4 MB in all. They are this repository's videos, under
+its licence (CC BY-NC-ND 4.0, the manifest's `license`).
+
 ## Setup
 
 From the repository root:
@@ -264,6 +307,9 @@ python tools/frame_pacing_video/generate_videos.py --pixel-size 4 --speed ui-384
 | `--scene`                | `box`                     | At `normal` and `fast`: `box` or `row`; the ui speeds always scroll a row. `follow`: the [follow camera](#follow-camera).                        |
 | `--follow-boxes MODE…`   | the two default videos    | Follow scene: one video with this stack of boxes, top to bottom, all of one rate.                                                                |
 | `--slow-motion N…`       | 1                         | Shows every refresh for N video frames, one video per factor.                                                                                    |
+| `--single MODE…`         |                           | One video per mode instead of pairs: the box alone ([single box](#single-box-and-the-frame-marker)).                                             |
+| `--marker`               | off                       | With `--single`: mb-framepacing's frame marker in every frame, so mb-framepacing can measure the video.                                          |
+| `--marker-module-px`     | 3                         | `--marker`: video pixels per marker module (at least 2, 3 with `--web`).                                                                         |
 | `--box-size`             | 2/15 of the canvas height | Box width and height in virtual pixels (96 at pixel size 1, 24 at 4).                                                                            |
 | `--box-spacing`          | twice the box size        | Virtual pixels from one box of a row to the next.                                                                                                |
 | `--travel`               | 4 × the spacing           | Virtual pixels the box travels (its path is centred), or a row moves per page, at `normal` and `fast`.                                           |
@@ -303,6 +349,8 @@ Settings that would break the loop or the pacing are rejected with an error; not
 - the round trips must fit the clip with the rest at both ends;
 - a ui scroll must move a whole number of box spacings per clip;
 - a follow video's boxes must share one rate and fit above each other;
+- `--marker` needs `--single`, real speed (no `--slow-motion`), the box scene, and room for the marker (49 modules, the same for every main marker) in the frame
+  and left of the box's path;
 - the boxes must fit the height, a single box and its travel the canvas width, and the box spacing must be larger than the box
   size.
 
@@ -324,8 +372,11 @@ Settings that would break the loop or the pacing are rejected with an error; not
     (`frames.sampleMs`, the first frame is shown at 0), the dt its animation advanced by (`frames.dtMs`) and its **animation
     error** in ms (`frames.animationErrorMs`), computed like PresentMon's `MsAnimationError`: positive = shown too soon,
     negative = shown too late, and how many refreshes after the one it was rendered for it is flipped (`frames.late`, 0 on
-    time; the naive timer's frames are always on time). The first frame follows the last one of the previous loop. A web page
-    can draw the dt and error graphs next to the video from it.
+    time; the naive timer's frames are always on time), and the rate the game aims for while showing it (`frames.targetFps`:
+    the refresh rate divided by the swap interval it is paced at; `targetFps` of the mode at full speed, which Swappy's rule
+    lowers through its busy stretch). The first frame follows the last one of the previous loop. A web page can draw the dt and
+    error graphs next to the video from it.
+  - the licence of the videos (`license`): this repository's, CC BY-NC-ND 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
   RGB-to-YUV conversion reproduces the background and boxes exactly and moves in-between grays (edges, text) by at most one step.
@@ -366,4 +417,10 @@ at the moment. Windows and Linux (on a build server through Mesa's EGL) have bot
   speeds, validation, rendering (rows, sub-pixel edges, edge fade, divider, labels, colours, virtual pixel grids and the layout per
   grid size), the follow scene (videos, one rate, boxes in front of the lines, labels clear of the swing, slow motion, loops) and
   the FFmpeg lookup. An encode test (skipped without FFmpeg) makes a small clip and checks with ffprobe that it is H.264 High
-  4:4:4 Predictive at 60 fps with the right size and frame count, and that its decoded frames match the rendered ones.
+  4:4:4 Predictive at 60 fps with the right size and frame count, and that its decoded frames match the rendered ones. The single
+  box and the marker: one video per mode, the payload of every refresh (held frames, the start and end markers), the marker drawn
+  into every frame, its name, the manifest and the validation.
+- `test_check_marker_run.py`: comparing mb-framepacing's measurement with the manifest.
+- `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
+- `mb_framemarker/tests`: the marker library: payload layout and round trips, sizes and placement, and the golden images of
+  mb-framepacing (module matrices of 512 payloads, 40 images through quads, triangles and indexed triangles).

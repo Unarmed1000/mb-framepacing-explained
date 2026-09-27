@@ -21,6 +21,7 @@ from PIL import Image
 
 import generate_videos as gv
 from frame_timing import parse_mode
+from mb_framemarker import MAX_START_NAME_BYTES, MarkerKind
 
 SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
 MODE = parse_mode
@@ -750,6 +751,112 @@ class FollowTests(unittest.TestCase):
         errors = cast(dict[str, list[float]], boxes[4]["frames"])["animationErrorMs"]
         self.assertEqual(max(map(abs, errors)), 8)
         self.assertNotIn("top", video)
+
+
+class SingleAndMarkerTests(unittest.TestCase):
+    """--single (one box per video) and --marker (mb-framepacing's frame marker), at the default 1280 x 720, where the start marker
+    fits left of the box's path."""
+
+    def marked(self, *modes: str) -> tuple[gv.Settings, list[gv.VideoJob]]:
+        settings = plain_settings("--single", *modes, "--marker", "--speed", "fast")
+        return settings, gv.plan_videos(settings)
+
+    def test_single_makes_one_video_per_mode_in_its_own_folder(self) -> None:
+        settings, jobs = self.marked("60", "30")
+        self.assertEqual([job.filename for job in jobs], ["single_fast_60.mp4", "single_fast_30.mp4"])
+        self.assertEqual({job.group.as_posix() for job in jobs}, {"box-single-marker/fast"})
+        plain = gv.plan_videos(plain_settings("--single", "60", "--speed", "fast"))
+        self.assertEqual(plain[0].group.as_posix(), "box-single/fast")
+        # The box alone, halfway down the frame (at rest at the left end of its path, from x = 208), and no divider
+        image = gv.renderer_for(settings, jobs[0]).draw((0.0, 0.0))
+        self.assertEqual(image.getpixel((250, settings.single_row)), settings.box_color)
+        self.assertEqual(image.getpixel((250, settings.single_row - 1)), settings.background)
+        self.assertEqual(settings.single_row, (720 - settings.band_height) // 2)
+        self.assertEqual(image.getpixel((640, settings.divider_rows[0])), settings.background)
+
+    def test_the_payload_follows_the_frame_on_screen(self) -> None:
+        settings, jobs = self.marked("30")
+        job = jobs[0]
+        frames = settings.frame_count(job.speed)
+        payloads = [gv.marker_payload(settings, job, frame) for frame in gv.video_refreshes(settings, job)]
+        self.assertEqual(len(payloads), frames + 2 * gv.MARKER_LEAD_REFRESHES)
+        kinds = [payload.kind for payload in payloads]
+        lead = gv.MARKER_LEAD_REFRESHES
+        self.assertEqual(set(kinds[:lead]), {MarkerKind.SEQUENCE_START})
+        self.assertEqual(set(kinds[lead:-lead]), {MarkerKind.FRAME})
+        self.assertEqual(set(kinds[-lead:]), {MarkerKind.SEQUENCE_END})
+        # 30 Hz: every frame index on two refreshes in a row, counting on through the lead-in and lead-out
+        indices = [payload.frame_index for payload in payloads]
+        self.assertEqual([b - a for a, b in itertools.pairwise(dict.fromkeys(indices))], [1] * (len(set(indices)) - 1))
+        self.assertEqual(payloads[lead].frame_index, frames // 2)
+        self.assertEqual(indices[lead : lead + 4], [240, 240, 241, 241])
+        # The animation time of the frame on screen, in ticks
+        self.assertEqual(payloads[lead + 3].animation_ticks, round(gv.content_time(settings, job.top, job.speed, 3) * 10_000_000))
+        self.assertEqual({payload.run_id for payload in payloads}, {gv.MARKER_RUN_ID})
+        # The pacer's plan: 30 fps, each frame meant for its own refresh (every second one), counted from the clip's first refresh
+        self.assertEqual({payload.target_frame_ticks for payload in payloads}, {333_333})
+        self.assertEqual([payload.intended_display_ticks for payload in payloads[lead : lead + 3]], [0, 0, 333_333])
+        # The lead-in shows the previous loop's last frame, meant for 2 refreshes before the clip's first
+        self.assertEqual(payloads[lead - 1].intended_display_ticks, -333_333)
+
+    def test_the_marker_is_drawn_into_every_frame(self) -> None:
+        settings, jobs = self.marked("60-naive-5ms")
+        job = jobs[0]
+        video = list(gv.clip_frames(settings, job))
+        self.assertEqual(len(video), settings.video_frame_count(job))
+        x, y = settings.marker_origin
+        for frame in (-gv.MARKER_LEAD_REFRESHES, 0, 1, settings.frame_count(job.speed)):
+            with self.subTest(frame=frame):
+                image = Image.frombytes("RGB", (settings.width, settings.height), video[frame + gv.MARKER_LEAD_REFRESHES])
+                # The quiet zone's corner is white, and the frame's pixels are the plain frame plus the marker's quads
+                self.assertEqual(image.getpixel((x, y)), (255, 255, 255))
+                plain = gv.renderer_for(settings, job).draw(gv.renderer_for(settings, job).positions(frame)).tobytes()
+                self.assertEqual(video[frame + gv.MARKER_LEAD_REFRESHES], gv.draw_marker(settings, job, frame, plain))
+        # Every frame shows another frame of the naive timer, so no two neighbouring video frames are the same
+        self.assertTrue(all(a != b for a, b in itertools.pairwise(video[gv.MARKER_LEAD_REFRESHES : -gv.MARKER_LEAD_REFRESHES])))
+
+    def test_the_manifest_has_the_rate_the_game_aims_for(self) -> None:
+        settings = plain_settings("--single", "60", "--speed", "fast")
+        speed = settings.speeds[0]
+        for name, expected in (("60", {60}), ("30", {30}), ("60-naive-5ms", {60}), ("60-diagram-half-rate-bad-pacing", {30}), ("60-busy-swappy", {30, 60})):
+            with self.subTest(name):
+                entry = gv._mode_entry(settings, MODE(name), speed)  # pyright: ignore[reportPrivateUsage]
+                self.assertEqual(set(cast(dict[str, list[int]], entry["frames"])["targetFps"]), expected)
+                self.assertEqual(entry["targetFps"], max(expected))
+        self.assertIn("CC BY-NC-ND 4.0", cast(str, gv.build_manifest(settings, gv.plan_videos(settings))["license"]))
+
+    def test_the_start_marker_names_the_mode_within_the_limit(self) -> None:
+        settings, _ = self.marked("60")
+        long = MODE("60-naive-5ms-diagram-slow-frames-every-1s")
+        name = gv.marker_name(settings, long)
+        self.assertLessEqual(len(name.encode("utf-8")), MAX_START_NAME_BYTES)
+        self.assertTrue(settings.label(long).startswith(name))
+
+    def test_the_manifest_says_how_to_measure(self) -> None:
+        settings, jobs = self.marked("60")
+        manifest = gv.build_manifest(settings, jobs)
+        marker = cast(dict[str, object], cast(dict[str, object], manifest["settings"])["marker"])
+        self.assertEqual((marker["moduleSizePx"], marker["origin"], marker["runId"]), (3, [32, 32], 1))
+        video = cast(list[dict[str, object]], manifest["videos"])[0]
+        self.assertEqual(video["markerFirstFrameIndex"], 480)
+        self.assertEqual(video["measure"], "mb-framepacing import single_fast_60.mp4 --analyze -o single_fast_60")
+        self.assertIn("box", video)
+        self.assertNotIn("top", video)
+
+    def test_the_marker_needs_a_single_box_at_real_speed_with_room(self) -> None:
+        def rejected(message: str, *argv: str) -> None:
+            with self.assertRaises(ValueError) as caught:
+                gv.validate(gv.settings_from_arguments(gv.build_parser().parse_args(list(argv), namespace=gv.Arguments())))
+            self.assertIn(message, str(caught.exception))
+
+        rejected("--marker needs --single", "--marker", "--speed", "fast")
+        rejected("needs real speed", "--single", "60", "--marker", "--speed", "fast", "--slow-motion", "10")
+        rejected("shows a row", "--single", "60", "--marker", "--speed", "ui-384")
+        rejected("at least 3 for --web", "--single", "60", "--marker", "--speed", "fast", "--web", "--marker-module-px", "2")
+        rejected("overlaps the box's path", "--single", "60", "--marker", "--speed", "fast", "--marker-module-px", "5")
+        rejected("does not fit in the height", "--single", "60", "--marker", "--speed", "fast", "--height", "150", "--box-size", "10")
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            _ = gv.parse_arguments(["--single", "60", "--top", "30"])
 
 
 class FfmpegLookupTests(unittest.TestCase):

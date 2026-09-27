@@ -130,6 +130,12 @@ def with_lead(policy: str, refreshes: int, fps: Fraction, stages: tuple[Stage, .
     return kept
 
 
+def intervals(policy: str, refreshes: int, fps: Fraction) -> list[int]:
+    """The swap interval each frame of the clip is paced at, in refreshes: the rate the game aims for is the refresh rate divided by
+    it (full rate, then half rate through the busy stretch when it adapts)."""
+    return [frame.interval for frame in records(policy, refreshes, fps)]
+
+
 def schedule(policy: str, refreshes: int, fps: Fraction) -> tuple[list[int], list[Fraction]]:
     """The frames of a clip of `refreshes` refreshes through the busy stretch: the refresh each is shown on and its animation time
     (s), the refresh it targets."""

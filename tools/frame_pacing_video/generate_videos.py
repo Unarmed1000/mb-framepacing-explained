@@ -19,6 +19,11 @@ is the video size divided by N, and the default layout follows the canvas, so th
 while the ui scroll speeds are in virtual pixels per second: on a coarser grid a timing error moves N times as many video pixels.
 The divider and the labels are drawn at native 1:1 video pixels.
 
+--single MODE [MODE ...] makes one video per mode instead of pairs: a single box (or row) in the middle of the frame, no divider.
+With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, a copy of mb-framepacing's marker/python), so
+mb-framepacing can import them and measure their animation error: the frame index and the animation time of the frame on screen at
+every refresh, with a start marker before the clip and an end marker after it.
+
 The timing comes from frame_timing.py, which simulates the game's loop on a plain vsync display (no presentation timestamps): after
 Present returns, the loop reads a high-precision wall clock, moves the animation by dt = now - last, renders (always in time for the
 next vsync) and presents. A mode is a rate and a timer (see the repository README for the terms, after Intel PresentMon):
@@ -75,6 +80,20 @@ from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
+from mb_framemarker import (
+    MAX_START_NAME_BYTES,
+    TICKS_PER_SECOND,
+    MarkerKind,
+    Payload,
+    StartMetadata,
+    fill_quads,
+    marker_size_px,
+    recommended_origin,
+)
+from mb_framemarker import Options as MarkerOptions
+from mb_framemarker import Point as MarkerPoint
+from mb_framemarker import generate_quads as marker_quads
+from mb_framemarker import generate_start_quads as start_marker_quads
 
 type Rgb = tuple[int, int, int]
 
@@ -90,6 +109,15 @@ PIXEL_FORMAT = "yuv444p"
 WEB_PIXEL_FORMAT = "yuv420p"
 WEB_CRF = 12
 MANIFEST_NAME = "manifest.json"
+# The videos are this repository's, under its license (README.md, LICENSE)
+VIDEO_LICENSE = "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), (c) 2026 Mana Battery ApS; made by mb-framepacing-explained"
+# --marker: refreshes of start marker before the clip and of end marker after it (mb-framepacing needs each on at least one captured
+# frame; about 50 ms at 60 fps is its recommendation), the run id, and the smallest module the analysis reads (2 video pixels)
+MARKER_LEAD_REFRESHES = 3
+MARKER_RUN_ID = 1
+MARKER_MIN_MODULE_PX = 2
+# Near-lossless web encoding softens the module edges a little: 3 video pixels per module, as mb-framepacing recommends
+MARKER_MIN_WEB_MODULE_PX = 3
 
 # The modes of the default run: 60, 30 and 20 Hz with the ideal timer, then 60 and 30 Hz with the naive timer under light, typical
 # and heavy system load (the demo profile: errors in most frames; 20 Hz only as the ideal reference). Opt-in: the realistic loads,
@@ -201,6 +229,11 @@ class Settings:
     divider_color: Rgb = (80, 80, 80)
     label_color: Rgb = (200, 200, 200)
     labels: bool = False
+    # One video per mode (--single): the top modes, each alone in the middle of the frame
+    single: bool = False
+    # mb-framepacing's frame marker in every frame (--marker), with modules of this many video pixels
+    marker: bool = False
+    marker_module_px: int = 3
     # Follow scene: the lines that mark where a perfectly timed box stays
     line_color: Rgb = (208, 72, 72)
 
@@ -305,8 +338,23 @@ class Settings:
         return floor(self.duration(speed) * self.fps)
 
     def video_frame_count(self, job: VideoJob) -> int:
-        """Frames of the job's encoded video: every refresh shown slow motion times."""
-        return self.frame_count(job.speed) * job.slow_motion
+        """Frames of the job's encoded video: every refresh shown slow motion times, and the marker's lead-in and lead-out."""
+        return (self.frame_count(job.speed) + (2 * MARKER_LEAD_REFRESHES if job.marker else 0)) * job.slow_motion
+
+    @property
+    def marker_options(self) -> MarkerOptions:
+        return MarkerOptions(self.marker_module_px)
+
+    @property
+    def marker_origin(self) -> tuple[int, int]:
+        """Top-left corner of the marker in video pixels: mb-framepacing's recommended place, near the top-left corner."""
+        origin = recommended_origin(MarkerKind.FRAME, self.width, self.height, self.marker_options)
+        return origin.x, origin.y
+
+    @property
+    def single_row(self) -> int:
+        """Top video pixel row of the single box's row (--single): in the middle of the frame."""
+        return (self.height - self.band_height) // 2
 
 
 SCENES = ("box", "row", "follow")
@@ -325,6 +373,9 @@ class VideoJob:
     # The follow scene's stack (its video has no top and bottom pair) and its name ("" or "extreme")
     boxes: tuple[FrameMode, ...] = ()
     stack: str = ""
+    # One mode alone (--single; top and bottom are the same mode), with mb-framepacing's frame marker (--marker)
+    single: bool = False
+    marker: bool = False
 
     @property
     def _variant(self) -> list[str]:
@@ -342,13 +393,16 @@ class VideoJob:
         if self.scene == "follow":
             stack = f"-{self.stack}" if self.stack else ""
             return f"follow{stack}_{self.speed.name}{suffix}.mp4"
+        if self.single:
+            return f"{prefix}single_{self.speed.name}_{self.top.name}{suffix}.mp4"
         return f"{prefix}{self.speed.name}_top-{self.top.name}_bottom-{self.bottom.name}{suffix}.mp4"
 
     @property
     def group(self) -> Path:
         """The job's folder under the output folder: the scene (with -labels when labelled, -px4 on a 4 x 4 virtual pixel grid),
         then the speed, e.g. box/fast or row-labels-px4/ui-768."""
-        suffix = ("-labels" if self.labels else "") + "".join(f"-{part}" for part in self._variant)
+        kind = ("-single" if self.single else "") + ("-marker" if self.marker else "")
+        suffix = kind + ("-labels" if self.labels else "") + "".join(f"-{part}" for part in self._variant)
         return Path(self.scene + suffix) / self.speed.name
 
 
@@ -411,6 +465,8 @@ def validate(settings: Settings) -> None:
                 + f"({settings.resolved_spacing} virtual px) to loop seamlessly"
             )
 
+    validate_marker(settings)
+
     fps = format_number(settings.fps)
     for mode in settings.modes:
         # Whole refreshes per frame, every frame in time for its vsync, the synthetic pattern valid
@@ -428,6 +484,33 @@ def validate(settings: Settings) -> None:
             _ = frame_schedule(settings, mode, speed)
 
 
+def validate_marker(settings: Settings) -> None:
+    """Raise ValueError unless the single box and the marker can be made: one mode per video, at real speed, and room for the marker
+    (every main marker has the same size) left of the box's path."""
+    if settings.single and settings.scene == "follow":
+        raise ValueError("--single makes one video per mode; the follow scene has a stack of boxes instead (--follow-boxes)")
+    if not settings.marker:
+        return
+    if not settings.single:
+        raise ValueError("--marker needs --single: mb-framepacing times one marker per frame, so a marked video shows one mode")
+    if settings.slow_motions != (1,):
+        raise ValueError("--marker needs real speed: repeated video frames (--slow-motion) would read as longer display times")
+    minimum = MARKER_MIN_WEB_MODULE_PX if settings.web else MARKER_MIN_MODULE_PX
+    if settings.marker_module_px < minimum:
+        raise ValueError(f"--marker-module-px must be at least {minimum}{' for --web' if settings.web else ''}, got {settings.marker_module_px}")
+    size = marker_size_px(settings.marker_options)
+    left, top = settings.marker_origin
+    if top + size > settings.height:
+        raise ValueError(f"the marker ({size} px) does not fit in the height {settings.height} below y = {top}")
+    for speed in settings.speeds:
+        if settings.scene_for(speed) != "box":
+            raise ValueError(f"--marker needs the single box: the {speed.name} speed shows a row across the whole width, under the marker")
+        box_left = (settings.canvas[0] - settings.resolved_box_size - settings.travel_for(speed)) // 2 * settings.pixel_size
+        box_left -= (settings.canvas[0] * settings.pixel_size - settings.width) // 2
+        if left + size > box_left:
+            raise ValueError(f"the marker ({size} px from x = {left}) overlaps the box's path, which starts at x = {box_left}")
+
+
 def plan_videos(settings: Settings) -> list[VideoJob]:
     if settings.scene == "follow":
         # One video per stack and speed
@@ -436,6 +519,25 @@ def plan_videos(settings: Settings) -> list[VideoJob]:
             for slow in settings.slow_motions
             for name, stack in settings.follow_stacks
             for speed in settings.speeds
+        ]
+    if settings.single:
+        # One video per mode, alone in the middle
+        return [
+            VideoJob(
+                mode,
+                mode,
+                speed,
+                settings.scene_for(speed),
+                settings.labels,
+                settings.pixel_size,
+                settings.jitter_pattern,
+                slow,
+                single=True,
+                marker=settings.marker,
+            )
+            for slow in settings.slow_motions
+            for speed in settings.speeds
+            for mode in settings.top
         ]
     pairs = settings.pairs or tuple((top, bottom) for top in settings.top for bottom in settings.bottom)
     return [
@@ -495,11 +597,18 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     return FrameSchedule(frames.flips, frames.animation)
 
 
-def content_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> Fraction:
-    """Animation time a box shows in output frame `frame`; frames past the clip continue the motion (the loop checks use this)."""
+def frame_on_screen(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> tuple[int, int]:
+    """Which frame of the clip is on screen in output frame `frame`, and in which loop of the clip: frames before the clip are the
+    previous loop's (-1), frames past it the next loop's."""
     schedule = frame_schedule(settings, mode, speed)
     loops, within = divmod(frame, settings.frame_count(speed))
-    return schedule.animation[bisect.bisect_right(schedule.shown, within) - 1] + loops * settings.duration(speed)
+    return bisect.bisect_right(schedule.shown, within) - 1, loops
+
+
+def content_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> Fraction:
+    """Animation time a box shows in output frame `frame`; frames past the clip continue the motion (the loop checks use this)."""
+    index, loops = frame_on_screen(settings, mode, speed, frame)
+    return frame_schedule(settings, mode, speed).animation[index] + loops * settings.duration(speed)
 
 
 def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[Fraction]:
@@ -585,14 +694,19 @@ class FrameRenderer:
         self._scene: str = job.scene
         self._background: Image.Image = Image.new("RGB", (settings.width, settings.height), settings.background)
         draw = ImageDraw.Draw(self._background)
-        if settings.divider:
+        self._single: bool = job.single
+        if settings.divider and not job.single:
             first, thickness = settings.divider_rows
             for x, color in enumerate(divider_colors(settings)):
                 draw.rectangle((x, first, x, first + thickness - 1), fill=color)
-        rows = settings.box_rows
+        rows = (settings.single_row, settings.single_row) if job.single else settings.box_rows
         self._top_y: int = rows[0]
         self._bottom_y: int = rows[1]
-        if settings.labels:
+        if settings.labels and job.single:
+            font = ImageFont.load_default(size=max(12, settings.height // 20))
+            margin = max(4, settings.height // 45)
+            draw.text((settings.width / 2, self._top_y - margin), settings.label(job.top), fill=settings.label_color, font=font, anchor="md")
+        elif settings.labels:
             # Centred next to each row, on the side away from the divider: above the top row, below the bottom row
             font = ImageFont.load_default(size=max(12, settings.height // 20))
             margin = max(4, settings.height // 45)
@@ -659,7 +773,8 @@ class FrameRenderer:
         """The frame with the top and bottom rows shifted by `top_offset` and `bottom_offset` pixels."""
         image = self._background.copy()
         image.paste(self._row(top_offset), (0, self._top_y))
-        image.paste(self._row(bottom_offset), (0, self._bottom_y))
+        if not self._single:
+            image.paste(self._row(bottom_offset), (0, self._bottom_y))
         return image
 
 
@@ -774,15 +889,57 @@ def renderer_for(settings: Settings, job: VideoJob) -> Renderer:
     return FollowRenderer(settings, job) if job.scene == "follow" else RowRenderer(settings, job)
 
 
+def marker_name(settings: Settings, mode: FrameMode) -> str:
+    """The start marker's name: the mode's label, cut to the marker's limit (MAX_START_NAME_BYTES of UTF-8) on a character boundary."""
+    return settings.label(mode).encode("utf-8")[:MAX_START_NAME_BYTES].decode("utf-8", errors="ignore")
+
+
+def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
+    """What the marker carries in output frame `frame` (negative in the lead-in, past the clip in the lead-out): the index of the
+    frame on screen, counted on across loops so it never repeats (the clip's first frame is the clip's frame count), the animation
+    time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
+    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval), all in ticks. A held frame keeps its
+    index, so mb-framepacing sees one presented frame. Start marker in the lead-in, end marker in the lead-out."""
+    index, loops = frame_on_screen(settings, job.top, job.speed, frame)
+    frames = simulated_frames(settings, job.top, job.speed)
+    ticks = round(content_time(settings, job.top, job.speed, frame) * TICKS_PER_SECOND)
+    refresh_ticks = TICKS_PER_SECOND / settings.fps
+    intended = round((frames.targets[index] + loops * settings.frame_count(job.speed)) * refresh_ticks)
+    target = round(frames.intervals[index] * refresh_ticks)
+    kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
+    return Payload(((loops + 1) * len(frames.flips)) + index, ticks, MARKER_RUN_ID, kind, intended, target)
+
+
+def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> bytes:
+    """The RGB24 frame `image` with the marker of output frame `frame` drawn in, in pure black and white."""
+    payload = marker_payload(settings, job, frame)
+    origin = MarkerPoint(*settings.marker_origin)
+    if payload.kind == MarkerKind.SEQUENCE_START:
+        quads = start_marker_quads(payload, StartMetadata(0, marker_name(settings, job.top)), settings.marker_options, origin)
+    else:
+        quads = marker_quads(payload, settings.marker_options, origin)
+    pixels = bytearray(image)
+    fill_quads(pixels, settings.width, settings.height, quads, channels=3)
+    return bytes(pixels)
+
+
+def video_refreshes(settings: Settings, job: VideoJob) -> range:
+    """The output frames of the video: the clip's refreshes, and with the marker the lead-in before it and the lead-out after it."""
+    lead = MARKER_LEAD_REFRESHES if job.marker else 0
+    return range(-lead, settings.frame_count(job.speed) + lead)
+
+
 def clip_frames(settings: Settings, job: VideoJob) -> Iterator[bytes]:
     """The clip's video frames as raw RGB24 bytes: every refresh, shown slow motion times."""
     renderer = renderer_for(settings, job)
-    previous: tuple[tuple[float, ...], bytes] | None = None
-    for frame in range(settings.frame_count(job.speed)):
+    previous: tuple[object, bytes] | None = None
+    for frame in video_refreshes(settings, job):
         positions = renderer.positions(frame)
-        # Held updates repeat the previous frame
-        if previous is None or previous[0] != positions:
-            previous = (positions, renderer.draw(positions).tobytes())
+        # Held updates repeat the previous frame; the marker changes with the frame on screen, not with every refresh
+        key = (positions, marker_payload(settings, job, frame)) if job.marker else positions
+        if previous is None or previous[0] != key:
+            image = renderer.draw(positions).tobytes()
+            previous = (key, draw_marker(settings, job, frame, image) if job.marker else image)
         for _ in range(job.slow_motion):
             yield previous[1]
 
@@ -1001,15 +1158,19 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         "noise": None if mode.noise is None else mode.noise.value,
         "noiseWindowMs": None if mode.window is None else _json_number(mode.window * 1000),
         "label": settings.label(mode),
+        # The rate the game aims for: at full speed (Swappy's adaptive rule aims lower through its busy stretch, frames.targetFps)
+        "targetFps": _json_number(settings.fps / min(frames.intervals)),
         # Every frame of the clip: the output refresh it is flipped on, when the naive loop read the clock (ms, the first frame is
         # shown at 0), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError) and how many refreshes
-        # after the one it was rendered for it is flipped (0: on time)
+        # after the one it was rendered for it is flipped (0: on time), and the rate the game aims for while showing it (the refresh
+        # rate divided by the swap interval it is paced at)
         "frames": {
             "refresh": list(frames.flips),
             "sampleMs": _milliseconds(frames.samples),
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
             "late": refreshes_late(settings, mode, speed),
+            "targetFps": [_json_number(settings.fps / interval) for interval in frames.intervals],
         },
     }
 
@@ -1018,12 +1179,41 @@ def _halves(settings: Settings, job: VideoJob) -> dict[str, object]:
     """The modes of a video: top and bottom, or the follow scene's stack of boxes (top to bottom)."""
     if job.scene == "follow":
         return {"boxes": [_mode_entry(settings, box, job.speed) for box in job.boxes]}
+    if job.single:
+        return {"box": _mode_entry(settings, job.top, job.speed)}
     return {"top": _mode_entry(settings, job.top, job.speed), "bottom": _mode_entry(settings, job.bottom, job.speed)}
+
+
+def _marker_settings(settings: Settings) -> dict[str, object] | None:
+    """How the marker is drawn (--marker): mb-framepacing's frame marker, its module size, where, and its run."""
+    if not settings.marker:
+        return None
+    return {
+        "format": "mb-framepacing frame marker (doc/marker-format.md)",
+        "moduleSizePx": settings.marker_module_px,
+        "quietZoneModules": settings.marker_options.quiet_zone_modules,
+        "origin": list(settings.marker_origin),
+        "runId": MARKER_RUN_ID,
+        "leadInRefreshes": MARKER_LEAD_REFRESHES,
+        "leadOutRefreshes": MARKER_LEAD_REFRESHES,
+    }
+
+
+def _marker_video(settings: Settings, job: VideoJob) -> dict[str, object]:
+    """A marked video's measurement: the marker frame index of the clip's first frame (the per-frame lists start there) and the
+    command that measures it."""
+    if not job.marker:
+        return {}
+    return {
+        "markerFirstFrameIndex": len(frame_schedule(settings, job.top, job.speed).shown),
+        "measure": f"mb-framepacing import {job.filename} --analyze -o {Path(job.filename).stem}",
+    }
 
 
 def build_manifest(settings: Settings, jobs: Sequence[VideoJob]) -> dict[str, object]:
     return {
         "generator": "tools/frame_pacing_video/generate_videos.py",
+        "license": VIDEO_LICENSE,
         "settings": {
             "width": settings.width,
             "height": settings.height,
@@ -1052,6 +1242,8 @@ def build_manifest(settings: Settings, jobs: Sequence[VideoJob]) -> dict[str, ob
             "encoder": ENCODER,
             "pixelFormat": WEB_PIXEL_FORMAT if settings.web else PIXEL_FORMAT,
             "web": settings.web,
+            "single": settings.single,
+            "marker": _marker_settings(settings),
         },
         "videos": [
             {
@@ -1071,6 +1263,7 @@ def build_manifest(settings: Settings, jobs: Sequence[VideoJob]) -> dict[str, ob
                 "videoFrameCount": settings.video_frame_count(job),
                 "width": settings.width,
                 "height": settings.height,
+                **_marker_video(settings, job),
                 **_halves(settings, job),
             }
             for job in jobs
@@ -1121,6 +1314,9 @@ class Arguments(argparse.Namespace):
     line_color: Rgb
     slow_motion: list[int] | None
     follow_boxes: list[FrameMode] | None
+    single: list[FrameMode] | None
+    marker: bool
+    marker_module_px: int
     ffmpeg: str | None
     config: Path | None
     preview_png: bool
@@ -1302,6 +1498,24 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help="show every refresh for N video frames (N times slower), one video per factor (default: 1, real speed)",
     )
+    _ = add(
+        "--single",
+        nargs="+",
+        type=_mode,
+        metavar="MODE",
+        help="one video per mode instead of top/bottom pairs: a single box in the middle of the frame, no divider",
+    )
+    _ = add(
+        "--marker",
+        action="store_true",
+        help="with --single: draw mb-framepacing's frame marker into every frame (frame index and animation time), with a start marker before the clip and an end marker after it, so mb-framepacing can measure the video",
+    )
+    _ = add(
+        "--marker-module-px",
+        type=_positive_int,
+        default=defaults.marker_module_px,
+        help=f"--marker: video pixels per marker module (at least {MARKER_MIN_MODULE_PX}, {MARKER_MIN_WEB_MODULE_PX} with --web)",
+    )
     _ = add("--box-spacing", type=_positive_int, default=None, help="virtual pixels from one box of a row to the next (default: twice the box size)")
     _ = add("--box-gap", type=_non_negative_int, default=None, help="virtual pixels between each box and the divider (default: half the box size)")
     _ = add("--background", type=_color, default=_hex_color(defaults.background), help="background colour")
@@ -1349,8 +1563,16 @@ def _seconds_pair(milliseconds: Sequence[Fraction | str]) -> tuple[Fraction, Fra
 
 def settings_from_arguments(args: Arguments) -> Settings:
     return Settings(
-        top=tuple(dict.fromkeys(top for top, _ in args.pairs)) if args.pairs else MODES if args.top is None else tuple(dict.fromkeys(args.top)),
-        bottom=tuple(dict.fromkeys(bottom for _, bottom in args.pairs))
+        top=tuple(dict.fromkeys(args.single))
+        if args.single
+        else tuple(dict.fromkeys(top for top, _ in args.pairs))
+        if args.pairs
+        else MODES
+        if args.top is None
+        else tuple(dict.fromkeys(args.top)),
+        bottom=tuple(dict.fromkeys(args.single))
+        if args.single
+        else tuple(dict.fromkeys(bottom for _, bottom in args.pairs))
         if args.pairs
         else (MODES if args.bottom is None else tuple(dict.fromkeys(args.bottom))),
         pairs=tuple(dict.fromkeys(args.pairs)) if args.pairs else (),
@@ -1383,6 +1605,9 @@ def settings_from_arguments(args: Arguments) -> Settings:
         slow_motions=tuple(dict.fromkeys(args.slow_motion)) if args.slow_motion else (1,),
         follow_stacks=FOLLOW_STACKS if args.follow_boxes is None else (("", tuple(args.follow_boxes)),),
         labels=args.labels,
+        single=bool(args.single),
+        marker=args.marker,
+        marker_module_px=args.marker_module_px,
     )
 
 
@@ -1392,6 +1617,8 @@ def parse_arguments(argv: Sequence[str] | None = None) -> tuple[Arguments, Setti
     args = parser.parse_args(argv, namespace=Arguments())
     if args.pairs and (args.top is not None or args.bottom is not None):
         parser.error("use either --pairs or --top/--bottom, not both")
+    if args.single and (args.pairs or args.top is not None or args.bottom is not None):
+        parser.error("use either --single or --top/--bottom/--pairs, not both")
     if args.pairs and args.scene == "follow":
         parser.error("--pairs selects top/bottom pairs; the follow scene has a stack of boxes instead (--follow-boxes)")
     try:
@@ -1444,8 +1671,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"[{index}/{len(jobs)}] {group.as_posix()}/{job.filename}: {frames}", flush=True)
                 encode_video(location.path, settings, job, folder / job.filename)
                 if args.preview_png:
-                    renderer = renderer_for(settings, job)
-                    preview = renderer.draw(renderer.positions(0))
+                    first = next(clip_frames(settings, job))
+                    preview = Image.frombytes("RGB", (settings.width, settings.height), first)
                     preview.save(folder / f"{Path(job.filename).stem}.png")
             manifest = json.dumps(build_manifest(settings, group_jobs), indent=2) + "\n"
             _ = (folder / MANIFEST_NAME).write_text(manifest, encoding="utf-8")

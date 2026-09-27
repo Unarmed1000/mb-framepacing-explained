@@ -153,5 +153,8 @@ ideally with a source: open an [issue](https://github.com/Unarmed1000/mb-framepa
 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) ([full text](LICENSE)): you may share it unchanged, with
 credit, for non-commercial purposes. Commercial use and sharing adapted versions need written permission from Mana Battery ApS.
 It is provided as is, without warranty or liability. Quotations from third-party articles and videos remain their owners'.
-The exception is AMD's FSR 1 headers in [`tools/frame_pacing_video/fsr1`](tools/frame_pacing_video/fsr1), under their own MIT
-licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)).
+The exceptions are AMD's FSR 1 headers in [`tools/frame_pacing_video/fsr1`](tools/frame_pacing_video/fsr1), under their own MIT
+licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)), and mb-framepacing's frame marker library in
+[`tools/frame_pacing_video/mb_framemarker`](tools/frame_pacing_video/mb_framemarker), a copy of its `marker/python`, under the BSD
+3-Clause licence ([text](tools/frame_pacing_video/mb_framemarker/LICENSE)); its QR encoder in `third_party/` is under the MIT licence
+([text](tools/frame_pacing_video/mb_framemarker/third_party/qrcodegen-LICENSE.txt)).

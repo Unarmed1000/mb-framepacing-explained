@@ -211,13 +211,14 @@ class TimingParameters:
 @dataclass(frozen=True)
 class SimulatedFrames:
     """The frames of one clip, in order: the output refresh each is flipped on, the wall clock reading of the naive loop (seconds;
-    the first frame is shown at 0), the animation time each shows, and the refresh each is rendered for (a frame flipped later is
-    late)."""
+    the first frame is shown at 0), the animation time each shows, the refresh each is rendered for (a frame flipped later is
+    late), and the swap interval each is paced at, in refreshes: the rate the game aims for is the refresh rate divided by it."""
 
     flips: tuple[int, ...]
     samples: tuple[Fraction, ...]
     animation: tuple[Fraction, ...]
     targets: tuple[int, ...]
+    intervals: tuple[int, ...]
 
 
 def swap_interval(mode: FrameMode, fps: Fraction) -> int:
@@ -411,25 +412,30 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
     if refreshes % interval:
         raise ValueError(f"{refreshes} refreshes are not a whole number of {mode.rate} Hz frames")
     if mode.busy is not None:
+        from adaptive_rate import intervals as busy_intervals  # noqa: PLC0415
         from adaptive_rate import schedule as busy_schedule  # noqa: PLC0415
 
         flips, animation = busy_schedule(mode.busy, refreshes, parameters.fps)
         targets = tuple(round(moment * parameters.fps) for moment in animation)
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets)
+        paced = tuple(busy_intervals(mode.busy, refreshes, parameters.fps))
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced)
     if mode.diagram is not None:
         from diagram_replay import schedule  # noqa: PLC0415
 
         flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
         targets = tuple(round(moment * parameters.fps) for moment in animation)
+        # The rate the diagram aims for: its smallest step between the refreshes frames are rendered for (half rate: 2)
+        steps = [b - a for a, b in zip(targets, targets[1:], strict=False) if b > a]
+        paced = (min(steps, default=interval),) * len(targets)
         if mode.timer is Timer.NAIVE:
             # The perfect storm: the diagram's frames, each read off the clock by its wake-up delay around the window's middle, as
             # the naive timer does; late frames stay late, and every frame shows a moment a little off
             window = mode.window or Fraction(0)
             offsets = [wake - window for wake in wake_delays(mode, parameters, len(flips))]
             animation = [moment + offset for moment, offset in zip(animation, offsets, strict=True)]
-            return SimulatedFrames(tuple(flips), tuple(animation), tuple(animation), targets)
+            return SimulatedFrames(tuple(flips), tuple(animation), tuple(animation), targets, paced)
         # The perfect timer reads no clock: each frame's sample is its own flip
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets)
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced)
     count = refreshes // interval
     frame_time = Fraction(interval) / parameters.fps
     wakes = wake_delays(mode, parameters, count)
@@ -444,7 +450,7 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
         latency = average - frame_time
         animation = tuple(sample - latency for sample in samples)
     # Every frame of this loop makes its vsync: it is flipped on the refresh it is rendered for
-    return SimulatedFrames(flips, samples, animation, flips)
+    return SimulatedFrames(flips, samples, animation, flips, (interval,) * count)
 
 
 def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
