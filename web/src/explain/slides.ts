@@ -213,12 +213,13 @@ const halfRate: Slide = {
   title: "Half rate",
   render: () =>
     body(
-      "Frame rate targets",
-      "30 fps, done right and done wrong",
-      `A fixed target that divides the refresh rate gives even pacing: 60 or 30 fps on 60 Hz, 40 fps on 120 Hz. But a cap only
-      helps if every frame is held for the same number of refreshes. A frame that is ready early and not held back appears after
-      one refresh, and the next one stays for three: Digital Foundry keep finding 30 fps caps like that, and in Bloodborne they
-      swung "between 16ms and 66ms".`,
+      "Half rate",
+      "30 fps on average, and still stuttering",
+      `An average frame rate says nothing about how evenly frames arrive. Both rows below are 30 fps on average: one holds every
+      frame for two refreshes, the other for one and then three, and only the first is smooth. A frame that is ready early and not
+      held back appears after one refresh, and the next one stays for three: Digital Foundry keep finding 30 fps caps like that,
+      and in Bloodborne they swung "between 16ms and 66ms". A fixed target that divides the refresh rate (60 or 30 fps on 60 Hz,
+      40 fps on 120 Hz) only helps when every frame is held for the same number of refreshes.`,
       `<div class="figures">
         ${figure(halfRateEven, "Evenly paced: each frame held for two refreshes, as intended.")}
         ${figure(halfRateBad, "Bad frame pacing: frames held for 1 and 3 refreshes instead of 2.")}
