@@ -141,6 +141,12 @@ Much of the research behind these docs was done with AI assistance: sources were
 were compared with the pages they come from, but mistakes are still possible. Check the linked source before relying on a detail,
 and please report anything that is wrong. Where the docs go beyond their sources, they say so.
 
+## Contributing
+
+Corrections and new topics are welcome, especially from people who work on engines, drivers, displays or measurement tools,
+ideally with a source: open an [issue](https://github.com/Unarmed1000/mb-framepacing-explained/issues) or a pull request. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for what helps most, the checks, and the terms for contributions.
+
 ## License
 
 (c) 2026 Mana Battery ApS. Everything here (documentation, diagrams, videos and tools) is licensed under
