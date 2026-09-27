@@ -7,6 +7,7 @@ from fractions import Fraction
 
 import diagram_replay as replay
 import frame_timing as ft
+import generate_videos as gv
 
 PARAMETERS = ft.TimingParameters()
 CLIP = 480  # 8 s at 60 fps
@@ -69,17 +70,31 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(errors_ms(simulated), [Fraction(-50, 3), Fraction(50, 3)] * 120)
 
     def test_a_unit_that_does_not_divide_the_clip_is_filled_with_on_time_frames(self) -> None:
-        # Hysteresis: 13 refreshes, repeated every 15 (480 / 15 = 32) with two more frames at full rate
+        # Hysteresis: 13 refreshes, repeated every 15 (480 / 15 = 32), centred with a frame at full rate before and after
         simulated = frames("60-diagram-switching-hysteresis")
-        self.assertEqual(holds(simulated)[:9], [2, 2, 2, 2, 2, 2, 1, 1, 1])
+        self.assertEqual(holds(simulated)[:9], [1, 2, 2, 2, 2, 2, 2, 1, 1])
         self.assertEqual(sum(holds(simulated)[:9]), 15)
 
     def test_every_repeats_the_unit_once_per_period_and_plays_on_time_frames_between(self) -> None:
         simulated = frames("60-diagram-slow-frames-every-1s")
-        self.assertEqual(holds(simulated)[:4], [2, 1, 1, 1])
+        # The unit in the middle of each second: the held frame at refresh 28 of 60 (the clip starts in the middle of a rest)
+        held = [flip for flip, hold in zip(simulated.flips, holds(simulated), strict=True) if hold == 2]
+        self.assertEqual(held, [28 + 60 * second for second in range(8)])
         self.assertEqual(sum(1 for error in errors_ms(simulated) if error < 0), 8)
         with self.assertRaisesRegex(ValueError, "cannot repeat every 7 refreshes"):
             _ = replay.schedule("slow-frames", Fraction(7, 60), CLIP, 1, Fraction(60))
+
+    def test_the_late_frames_fall_where_the_box_moves(self) -> None:
+        # A held or late frame where the box rests shows nothing: every one must be in the middle of a move, at every box speed
+        for speed_name in ("normal", "fast", "slow"):
+            settings = gv.parse_arguments(["--pairs", "60:60-diagram-slow-frames-every-1s", "--speed", speed_name])[1]
+            speed = settings.speeds[0]
+            simulated = frames("60-diagram-slow-frames-every-1s")
+            for flip, hold in zip(simulated.flips, holds(simulated), strict=True):
+                if hold == 2:
+                    before = gv.world_position(settings, speed, Fraction(flip, 60))
+                    after = gv.world_position(settings, speed, Fraction(flip + 3, 60))
+                    self.assertGreater(abs(float(after) - float(before)), 1, (speed_name, flip))
 
     def test_names_and_labels(self) -> None:
         mode = ft.parse_mode("60-diagram-slow-frames-every-1.5s")

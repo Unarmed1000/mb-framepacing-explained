@@ -85,13 +85,19 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
         period = int(period_refreshes)
         if period < length or refreshes % period or period % interval:
             raise ValueError(f"the {name} diagram ({length} refreshes) cannot repeat every {period} refreshes in a {refreshes}-refresh clip")
+    # The unit sits in the middle of its period, on-time frames around it: a clip starts in the middle of a rest of the box's
+    # motion, and a period that divides the clip ends in one too, so a unit at a period's start would fall where nothing moves
+    offset = (period - length) // 2 // interval * interval
     flips: list[int] = []
     moments: list[Fraction] = []
     for start in range(0, refreshes, period):
+        for at in range(start, start + offset, interval):
+            flips.append(at)
+            moments.append(Fraction(at))
         for at, moment in zip(unit.shown, unit.animation, strict=True):
-            flips.append(start + at * interval)
-            moments.append(start + moment * interval)
-        for at in range(start + length, start + period, interval):
+            flips.append(start + offset + at * interval)
+            moments.append(start + offset + moment * interval)
+        for at in range(start + offset + length, start + period, interval):
             flips.append(at)
             moments.append(Fraction(at))
     return flips, [moment / fps for moment in moments]
