@@ -1,0 +1,34 @@
+{
+  "topics": [
+    {
+      "name": "Stutter at a steady frame rate",
+      "about": "Animation error, and the first cause of stutter: **delta time jitter**.",
+      "slides": ["two-clocks", "timer-jitter", "invisible"]
+    },
+    {
+      "name": "Fixing delta time jitter",
+      "about": "The vsync timer: round each measured frame time to whole refreshes, so every frame shows the moment it is on screen.",
+      "slides": ["vsync-timer"]
+    },
+    {
+      "name": "Stutter from late frames",
+      "about": "The second cause of stutter, **bad frame pacing**: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with a lower target frame rate.",
+      "slides": ["slow-frames", "missed-frames", "lower-target", "half-rate", "other-rates"]
+    },
+    {
+      "name": "Beyond vsync: VRR and input latency",
+      "about": "What VRR changes, and how pacing meets input latency.",
+      "slides": ["vrr", "input-latency"]
+    },
+    {
+      "name": "Go further",
+      "about": "Why the average frame rate hides stutter, how to measure animation error, and where to read more.",
+      "slides": ["average-frame-rate", "measure", "further-reading"]
+    }
+  ],
+  "parked": {
+    "name": "Stuff we might use",
+    "about": "Set aside to be reworked later.",
+    "slides": ["switching", "recovery"]
+  }
+}

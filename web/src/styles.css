@@ -874,3 +874,24 @@ code {
     gap: 6px;
   }
 }
+
+/* The welcome page's invitation to contribute: a small accent heading over the note, marked by a line on its left */
+.contribute {
+  max-width: 820px;
+  margin: 4px 0 20px;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--accent);
+}
+
+.contribute-title {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contribute .note {
+  margin: 0;
+}

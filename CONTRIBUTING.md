@@ -17,7 +17,8 @@ contribution is a correction with a link to where it can be checked.
 
 - **An issue** is enough for most of the above: no code needed. Describe what is wrong or missing, and link the source.
   [Open an issue](https://github.com/Unarmed1000/mb-framepacing-explained/issues).
-- **A pull request** for a change you want to make yourself. For anything larger than a fix, open an issue first, so we can agree
+- **A pull request** for a change you want to make yourself. The slides are Markdown files, so a wording fix can be made in
+  GitHub's own editor, without cloning anything. For anything larger than a fix, open an issue first, so we can agree
   on the direction before you spend the time.
 
 ## Sources
@@ -31,13 +32,13 @@ contribution is a correction with a link to where it can be checked.
 
 ## Where things are
 
-| What                                | Where                                                    |
-| ----------------------------------- | -------------------------------------------------------- |
-| The page's explanation slides       | [`web/src/explain/slides.ts`](web/src/explain/slides.ts) |
-| The docs                            | [`doc/`](doc) and the [README](README.md)                |
-| The timing diagrams and charts      | [`tools/timing_diagrams`](tools/timing_diagrams)         |
-| The videos and the simulated timers | [`tools/frame_pacing_video`](tools/frame_pacing_video)   |
-| The clips the page uses             | [`tools/web_export`](tools/web_export)                   |
+| What                                | Where                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| The page's explanation slides       | [`web/content`](web/content): a Markdown file per slide ([how](web/content/README.md)) |
+| The docs                            | [`doc/`](doc) and the [README](README.md)                                              |
+| The timing diagrams and charts      | [`tools/timing_diagrams`](tools/timing_diagrams)                                       |
+| The videos and the simulated timers | [`tools/frame_pacing_video`](tools/frame_pacing_video)                                 |
+| The clips the page uses             | [`tools/web_export`](tools/web_export)                                                 |
 
 ## Checks
 

@@ -28,10 +28,13 @@ const welcome: Slide = {
       </p>
       <p class="note screen-note">Made for a larger display: a computer monitor, a laptop or a TV. The videos are 1280 pixels wide
         and shown pixel for pixel, which a phone screen cannot do. On a phone, it is well worth coming back on a bigger screen.</p>
-      <p class="note">Found something wrong, or know a topic that belongs here? Corrections and suggestions from people who work
-        on this are very welcome, ideally with a source:
-        <a href="https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/CONTRIBUTING.md" target="_blank"
-          rel="noopener">open an issue or a pull request</a> on GitHub.</p>`;
+      <div class="contribute">
+        <p class="contribute-title">Know this field? Help improve it</p>
+        <p class="note">Found something wrong, or know a topic that belongs here? Corrections and suggestions from people who work
+          on this are very welcome, ideally with a source:
+          <a href="https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/CONTRIBUTING.md" target="_blank"
+            rel="noopener">open an issue or a pull request</a> on GitHub.</p>
+      </div>`;
     const start = document.createElement("a");
     start.className = "button";
     start.href = "#/best-viewing";
