@@ -1,0 +1,11 @@
+{
+  "motion": "fast",
+  "pairs": [
+    ["60", "60"],
+    ["60", "60-naive-5ms"],
+    ["60", "60-diagram-slow-frames-every-1s"],
+    ["60-diagram-half-rate-even", "60-diagram-half-rate-bad-pacing"],
+    ["60-diagram-switching-naive-every-1s", "60-diagram-switching-hysteresis-every-1s"],
+    ["60-diagram-recovery-half-rate-every-1s", "60-diagram-recovery-targeting-every-1s"]
+  ]
+}

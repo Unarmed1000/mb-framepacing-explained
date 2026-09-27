@@ -558,7 +558,59 @@ const notReady: Slide = {
     ),
 };
 
-/** A topic's slide with a line above its heading: the topic and where in it this slide is, linking back to the topics. */
+/** The frame pacing slides' videos: each diagram replayed exactly (the video tool's diagram modes), at the fast movement, right
+ * under the slide's lead. The clips are listed in clips.json, for the export. */
+const CLIPS: ReadonlyMap<Slide, () => HTMLElement> = new Map([
+  [
+    slowFramesSlide,
+    () =>
+      singleBox(
+        "fast",
+        "60",
+        "60-diagram-slow-frames-every-1s",
+        "bottom",
+        "In the middle of every move two frames miss their refresh, as B and E in the diagram: the previous frame is held, the " +
+          "late one shows a moment already past, and the next one jumps ahead. The chart shows each frame's animation error.",
+        true,
+      ),
+  ],
+  [
+    halfRate,
+    () =>
+      liveComparison(
+        "fast",
+        "60-diagram-half-rate-even",
+        "60-diagram-half-rate-bad-pacing",
+        "Top: half rate, evenly paced, every frame held for two refreshes. Bottom: bad frame pacing, frames held for one and " +
+          "three refreshes. Both are 30 fps on average; only the bottom one stutters.",
+      ),
+  ],
+  [
+    switching,
+    () =>
+      liveComparison(
+        "fast",
+        "60-diagram-switching-naive-every-1s",
+        "60-diagram-switching-hysteresis-every-1s",
+        "Top: back to full rate after the first fast frame. Bottom: with hysteresis, back up only after three fast frames in a " +
+          "row. Each plays its diagram once, in the middle of every move.",
+      ),
+  ],
+  [
+    recovery,
+    () =>
+      liveComparison(
+        "fast",
+        "60-diagram-recovery-half-rate-every-1s",
+        "60-diagram-recovery-targeting-every-1s",
+        "Top: recovering at half rate. Bottom: at full rate with per-frame targets, back a frame sooner. Each plays its diagram " +
+          "once, in the middle of every move.",
+      ),
+  ],
+]);
+
+/** A topic's slide with a line above its heading (the topic and where in it this slide is, linking back to the topics), its
+ * video when it has one, and its work-in-progress notice when it is a draft. */
 function withTopic(slide: Slide, topic: (typeof TOPICS)[number], position: number): Slide {
   return {
     ...slide,
@@ -569,6 +621,8 @@ function withTopic(slide: Slide, topic: (typeof TOPICS)[number], position: numbe
         href: "#/topics",
         textContent: `‹ ${topic.name} · ${position + 1} of ${topic.slides.length}`,
       });
+      const clip = CLIPS.get(slide);
+      if (clip) element.querySelector(".lead")?.after(clip());
       if (WORK_IN_PROGRESS.has(slide)) {
         const notice = Object.assign(document.createElement("p"), { className: "wip", role: "note" });
         notice.innerHTML =
