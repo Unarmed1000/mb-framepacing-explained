@@ -2,7 +2,7 @@
 """Create or update the repository's .venv with one command: setup.cmd (Windows) or ./setup.sh (Linux, macOS) run this script.
 
 1. Checks that this is Python 3.14 or newer.
-2. Creates .venv when it is missing (or was made by an older Python).
+2. Creates .venv when it is missing (or was made by an older Python, or in another folder before the repository was moved).
 3. Upgrades pip in it and installs the dev dependency group of pyproject.toml (Pillow, ruff, basedpyright).
 4. Creates local.toml (the machine-local settings, git-ignored) from local.example.toml when it is missing; with --ffmpeg it
    stores where FFmpeg is. Then it shows which FFmpeg the tools will use.
@@ -12,6 +12,7 @@ Safe to run again at any time, for example after pyproject.toml changes. Uses on
 """
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -38,10 +39,19 @@ def run(command: list[str]) -> None:
     _ = subprocess.run(command, check=True, cwd=REPO_ROOT)
 
 
+def venv_was_made_here() -> bool:
+    """False when .venv was created in another folder (the repository was moved or renamed): its Python still runs, but the
+    launchers of its tools (pip, ruff, basedpyright) point to the old folder. Its pyvenv.cfg names the folder it was made in."""
+    config = VENV_DIR / "pyvenv.cfg"
+    lines = config.read_text(encoding="utf-8").splitlines() if config.is_file() else []
+    command = next((line.split("=", 1)[1] for line in lines if line.split("=", 1)[0].strip() == "command"), None)
+    return command is None or os.path.normcase(str(VENV_DIR)) in os.path.normcase(command)
+
+
 def venv_is_current() -> bool:
-    """True when .venv has a working Python of at least MIN_PYTHON."""
+    """True when .venv has a working Python of at least MIN_PYTHON, made in this folder."""
     python = venv_python()
-    if not python.is_file():
+    if not python.is_file() or not venv_was_made_here():
         return False
     check = f"import sys; sys.exit(0 if sys.version_info >= {MIN_PYTHON} else 1)"
     return subprocess.run([str(python), "-c", check], check=False).returncode == 0
