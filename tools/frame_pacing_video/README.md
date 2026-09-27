@@ -339,6 +339,11 @@ resolution model, jump between scales, hold a fixed scale (`fixed`), or compare 
 (`fsr`, from the MIT-licensed headers in [`fsr1/`](fsr1)). The page's build renders the ones it uses (`rendered` in
 `web/src/explain/clips.json`).
 
+`generate_upscaler_artifacts.py` makes the artifact slide's videos: the same renderer with a simple temporal upscaler of our own
+(jitter, motion vectors, a depth check, a clamped history), set up per artifact to show ghosting, disocclusion, blur in motion,
+flicker and soft transparent edges, exaggerated, next to the scene as it should look. It is not DLSS or FSR. The page's build
+renders these too (`generator` in the `rendered` list).
+
 It needs OpenGL 3.3, and **FSR 1 needs OpenGL 4.3, which macOS does not have: the `fsr` pattern cannot be generated on macOS**
 at the moment. Windows and Linux (on a build server through Mesa's EGL) have both.
 

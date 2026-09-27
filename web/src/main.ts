@@ -72,6 +72,10 @@ const bestViewing: Slide = {
             refresh rates.</li>
           <li><strong>On a TV:</strong> game or PC mode, motion smoothing and interpolation off.</li>
           <li><strong>On a laptop:</strong> plugged in, with the browser's hardware acceleration on.</li>
+          <li><strong>An older or slower monitor</strong> can make some examples harder to see. Slow pixel response
+            (grey-to-grey time) smears moving edges into a blur of its own, which can hide small stutters or look like the
+            ghosting and blur on the upscaler slides. Strong overdrive can instead add bright or dark halos behind moving edges.
+            A fast monitor, with overdrive at its normal setting, shows the examples best.</li>
           <li><strong>Nothing else heavy running:</strong> close other video tabs and busy apps, no screen sharing or remote
             desktop.</li>
           <li><strong>Watch the whole motion</strong> at a normal distance, not one box edge.</li>

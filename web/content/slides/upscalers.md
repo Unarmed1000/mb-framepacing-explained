@@ -10,6 +10,9 @@ The same lower render resolution, scaled up with more than the current frame. A 
 multiple lower-resolution images and uses motion data and feedback from prior frames to construct high-quality images"
 ([NVIDIA](https://www.nvidia.com/en-us/geforce/technologies/dlss/)).
 
+This is a rough overview: upscaling is a complex topic, and every upscaler, and how each game uses it, differs in the details.
+{.note}
+
 :::video file upscaler-fsr1
 
 Both halves at 50 % per axis: above scaled up with a plain bilinear filter, below with AMD's FSR 1 (its upscale and sharpening
@@ -55,23 +58,16 @@ detail the way the temporal upscalers below do.
 
 :::
 
-:::card The cost: artifacts
+:::card The cost
 
-Every temporal upscaler builds the frame partly from older frames, so they all show the same kinds of artifacts; the newer ones show
-fewer, not none.
-
-- **Ghosting and smearing:** trails behind moving objects, where old detail is kept that should have been dropped. Particles and
-  alpha-blended objects often "do not write depth or motion vectors", so the upscaler cannot tell where they moved; FSR 2 asks the
-  game for a mask of them ([AMD](https://gpuopen.com/manuals/fidelityfx_sdk/techniques/super-resolution-temporal/)).
-- **Disocclusion:** "artifacts that happen from areas of the frame becoming visible from behind areas of the frame closer to the
-  camera": the uncovered area has no history yet
-  ([Unreal](https://dev.epicgames.com/documentation/en-us/unreal-engine/temporal-super-resolution-in-unreal-engine)).
-- **Blur in motion:** "TSR and other temporal upscalers have to interpolate the previous frame's pixels, which introduces blur";
-  they "can look like they have a resolution of 540p when displaying at 1080p while movement is happening" (Unreal, the same).
-- **Flicker and moiré** on small, thin or repeating details and bright highlights. AMD lists what FSR 4 improves over FSR 3.1: it
-  "reduces ghosting on moving objects", and "Flickering is reduced on small, thin features and high specular surfaces"
-  ([AMD](https://gpuopen.com/amd-fsr-upscaling/)); moiré "often happens with repetitive details" (Unreal, the same).
-- **Soft transparent edges:** "translucent materials never draw velocities, or at most they draw one" (Unreal, the same).
+- **The upscale pass takes time of its own.** FSR 2 at a 4K output in its Quality mode takes 0.7 ms on a Radeon RX 7900 XTX and
+  5.4 ms on an RX 590; at 1080p 0.2 to 1.3 ms
+  ([AMD](https://github.com/GPUOpen-Effects/FidelityFX-FSR2#performance)). The rendering it saves has to be worth more than that,
+  and at a lower output resolution there is less to save.
+- **It needs memory.** FSR 2 at 4K in its Quality mode uses about 448 MB, 354 MB of it kept from frame to frame; at 1080p about
+  115 MB ([AMD](https://github.com/GPUOpen-Effects/FidelityFX-FSR2#memory-requirements), measured on an RX 6700 XT).
+- **Artifacts.** Built partly from older frames, every temporal upscaler shows the same kinds of
+  [artifacts](#/upscaler-artifacts).
 
 :::
 

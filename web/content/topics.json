@@ -28,7 +28,7 @@
     {
       "name": "Appendix: staying within the frame budget",
       "about": "Not pacing strategies, but ways to keep frames within their budget: render scale, dynamic resolution and better upscalers.",
-      "slides": ["render-scale", "dynamic-resolution", "upscalers"]
+      "slides": ["render-scale", "dynamic-resolution", "upscalers", "upscaler-artifacts"]
     }
   ],
   "parked": {

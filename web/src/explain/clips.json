@@ -19,6 +19,31 @@
       "arguments": ["--pattern", "fsr", "--scale", "0.5", "--textured"]
     },
     {
+      "name": "upscaler-ghosting",
+      "generator": "generate_upscaler_artifacts.py",
+      "arguments": ["--artifact", "ghosting"]
+    },
+    {
+      "name": "upscaler-disocclusion",
+      "generator": "generate_upscaler_artifacts.py",
+      "arguments": ["--artifact", "disocclusion"]
+    },
+    {
+      "name": "upscaler-blur",
+      "generator": "generate_upscaler_artifacts.py",
+      "arguments": ["--artifact", "blur"]
+    },
+    {
+      "name": "upscaler-flicker",
+      "generator": "generate_upscaler_artifacts.py",
+      "arguments": ["--artifact", "flicker"]
+    },
+    {
+      "name": "upscaler-transparent",
+      "generator": "generate_upscaler_artifacts.py",
+      "arguments": ["--artifact", "transparent"]
+    },
+    {
       "name": "render-scale-ui",
       "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured", "--ui"]
     },

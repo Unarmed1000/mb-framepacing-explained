@@ -69,11 +69,13 @@ def generator_command(motion: str, pairs: list[tuple[str, str]], clip_arguments:
 
 
 def rendered_commands(clips: dict[str, object], output_dir: Path, ffmpeg: str | None) -> list[list[str]]:
-    """The command for each of clips.json's rendered videos: its generator's arguments, into videos/rendered/<name>.mp4."""
+    """The command for each of clips.json's rendered videos: its generator (RENDER_GENERATOR, or another script next to it named
+    by `generator`) with its arguments, into videos/rendered/<name>.mp4."""
     commands: list[list[str]] = []
     for video in cast(list[dict[str, object]], clips.get("rendered", [])):
         output = output_dir / "rendered" / f"{video['name']}.mp4"
-        command = [sys.executable, str(RENDER_GENERATOR), *cast(list[str], video["arguments"]), "--output", str(output)]
+        generator = RENDER_GENERATOR.parent / cast(str, video.get("generator", RENDER_GENERATOR.name))
+        command = [sys.executable, str(generator), *cast(list[str], video["arguments"]), "--output", str(output)]
         commands.append(command + (["--ffmpeg", ffmpeg] if ffmpeg else []))
     return commands
 
