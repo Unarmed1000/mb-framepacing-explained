@@ -3,7 +3,7 @@
 For engine developers, in the order to tackle them: getting the animation time right with a vsync timer, holding a frame for more
 than one refresh, switching between full and half rate, and recovering after a frame overshoots its refresh. Everything assumes
 vsync on and a fixed refresh rate; VRR and vsync off are [still open](#still-open-vrr-and-vsync-off). The diagrams follow the conventions of the
-[overview](../README.md#frame-pacing-in-one-minute): a 10 Hz display (a refresh every 100 ms, easy to see and to count), bright vsyncs a frame can target at
+[overview](../README.md#frame-pacing-in-one-minute): a 60 Hz display (a refresh every 16.7 ms, as in the videos), bright vsyncs a frame can target at
 its rate and faint ones it skips.
 
 **The baseline has to work on the simplest platform**: plain vsync, no extensions, at worst a hard-coded refresh rate. The vsync
@@ -123,7 +123,7 @@ again: graceful degradation. The hard part is when to go back up.
 A naive engine goes back to full rate after the first frame that fits. In a busy stretch, where slow and fast frames alternate, the
 next slow frame then misses its refresh at full rate, and every switch back up costs a late frame and a catch-up jump:
 
-![Switching rates without hysteresis: four errors of 100 ms](images/timing-switching-naive.svg)
+![Switching rates without hysteresis: four errors of 16.7 ms](images/timing-switching-naive.svg)
 
 With hysteresis the engine goes back up only after several fast frames in a row (three here). The busy stretch plays at an even
 half rate, and only the first slow frame is late. The price is more time at half rate:

@@ -61,7 +61,7 @@ from a measurement we can cite:
   animation error then depends on how well the game's animation time step matches its own frame times.
 
 The [slow frames](../README.md#frame-pacing-in-one-minute) of the vsync diagram, on a VRR display: B and E appear as soon as they
-are done, so their error shrinks from 100 to 25 ms, but they are still late, and the next frame still jumps ahead.
+are done, so their error shrinks from 16.7 to 4.2 ms, but they are still late, and the next frame still jumps ahead.
 
 ![VRR with the same slow frames: the errors shrink but do not go away](images/timing-vrr-slow-frames.svg)
 
@@ -76,20 +76,22 @@ Digital Foundry found that the PS5's VRR has
   [Ratchet & Clank's 40 fps mode](https://www.youtube.com/watch?v=QXi7uO7wxdc): "Instead of updating every 33.3ms (30fps) on a 60Hz
   screen, Ratchet updates every 25ms (40fps) at 120Hz, the same consistency but smoother." A cap only helps if it is implemented
   right: Digital Foundry keep finding [30 fps caps with bad frame pacing](https://www.youtube.com/watch?v=tvzdJh3bvAs), where frames
-  are not held for an even two refreshes each; in
-  [Bloodborne](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis) they swung "between
-  16ms and 66ms".
+  are not held for an even two refreshes each.
+  [Bloodborne](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis) had it together with
+  real performance drops, its frame times swinging "between 16ms and 66ms"; a fan patch that only changes how often frames are
+  flipped, [30 FPS Fix (Proper Frame Pacing)](https://github.com/illusionyy/console-game-patches/blob/main/_patch0/orbis/Bloodborne-Orbis.yml), fixes its pacing on the same hardware.
 - **An unlocked frame rate** on a fixed refresh display mixes display times of one and two refreshes (or tears with vsync off), so
   it is uneven even when the average looks high.
 - **An unlocked frame rate on VRR** is smooth as long as the frametime is stable and the game's delta time follows it.
 - **Dynamic resolution** is the other lever: games lower the render resolution under load to hold a fixed target.
 
-Half rate on a 10 Hz display (5 fps, like 30 fps on 60 Hz), first evenly paced, then with the bad pacing of a broken cap: the
-animation steps 200 ms per frame in both, but only the first shows each frame for 200 ms.
+Half rate, 30 fps on a 60 Hz display, first evenly paced, then capped by the game's own clock: the animation steps 33.3 ms per
+frame in both, but only the first shows each frame for 33.3 ms. In the second every frame renders in time and is still held for
+three refreshes and then one.
 
 ![Half rate, evenly paced: each frame held for two refreshes, as intended](images/timing-half-rate-even.svg)
 
-![Half rate, bad frame pacing: frames held for 1 and 3 refreshes instead of 2](images/timing-half-rate-bad-pacing.svg)
+![Half rate, bad frame pacing: frames held for 3 and 1 refreshes instead of 2, although every frame renders in time](images/timing-half-rate-bad-pacing.svg)
 
 How to hold a frame for two refreshes, how to switch between full and half rate without extra late frames, and how to recover after
 a frame overshoots its refresh: [advanced frame pacing strategies](frame-pacing-strategies.md).

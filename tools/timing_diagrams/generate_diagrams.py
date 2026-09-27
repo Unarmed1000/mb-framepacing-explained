@@ -12,8 +12,9 @@ PresentMon computes it (positive: shown too soon, negative: shown too late).
 
 The loop is double buffered: a frame starts rendering when the previous one appears (the first one somewhere inside a refresh). With vsync it appears at the first refresh
 after it is presented and at least its swap interval after the previous one; with VRR the display refreshes as soon as it is
-presented, but at most every 100 ms. The display runs at 10 Hz (a refresh every 100 ms), chosen so the steps are easy to see and the
-numbers easy to work with. A perfect timer gives each frame the moment it expects to be shown: its start plus its swap interval.
+presented, but at most once a refresh. The display runs at 60 Hz (a refresh every 16.7 ms), as in the videos; the model counts in
+hundredths of a refresh and the labels show real milliseconds. A perfect timer gives each frame the moment it expects to be shown:
+its start plus its swap interval.
 
 The SVGs are transparent, with everything on a rounded, slightly translucent dark grey card, so they read the same on a white and
 on a dark page (--background adds an opaque page colour behind the card, for previews). They are vector graphics, so
@@ -51,8 +52,10 @@ BROWSER_CANDIDATES = (
 )
 BROWSER_NAMES = ("msedge", "microsoft-edge", "google-chrome", "chrome", "chromium", "chromium-browser")
 
-# The display: one refresh every PERIOD ms (10 Hz), the first frame shown at 0 ms
+# The model counts time in units of which a refresh is PERIOD (so render times read as hundredths of a refresh); the labels show
+# them as the real milliseconds of a 60 Hz display, REFRESH_MS per refresh. The first frame is shown at 0
 PERIOD = 100.0
+REFRESH_MS = 1000 / 60
 EPSILON = 1e-9
 # How far into its refresh the first frame starts rendering (ms): the loop begins somewhere inside a refresh, not on a vsync
 FIRST_START = 20.0
@@ -144,6 +147,9 @@ class Diagram:
     # The vsync timer: the clock is read as unevenly as the frames' timer errors say, but each measured frame time is rounded to
     # whole refreshes, so the animation time is the perfect one; two more rows show the reading and the rounding
     vsync_timer: bool = False
+    # A cap by the game's own clock (ms): it starts a frame this long after it started the previous one (sleeping in between)
+    # instead of when the previous frame appears, and presents it as soon as it is done, at the next vsync
+    cpu_cap: float | None = None
 
     @property
     def rows(self) -> tuple[str, ...]:
@@ -182,8 +188,12 @@ def simulate(diagram: Diagram) -> list[Timed]:
     timed: list[Timed] = []
     previous_shown = -diagram.frames[0].interval * PERIOD
     for index, frame in enumerate(diagram.frames):
-        # The loop begins somewhere inside a refresh; every later frame starts at the flip that shows the previous one
-        start = previous_shown + (FIRST_START if index == 0 else 0)
+        # The loop begins somewhere inside a refresh; every later frame starts at the flip that shows the previous one, or with a
+        # cap by the game's own clock, a fixed time after the previous frame started
+        if diagram.cpu_cap is not None:
+            start = -diagram.frames[0].interval * PERIOD + FIRST_START + index * diagram.cpu_cap
+        else:
+            start = previous_shown + (FIRST_START if index == 0 else 0)
         end = start + frame.render
         if diagram.vrr:
             shown = max(end, previous_shown + PERIOD)
@@ -251,6 +261,11 @@ def targetable_refreshes(diagram: Diagram, timed: list[Timed]) -> list[float]:
     return result
 
 
+def real(units: float) -> float:
+    """A time of the model in the real milliseconds of a 60 Hz display."""
+    return units / PERIOD * REFRESH_MS
+
+
 def ms(value: float, sign: bool = False) -> str:
     text = f"{abs(value):.1f}".removesuffix(".0")
     if abs(value) < EPSILON:
@@ -299,7 +314,7 @@ def _timeline(diagram: Diagram, x_of: Callable[[float], float], shift: float) ->
         parts.append(
             f'<line class="{"vsync" if target else "vsync-skip"}" x1="{x:.1f}" y1="{VSYNC_Y + 6 + shift}" x2="{x:.1f}" y2="{DISPLAY_Y + DISPLAY_H + 5 + shift}"/>'
         )
-        parts.append(text(x, AXIS_Y + shift, f"{ms(at)} ms", "axis" if target or at < 0 else "vsync-n-skip"))
+        parts.append(text(x, AXIS_Y + shift, f"{ms(real(at))} ms", "axis" if target or at < 0 else "vsync-n-skip"))
         if at >= -EPSILON and at < refreshes[-1].end - EPSILON:
             label = f"{'refresh' if diagram.vrr else 'vsync'} {number - (1 if origin < 0 else 0) + 1}"
             parts.append(text(x, VSYNC_Y + shift, label, "vsync-target" if target else "vsync-n-skip"))
@@ -317,7 +332,7 @@ def _timeline(diagram: Diagram, x_of: Callable[[float], float], shift: float) ->
         parts.append(f'<rect class="box" x="{x0:.1f}" y="{RENDER_Y + shift}" width="{x1 - x0:.1f}" height="{RENDER_H}" rx="8"/>')
         cx = (x0 + x1) / 2
         parts.append(text(cx, RENDER_Y + 19 + shift, t.frame.name, "frame"))
-        parts.append(text(cx, RENDER_Y + 36 + shift, f"{ms(t.animation)} ms", "box-time"))
+        parts.append(text(cx, RENDER_Y + 36 + shift, f"{ms(real(t.animation))} ms", "box-time"))
         ax, tip = x_of(t.end), DISPLAY_Y - 4 + shift
         parts.append(f'<line class="arrow" x1="{ax:.1f}" y1="{ARROW_Y0 + shift}" x2="{ax:.1f}" y2="{tip - 8}"/>')
         parts.append(f'<path class="arrowhead" d="M{ax - 5:.1f},{tip - 9} L{ax + 5:.1f},{tip - 9} L{ax:.1f},{tip} z"/>')
@@ -338,10 +353,10 @@ def _timeline(diagram: Diagram, x_of: Callable[[float], float], shift: float) ->
                 step = cell.timed.animation - previous.animation
                 display = cell.timed.shown - previous.shown
                 error = step - display
-                values = (f"{ms(step)} ms", f"{ms(display)} ms", f"{ms(error, sign=True)} ms")
+                values = (f"{ms(real(step))} ms", f"{ms(real(display))} ms", f"{ms(real(error), sign=True)} ms")
                 if diagram.vsync_timer:
                     measured = cell.timed.reading - previous.reading
-                    values = (f"{ms(measured)} ms", f"{ms(round(measured / PERIOD) * PERIOD)} ms", *values)
+                    values = (f"{ms(real(measured))} ms", f"{ms(real(round(measured / PERIOD) * PERIOD))} ms", *values)
             for i, value in enumerate(values):
                 y = ROWS_Y + i * ROW_STEP + shift
                 value_cls = ""
@@ -437,7 +452,7 @@ def render_comparison(comparison: Comparison, background: str | None) -> str:
     for lane, (title, diagram) in enumerate(lanes):
         shift = LANE_TITLE_H + lane * lane_h
         parts.append(text(20, VSYNC_Y + shift - 30, title, "lane", "start"))
-        parts.append(text(20 + len(title) * 8.4 + 12, VSYNC_Y + shift - 30, f"{1000 / PERIOD:.0f} fps, {ms(PERIOD)} ms frametimes", "vsync-n", "start"))
+        parts.append(text(20 + len(title) * 8.4 + 12, VSYNC_Y + shift - 30, f"{1000 / REFRESH_MS:.0f} fps, {ms(REFRESH_MS)} ms frametimes", "vsync-n", "start"))
         timeline, kinds = _timeline(diagram, x_of, shift)
         parts += timeline
         used |= kinds
@@ -482,7 +497,7 @@ HITCH = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 75.0), ("E", 75.0), ("F",
 BUSY = (("A", 75.0), ("B", 125.0), ("C", 75.0), ("D", 125.0), ("E", 75.0), ("F", 75.0), ("G", 75.0), ("H", 75.0))
 
 # The delta time jitter diagram's frames: every frame on time, the clock read a little off after each flip (ms)
-JITTER = tuple(Frame(name, 75, timer_error=error) for name, error in zip("ABCDEFGH", (0, 0.2, 2.4, -1, 0.8, -1, 0.6, 0.2), strict=True))
+JITTER = tuple(Frame(name, 75, timer_error=error / REFRESH_MS * PERIOD) for name, error in zip("ABCDEFGH", (0, 0.2, 2.4, -1, 0.8, -1, 0.6, 0.2), strict=True))
 
 SLOW = (Frame("A", 75), Frame("B", 125), Frame("C", 75), Frame("D", 75), Frame("E", 125), Frame("F", 75))
 
@@ -492,7 +507,7 @@ DIAGRAMS = (
         "Perfect timer, every frame on time",
         (
             "Each frame shows the moment it is displayed: the animation time step equals the display time, so the animation error is 0.",
-            "A 10 Hz display with vsync, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work with.",
+            "A 60 Hz display with vsync, a refresh every 16.7 ms, as in the videos.",
         ),
         tuple(Frame(name, 75) for name in "ABCDEFGH"),
     ),
@@ -529,7 +544,7 @@ DIAGRAMS = (
         "Half rate, evenly paced",
         (
             "Each frame is meant to stay for two refreshes (swap interval 2), like 30 fps on a 60 Hz display, and it does:",
-            "every step is 200 ms and every frame is on screen for 200 ms.",
+            "every step is 33.3 ms and every frame is on screen for 33.3 ms.",
         ),
         tuple(Frame(name, 150, interval=2) for name in "ABCD"),
     ),
@@ -537,17 +552,18 @@ DIAGRAMS = (
         "half-rate-bad-pacing",
         "Half rate, bad frame pacing",
         (
-            "The game steps its animation 200 ms per frame, but the frames are shown for 1 and 3 refreshes instead of 2 each:",
-            "Digital Foundry's bad 30 fps frame pacing (16.7 and 50 ms frames on 60 Hz). The average frame rate is still half.",
+            "Every frame renders well within its 33.3 ms, but the game starts one every 33.3 ms by its own clock and shows it at the next",
+            "vsync, without a swap interval of 2: a frame done just after a vsync waits a whole refresh. Held 3 and 1 instead of 2 each.",
         ),
-        (Frame("A", 75), Frame("B", 75), Frame("C", 250), Frame("D", 75), Frame("E", 250)),
+        (Frame("A", 75), Frame("B", 130), Frame("C", 75), Frame("D", 130), Frame("E", 75)),
         fixed_step=200,
+        cpu_cap=200,
     ),
     Diagram(
         "vrr-slow-frames",
         "VRR with the same slow frames",
         (
-            "The display refreshes as soon as a frame is presented (at most every 100 ms). B and E appear when they are done instead",
+            "The display refreshes as soon as a frame is presented (at most every 16.7 ms). B and E appear when they are done instead",
             "of at the next vsync, so the errors shrink, but a slow frame is still late: VRR does not remove the hitch.",
         ),
         SLOW,
@@ -601,7 +617,7 @@ COMPARISONS = (
         "perfect-vs-jitter",
         "Same frame rate, same frametimes, different motion",
         (
-            "A perfect timer and a jittery one, measured the usual way: 10 fps, every frame on screen for exactly 100 ms, a flat frame-time",
+            "A perfect timer and a jittery one, measured the usual way: 60 fps, every frame on screen for exactly 16.7 ms, a flat frame-time",
             "graph. Every one of those numbers is identical. Only the animation time inside each frame differs, and only animation error shows it.",
         ),
         (("Perfect timer", "perfect-timer"), ("Delta time jitter", "timer-jitter")),

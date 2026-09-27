@@ -45,7 +45,7 @@ moment. It is far larger, and not simulated in the videos yet.
 | Dragon's Dogma 2 | "an excursion of about 750ms" (i3-12100F); "a frametime spike nearing 270ms, with regular spikes to 60ms" (Ryzen 5 5600X) | [Gamers Nexus, Dragon's Dogma 2](https://gamersnexus.net/game-benchmarks-graphics-guides/dragons-dogma-2-mess-gpu-cpu-benchmarks-bottlenecks-crashes)                    |
 | Crimson Desert   | "jumping up to 691 ms" (RTX 5060 Ti, a bridge scene)                                                                      | [Gamers Nexus, Crimson Desert](https://gamersnexus.net/gpus-game-benchmarks-graphics-guides/crimson-desert-gpu-benchmarks-bugs-simulation-error-tests)                   |
 | Elden Ring       | Shader compilation stutter "of up to 250 milliseconds"                                                                    | Digital Foundry, quoted second-hand [on Steam](https://steamcommunity.com/app/1245620/discussions/0/3183486320467701860); not checked against Digital Foundry's own page |
-| Bloodborne       | Bad 30 fps pacing: frame times "between 16ms and 66ms"                                                                    | [Digital Foundry](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis)                                                           |
+| Bloodborne       | Bad 30 fps pacing and real performance drops together: frame times "between 16ms and 66ms"                                | [Digital Foundry](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis)                                                           |
 
 ## The videos' timers, in the same terms
 

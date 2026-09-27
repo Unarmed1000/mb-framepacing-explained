@@ -48,7 +48,7 @@ frame rate says nothing about it.
 
 ![Perfect timer: every frame shows the moment it is displayed, so the animation error is 0](doc/images/timing-perfect-timer.svg)
 
-Each diagram follows the two clocks at a 10 Hz display, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work with. In the **render** row each box is one frame, as
+Each diagram follows the two clocks at a 60 Hz display, a refresh every 16.7 ms, as in the videos. In the **render** row each box is one frame, as
 wide as it takes to render and labelled with its **predicted display time**: when the game expects it to be shown, which becomes
 its animation time. The game predicts it from the recent frame times (the last one, or several smoothed) and the pacing it aims for, a whole
 number of refreshes that fits the refresh period (30 fps on 60 Hz is two). Whether the frame really appears then is the question.

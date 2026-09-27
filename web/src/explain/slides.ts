@@ -1,6 +1,7 @@
 // The explanation slides, after the blind test: what the visitor just saw, in the order of the docs (the README's overview, then
 // display sync, the strategies and input latency), with the timing diagrams of doc/images and a live clip where one helps.
 
+import averageHalfRate from "../../../doc/images/chart-average-half-rate.svg?url";
 import halfRateBad from "../../../doc/images/timing-half-rate-bad-pacing.svg?url";
 import halfRateEven from "../../../doc/images/timing-half-rate-even.svg?url";
 import perfectTimer from "../../../doc/images/timing-perfect-timer.svg?url";
@@ -58,8 +59,7 @@ const twoClocks: Slide = {
       <div class="card">
         <h2>Reading the diagrams</h2>
         <ul class="points">
-          <li>A <strong>10 Hz display</strong>, a refresh every 100 ms: chosen so the steps are easy to see and the numbers easy to work
-            with.</li>
+          <li>A <strong>60 Hz display</strong>, a refresh every 16.7 ms, as in the videos.</li>
           <li><strong>Render:</strong> each box is one frame, as wide as it takes to render, labelled with its
             <strong>predicted display time</strong>, when the game expects it to be shown. That becomes its animation time.</li>
           <li>The <strong>arrow</strong> is where the game presents it: the frame is done and waits for the next vsync.</li>
@@ -214,15 +214,15 @@ const halfRate: Slide = {
   render: () =>
     body(
       "Half rate",
-      "30 fps on average, and still stuttering",
-      `An average frame rate says nothing about how evenly frames arrive. Both rows below are 30 fps on average: one holds every
-      frame for two refreshes, the other for one and then three, and only the first is smooth. A frame that is ready early and not
-      held back appears after one refresh, and the next one stays for three: Digital Foundry keep finding 30 fps caps like that,
-      and in Bloodborne they swung "between 16ms and 66ms". A fixed target that divides the refresh rate (60 or 30 fps on 60 Hz,
-      40 fps on 120 Hz) only helps when every frame is held for the same number of refreshes.`,
+      "Holding every frame for two refreshes",
+      `At half rate, 30 fps on a 60 Hz display, every frame should stay on screen for exactly two refreshes. A game that caps its
+      frame rate with its own clock instead, and shows each frame at the next vsync once it is done, gets frames held for three
+      refreshes and then one: every frame renders in time, and only the pacing is wrong. Digital Foundry keep finding 30 fps caps
+      like that. Bloodborne had it together with real performance drops, and a fan patch that only changes how often frames are
+      flipped fixes its pacing.`,
       `<div class="figures">
         ${figure(halfRateEven, "Evenly paced: each frame held for two refreshes, as intended.")}
-        ${figure(halfRateBad, "Bad frame pacing: frames held for 1 and 3 refreshes instead of 2.")}
+        ${figure(halfRateBad, "Bad frame pacing: frames held for 3 and 1 refreshes instead of 2, although every frame renders in time.")}
       </div>
       <div class="card">
         <h2>Holding a frame for two refreshes</h2>
@@ -287,7 +287,7 @@ const vrr: Slide = {
       `With variable refresh rate the display refreshes when the frame is ready, instead of the frame waiting for the display. Inside
       the display's range there is no tearing and no rounding to whole refreshes. But it changes <em>when</em> a frame appears, not
       <em>which animation time</em> the game rendered it for.`,
-      `${figure(vrrSlowFrames, "The same slow frames on VRR: the errors shrink from 100 to 25 ms, but the frames are still late.")}
+      `${figure(vrrSlowFrames, "The same slow frames on VRR: the errors shrink from 16.7 to 4.2 ms, but the frames are still late.")}
       <div class="card">
         <h2>What VRR does not fix</h2>
         <ul class="points">
@@ -347,7 +347,12 @@ const measure: Slide = {
       `<a href="#/two-clocks">Animation error</a> needs two clocks for every frame: the moment it shows (its animation time) and
       when it reached the screen (its display time). The ways to measure it differ in where they get each, and so in what they
       can catch.`,
-      `<div class="card">
+      `<h2 class="section-title">Why the usual numbers miss it</h2>
+      <p class="note">The average frame rate is the same for evenly and badly paced 30 fps, and frame times are the same for a
+        perfect and a <a href="#/invisible">jittery timer</a>: only animation error tells them apart.</p>
+      ${figure(averageHalfRate, "Same 30 fps on average, different motion: 60 Hz, two refreshes every time, or three and then one.")}
+      <h2 class="section-title">Ways to measure it</h2>
+      <div class="card">
         <table class="ways">
           <thead>
             <tr><th>Way</th><th>Needs</th><th>Animation time</th><th>Display time</th><th>Catches</th></tr>
@@ -585,8 +590,8 @@ const CLIPS: ReadonlyMap<Slide, () => HTMLElement> = new Map([
         "fast",
         "60-diagram-half-rate-even",
         "60-diagram-half-rate-bad-pacing",
-        "Top: half rate, evenly paced, every frame held for two refreshes. Bottom: bad frame pacing, frames held for one and " +
-          "three refreshes. Both are 30 fps on average; only the bottom one stutters.",
+        "Top: half rate, evenly paced, every frame held for two refreshes. Bottom: bad frame pacing, frames held for three and " +
+          "one refreshes. Both are 30 fps on average; only the bottom one stutters.",
       ),
   ],
   [

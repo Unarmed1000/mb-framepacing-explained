@@ -40,6 +40,8 @@
   .step-line { stroke: #58a6ff; stroke-width: 1.2; fill: none; stroke-linejoin: round; }
   .strip-a { fill: #6e7681; }
   .strip-b { fill: #adbac7; }
+  .average-line { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .average-text { fill: #d29922; font-size: 12px; }
 </style>
 <rect class="card" x="0.5" y="0.5" width="1179" height="731" rx="14"/>
 <text x="20.0" y="30.0" text-anchor="start" class="title">Example chart: 60-naive-heavy-realistic</text>

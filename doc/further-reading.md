@@ -35,7 +35,8 @@ Measured values from these and the sources below are collected in [measured in r
 Frame pacing:
 
 - [Performance Analysis: Bloodborne](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis)
-  (Thomas Morgan, 2015-03-28): the classic case of bad 30 fps frame pacing, frame times swinging "between 16ms and 66ms"
+  (Thomas Morgan, 2015-03-28): the classic case of bad 30 fps frame pacing, together with real performance drops: frame times swinging "between 16ms and
+  66ms"
 - [From Software's Notorious 30FPS Stutter Fixed - But Only For Hacked PS4s](https://www.youtube.com/watch?v=M7bWbWUKHmM)
   (2022-07-01): "a stuttering 30fps - what we call inconsistent/'bad' frame-pacing"
 - [30FPS 'Bad' Frame-Pacing: Why Do So Many Games Get It Wrong?](https://www.youtube.com/watch?v=tvzdJh3bvAs) (DF Clips,

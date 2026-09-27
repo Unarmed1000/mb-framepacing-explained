@@ -10,6 +10,9 @@ the frames of the video of that mode: the refresh each frame appears on and the 
 - display time and animation time step per frame, two lines on one scale (the two clocks; mb-framepacing's "display vs animation");
 - a refresh strip of the first second: one cell per refresh, the colour changing with each new frame (after FCAT and TestUFO).
 
+The default run also draws comparisons of averages: modes with the same average frame rate, at the display's own rate, their
+display times against the average and their refresh strips (chart-average-half-rate.svg: 30 fps evenly and badly paced).
+
 Run from the repository's .venv:
   python tools/timing_diagrams/generate_charts.py [--output-dir DIR] [--png] [--background COLOUR] [MODE ...]
 """
@@ -57,6 +60,8 @@ CHART_STYLE = """
   .step-line { stroke: #58a6ff; stroke-width: 1.2; fill: none; stroke-linejoin: round; }
   .strip-a { fill: #6e7681; }
   .strip-b { fill: #adbac7; }
+  .average-line { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .average-text { fill: #d29922; font-size: 12px; }
 """
 
 
@@ -216,6 +221,106 @@ def render_chart(mode_name: str, background: str | None) -> str:
     return "\n".join(parts) + "\n"
 
 
+@dataclass(frozen=True)
+class AverageComparison:
+    """Modes with the same average frame rate side by side, at the display's own rate: their display time per frame over the
+    first second against the average, and their refresh strips, so the same average and the different pacing show at once."""
+
+    name: str
+    title: str
+    description: tuple[str, ...]
+    lanes: tuple[tuple[str, str], ...]  # (lane title, video mode)
+
+
+AVERAGE_COMPARISONS = (
+    AverageComparison(
+        "average-half-rate",
+        "Same 30 fps on average, different motion",
+        (
+            "A 60 Hz display, the first second of each: both show 30 frames a second, 33.3 ms per frame on average. Only how long each",
+            "frame stays on screen differs: two refreshes every time, or three and then one. The average frame rate cannot tell them apart.",
+        ),
+        (("Evenly paced", "60-diagram-half-rate-even"), ("Bad frame pacing", "60-diagram-half-rate-bad-pacing")),
+    ),
+)
+
+AVG_LANE_TOP = 108
+AVG_PLOT_H = 96
+AVG_STRIP_H = 22
+AVG_LANE_H = 24 + AVG_PLOT_H + 40 + AVG_STRIP_H + 44
+
+
+def render_average_comparison(comparison: AverageComparison, background: str | None) -> str:
+    lanes = [(title, frame_data(mode)) for title, mode in comparison.lanes]
+    height = AVG_LANE_TOP + AVG_LANE_H * len(lanes) + 10
+    parts: list[str] = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" viewBox="0 0 {WIDTH} {height}" role="img" aria-label="{escape(comparison.title)}">',
+        f"<title>{escape(comparison.title)}</title>",
+        f"<style>{STYLE}{CHART_STYLE}</style>",
+    ]
+    if background:
+        parts.append(f'<rect width="100%" height="100%" fill="{escape(background)}"/>')
+    parts.append(f'<rect class="card" x="0.5" y="0.5" width="{WIDTH - 1}" height="{height - 1}" rx="14"/>')
+    parts.append(text(20, 30, comparison.title, "title", "start"))
+    for i, line in enumerate(comparison.description):
+        parts.append(text(20, 54 + i * 19, line, "sub", "start"))
+    top_ms = max(max(data.display) for _, data in lanes) * 1.15
+    for lane, (title, data) in enumerate(lanes):
+        top = AVG_LANE_TOP + lane * AVG_LANE_H
+        refreshes = round(1000 / data.refresh_ms)  # one second
+        seconds = CLIP_REFRESHES * data.refresh_ms / 1000
+        average_rate = len(data.display) / seconds
+        average_ms = sum(data.display) / len(data.display)
+        values = sorted({round(d, 1) for d in data.display})
+        shown = "every frame " + f"{ms(values[0])} ms" if len(values) == 1 else " and ".join(f"{ms(v)}" for v in values) + " ms"
+        parts.append(text(20, top, title, "lane", "start"))
+        parts.append(text(20 + len(title) * 8.4 + 14, top, f"{average_rate:g} fps on average ({ms(average_ms)} ms) · on screen {shown}", "vsync-n", "start"))
+        plot_top = top + 24
+        plot_bottom = plot_top + AVG_PLOT_H
+
+        def y_of(value: float, plot_bottom: float = plot_bottom) -> float:
+            return plot_bottom - value / top_ms * AVG_PLOT_H
+
+        # The frames of the first second: each frame's display time, held until the next frame
+        in_second = [index for index, flip in enumerate(data.flips) if flip < refreshes]
+        cell_w = (PLOT_X1 - PLOT_X0) / refreshes
+        tick = data.refresh_ms
+        while tick < top_ms:
+            y = y_of(tick)
+            parts.append(f'<line class="grid" x1="{PLOT_X0}" y1="{y:.1f}" x2="{PLOT_X1}" y2="{y:.1f}"/>')
+            parts.append(text(PLOT_X0 - 10, y + 4, f"{ms(round(tick, 1))} ms", "vsync-n", "end"))
+            tick += data.refresh_ms
+        parts.append(f'<line class="zero-line" x1="{PLOT_X0}" y1="{plot_bottom}" x2="{PLOT_X1}" y2="{plot_bottom}"/>')
+        points: list[str] = []
+        for index in in_second:
+            # A frame's display time is how long the previous one was on screen: draw it from the previous frame's flip
+            end = data.flips[index]
+            start = end - round(data.display[index] / data.refresh_ms)
+            y = y_of(data.display[index])
+            points += [f"{PLOT_X0 + max(0, start) * cell_w:.1f},{y:.1f}", f"{PLOT_X0 + end * cell_w:.1f},{y:.1f}"]
+        parts.append(f'<polyline class="display-line" points="{" ".join(points)}"/>')
+        average_y = y_of(average_ms)
+        parts.append(f'<line class="average-line" x1="{PLOT_X0}" y1="{average_y:.1f}" x2="{PLOT_X1}" y2="{average_y:.1f}"/>')
+        parts.append(text(PLOT_X1, average_y - 6, f"average {ms(average_ms)} ms = {average_rate:g} fps", "average-text", "end"))
+
+        # The refresh strip of the same second
+        strip_top = plot_bottom + 40
+        parts.append(text(20, strip_top + AVG_STRIP_H / 2 + 4, "REFRESHES", "label", "start"))
+        flips = set(data.flips)
+        shade = 0
+        for refresh in range(refreshes):
+            if refresh in flips and refresh:
+                shade ^= 1
+            x = PLOT_X0 + refresh * cell_w
+            parts.append(
+                f'<rect class="{"strip-a" if shade == 0 else "strip-b"}" x="{x + 0.5:.1f}" y="{strip_top}" width="{cell_w - 1:.1f}" height="{AVG_STRIP_H}" rx="2"/>'
+            )
+        parts.append(text(PLOT_X0, strip_top + AVG_STRIP_H + 18, "0 s", "vsync-n"))
+        parts.append(text(PLOT_X1, strip_top + AVG_STRIP_H + 18, "1 s", "vsync-n"))
+    parts.append("</svg>")
+    return "\n".join(parts) + "\n"
+
+
 class Arguments(argparse.Namespace):
     modes: list[str]
     output_dir: Path
@@ -238,9 +343,13 @@ def main() -> None:
             parser.error(str(error))
     browser = find_browser() if args.png else None
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    for mode in modes:
-        path = args.output_dir / f"chart-{mode}.svg"
-        _ = path.write_text(render_chart(mode, args.background), encoding="utf-8", newline="\n")
+    outputs = [(f"chart-{mode}.svg", render_chart(mode, args.background)) for mode in modes]
+    # The default run also draws the comparisons of averages
+    if not args.modes:
+        outputs += [(f"chart-{c.name}.svg", render_average_comparison(c, args.background)) for c in AVERAGE_COMPARISONS]
+    for name, svg in outputs:
+        path = args.output_dir / name
+        _ = path.write_text(svg, encoding="utf-8", newline="\n")
         print(path)
         if browser:
             png = path.with_suffix(".png")

@@ -33,38 +33,38 @@
 </style>
 <rect class="card" x="0.5" y="0.5" width="1299" height="883" rx="14"/>
 <text x="20.0" y="30.0" text-anchor="start" class="title">Same frame rate, same frametimes, different motion</text>
-<text x="20.0" y="54.0" text-anchor="start" class="sub">A perfect timer and a jittery one, measured the usual way: 10 fps, every frame on screen for exactly 100 ms, a flat frame-time</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">A perfect timer and a jittery one, measured the usual way: 60 fps, every frame on screen for exactly 16.7 ms, a flat frame-time</text>
 <text x="20.0" y="73.0" text-anchor="start" class="sub">graph. Every one of those numbers is identical. Only the animation time inside each frame differs, and only animation error shows it.</text>
 <text x="20.0" y="104.0" text-anchor="start" class="lane">Perfect timer</text>
-<text x="141.2" y="104.0" text-anchor="start" class="vsync-n">10 fps, 100 ms frametimes</text>
+<text x="141.2" y="104.0" text-anchor="start" class="vsync-n">60 fps, 16.7 ms frametimes</text>
 <line class="vsync-skip" x1="180.0" y1="140" x2="180.0" y2="279"/>
-<text x="180.0" y="294.0" text-anchor="middle" class="axis">−100 ms</text>
+<text x="180.0" y="294.0" text-anchor="middle" class="axis">−16.7 ms</text>
 <line class="vsync" x1="300.0" y1="140" x2="300.0" y2="279"/>
 <text x="300.0" y="294.0" text-anchor="middle" class="axis">0 ms</text>
 <text x="300.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 1</text>
 <line class="vsync" x1="420.0" y1="140" x2="420.0" y2="279"/>
-<text x="420.0" y="294.0" text-anchor="middle" class="axis">100 ms</text>
+<text x="420.0" y="294.0" text-anchor="middle" class="axis">16.7 ms</text>
 <text x="420.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 2</text>
 <line class="vsync" x1="540.0" y1="140" x2="540.0" y2="279"/>
-<text x="540.0" y="294.0" text-anchor="middle" class="axis">200 ms</text>
+<text x="540.0" y="294.0" text-anchor="middle" class="axis">33.3 ms</text>
 <text x="540.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 3</text>
 <line class="vsync" x1="660.0" y1="140" x2="660.0" y2="279"/>
-<text x="660.0" y="294.0" text-anchor="middle" class="axis">300 ms</text>
+<text x="660.0" y="294.0" text-anchor="middle" class="axis">50 ms</text>
 <text x="660.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 4</text>
 <line class="vsync" x1="780.0" y1="140" x2="780.0" y2="279"/>
-<text x="780.0" y="294.0" text-anchor="middle" class="axis">400 ms</text>
+<text x="780.0" y="294.0" text-anchor="middle" class="axis">66.7 ms</text>
 <text x="780.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 5</text>
 <line class="vsync" x1="900.0" y1="140" x2="900.0" y2="279"/>
-<text x="900.0" y="294.0" text-anchor="middle" class="axis">500 ms</text>
+<text x="900.0" y="294.0" text-anchor="middle" class="axis">83.3 ms</text>
 <text x="900.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 6</text>
 <line class="vsync" x1="1020.0" y1="140" x2="1020.0" y2="279"/>
-<text x="1020.0" y="294.0" text-anchor="middle" class="axis">600 ms</text>
+<text x="1020.0" y="294.0" text-anchor="middle" class="axis">100 ms</text>
 <text x="1020.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 7</text>
 <line class="vsync" x1="1140.0" y1="140" x2="1140.0" y2="279"/>
-<text x="1140.0" y="294.0" text-anchor="middle" class="axis">700 ms</text>
+<text x="1140.0" y="294.0" text-anchor="middle" class="axis">116.7 ms</text>
 <text x="1140.0" y="134.0" text-anchor="middle" class="vsync-target">vsync 8</text>
 <line class="vsync" x1="1260.0" y1="140" x2="1260.0" y2="279"/>
-<text x="1260.0" y="294.0" text-anchor="middle" class="axis">800 ms</text>
+<text x="1260.0" y="294.0" text-anchor="middle" class="axis">133.3 ms</text>
 <text x="20.0" y="167.0" text-anchor="start" class="label">RENDER</text>
 <text x="20.0" y="183.0" text-anchor="start" class="vsync-n">predicted display time</text>
 <text x="20.0" y="258.0" text-anchor="start" class="label">DISPLAY</text>
@@ -78,37 +78,37 @@
 <path class="arrowhead" d="M289.0,221 L299.0,221 L294.0,230 z"/>
 <rect class="box" x="306.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="345.0" y="167.0" text-anchor="middle" class="frame">B</text>
-<text x="345.0" y="184.0" text-anchor="middle" class="box-time">100 ms</text>
+<text x="345.0" y="184.0" text-anchor="middle" class="box-time">16.7 ms</text>
 <line class="arrow" x1="390.0" y1="200" x2="390.0" y2="222"/>
 <path class="arrowhead" d="M385.0,221 L395.0,221 L390.0,230 z"/>
 <rect class="box" x="426.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="465.0" y="167.0" text-anchor="middle" class="frame">C</text>
-<text x="465.0" y="184.0" text-anchor="middle" class="box-time">200 ms</text>
+<text x="465.0" y="184.0" text-anchor="middle" class="box-time">33.3 ms</text>
 <line class="arrow" x1="510.0" y1="200" x2="510.0" y2="222"/>
 <path class="arrowhead" d="M505.0,221 L515.0,221 L510.0,230 z"/>
 <rect class="box" x="546.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="585.0" y="167.0" text-anchor="middle" class="frame">D</text>
-<text x="585.0" y="184.0" text-anchor="middle" class="box-time">300 ms</text>
+<text x="585.0" y="184.0" text-anchor="middle" class="box-time">50 ms</text>
 <line class="arrow" x1="630.0" y1="200" x2="630.0" y2="222"/>
 <path class="arrowhead" d="M625.0,221 L635.0,221 L630.0,230 z"/>
 <rect class="box" x="666.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="705.0" y="167.0" text-anchor="middle" class="frame">E</text>
-<text x="705.0" y="184.0" text-anchor="middle" class="box-time">400 ms</text>
+<text x="705.0" y="184.0" text-anchor="middle" class="box-time">66.7 ms</text>
 <line class="arrow" x1="750.0" y1="200" x2="750.0" y2="222"/>
 <path class="arrowhead" d="M745.0,221 L755.0,221 L750.0,230 z"/>
 <rect class="box" x="786.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="825.0" y="167.0" text-anchor="middle" class="frame">F</text>
-<text x="825.0" y="184.0" text-anchor="middle" class="box-time">500 ms</text>
+<text x="825.0" y="184.0" text-anchor="middle" class="box-time">83.3 ms</text>
 <line class="arrow" x1="870.0" y1="200" x2="870.0" y2="222"/>
 <path class="arrowhead" d="M865.0,221 L875.0,221 L870.0,230 z"/>
 <rect class="box" x="906.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="945.0" y="167.0" text-anchor="middle" class="frame">G</text>
-<text x="945.0" y="184.0" text-anchor="middle" class="box-time">600 ms</text>
+<text x="945.0" y="184.0" text-anchor="middle" class="box-time">100 ms</text>
 <line class="arrow" x1="990.0" y1="200" x2="990.0" y2="222"/>
 <path class="arrowhead" d="M985.0,221 L995.0,221 L990.0,230 z"/>
 <rect class="box" x="1026.0" y="148" width="78.0" height="44" rx="8"/>
 <text x="1065.0" y="167.0" text-anchor="middle" class="frame">H</text>
-<text x="1065.0" y="184.0" text-anchor="middle" class="box-time">700 ms</text>
+<text x="1065.0" y="184.0" text-anchor="middle" class="box-time">116.7 ms</text>
 <line class="arrow" x1="1110.0" y1="200" x2="1110.0" y2="222"/>
 <path class="arrowhead" d="M1105.0,221 L1115.0,221 L1110.0,230 z"/>
 <rect class="ok" x="302.0" y="234" width="116.0" height="40" rx="6"/>
@@ -118,69 +118,69 @@
 <text x="360.0" y="382.0" text-anchor="middle" class="zero">–</text>
 <rect class="ok" x="422.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="480.0" y="259.0" text-anchor="middle" class="cell-text">B</text>
-<text x="480.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="480.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="480.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="480.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="480.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="542.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="600.0" y="259.0" text-anchor="middle" class="cell-text">C</text>
-<text x="600.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="600.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="600.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="600.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="600.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="662.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="720.0" y="259.0" text-anchor="middle" class="cell-text">D</text>
-<text x="720.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="720.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="720.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="720.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="720.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="782.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="840.0" y="259.0" text-anchor="middle" class="cell-text">E</text>
-<text x="840.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="840.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="840.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="840.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="840.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="902.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="960.0" y="259.0" text-anchor="middle" class="cell-text">F</text>
-<text x="960.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="960.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="960.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="960.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="960.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="1022.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="1080.0" y="259.0" text-anchor="middle" class="cell-text">G</text>
-<text x="1080.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="1080.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="1080.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="1080.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="1080.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <rect class="ok" x="1142.0" y="234" width="116.0" height="40" rx="6"/>
 <text x="1200.0" y="259.0" text-anchor="middle" class="cell-text">H</text>
-<text x="1200.0" y="330.0" text-anchor="middle">100 ms</text>
-<text x="1200.0" y="356.0" text-anchor="middle">100 ms</text>
+<text x="1200.0" y="330.0" text-anchor="middle">16.7 ms</text>
+<text x="1200.0" y="356.0" text-anchor="middle">16.7 ms</text>
 <text x="1200.0" y="382.0" text-anchor="middle" class="zero">0 ms</text>
 <text x="20.0" y="416.0" text-anchor="start" class="lane">Delta time jitter</text>
-<text x="174.8" y="416.0" text-anchor="start" class="vsync-n">10 fps, 100 ms frametimes</text>
+<text x="174.8" y="416.0" text-anchor="start" class="vsync-n">60 fps, 16.7 ms frametimes</text>
 <line class="vsync-skip" x1="180.0" y1="452" x2="180.0" y2="591"/>
-<text x="180.0" y="606.0" text-anchor="middle" class="axis">−100 ms</text>
+<text x="180.0" y="606.0" text-anchor="middle" class="axis">−16.7 ms</text>
 <line class="vsync" x1="300.0" y1="452" x2="300.0" y2="591"/>
 <text x="300.0" y="606.0" text-anchor="middle" class="axis">0 ms</text>
 <text x="300.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 1</text>
 <line class="vsync" x1="420.0" y1="452" x2="420.0" y2="591"/>
-<text x="420.0" y="606.0" text-anchor="middle" class="axis">100 ms</text>
+<text x="420.0" y="606.0" text-anchor="middle" class="axis">16.7 ms</text>
 <text x="420.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 2</text>
 <line class="vsync" x1="540.0" y1="452" x2="540.0" y2="591"/>
-<text x="540.0" y="606.0" text-anchor="middle" class="axis">200 ms</text>
+<text x="540.0" y="606.0" text-anchor="middle" class="axis">33.3 ms</text>
 <text x="540.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 3</text>
 <line class="vsync" x1="660.0" y1="452" x2="660.0" y2="591"/>
-<text x="660.0" y="606.0" text-anchor="middle" class="axis">300 ms</text>
+<text x="660.0" y="606.0" text-anchor="middle" class="axis">50 ms</text>
 <text x="660.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 4</text>
 <line class="vsync" x1="780.0" y1="452" x2="780.0" y2="591"/>
-<text x="780.0" y="606.0" text-anchor="middle" class="axis">400 ms</text>
+<text x="780.0" y="606.0" text-anchor="middle" class="axis">66.7 ms</text>
 <text x="780.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 5</text>
 <line class="vsync" x1="900.0" y1="452" x2="900.0" y2="591"/>
-<text x="900.0" y="606.0" text-anchor="middle" class="axis">500 ms</text>
+<text x="900.0" y="606.0" text-anchor="middle" class="axis">83.3 ms</text>
 <text x="900.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 6</text>
 <line class="vsync" x1="1020.0" y1="452" x2="1020.0" y2="591"/>
-<text x="1020.0" y="606.0" text-anchor="middle" class="axis">600 ms</text>
+<text x="1020.0" y="606.0" text-anchor="middle" class="axis">100 ms</text>
 <text x="1020.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 7</text>
 <line class="vsync" x1="1140.0" y1="452" x2="1140.0" y2="591"/>
-<text x="1140.0" y="606.0" text-anchor="middle" class="axis">700 ms</text>
+<text x="1140.0" y="606.0" text-anchor="middle" class="axis">116.7 ms</text>
 <text x="1140.0" y="446.0" text-anchor="middle" class="vsync-target">vsync 8</text>
 <line class="vsync" x1="1260.0" y1="452" x2="1260.0" y2="591"/>
-<text x="1260.0" y="606.0" text-anchor="middle" class="axis">800 ms</text>
+<text x="1260.0" y="606.0" text-anchor="middle" class="axis">133.3 ms</text>
 <text x="20.0" y="479.0" text-anchor="start" class="label">RENDER</text>
 <text x="20.0" y="495.0" text-anchor="start" class="vsync-n">predicted display time</text>
 <text x="20.0" y="570.0" text-anchor="start" class="label">DISPLAY</text>
@@ -194,37 +194,37 @@
 <path class="arrowhead" d="M289.0,533 L299.0,533 L294.0,542 z"/>
 <rect class="box" x="306.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="345.0" y="479.0" text-anchor="middle" class="frame">B</text>
-<text x="345.0" y="496.0" text-anchor="middle" class="box-time">100.2 ms</text>
+<text x="345.0" y="496.0" text-anchor="middle" class="box-time">16.9 ms</text>
 <line class="arrow" x1="390.0" y1="512" x2="390.0" y2="534"/>
 <path class="arrowhead" d="M385.0,533 L395.0,533 L390.0,542 z"/>
 <rect class="box" x="426.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="465.0" y="479.0" text-anchor="middle" class="frame">C</text>
-<text x="465.0" y="496.0" text-anchor="middle" class="box-time">202.4 ms</text>
+<text x="465.0" y="496.0" text-anchor="middle" class="box-time">35.7 ms</text>
 <line class="arrow" x1="510.0" y1="512" x2="510.0" y2="534"/>
 <path class="arrowhead" d="M505.0,533 L515.0,533 L510.0,542 z"/>
 <rect class="box" x="546.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="585.0" y="479.0" text-anchor="middle" class="frame">D</text>
-<text x="585.0" y="496.0" text-anchor="middle" class="box-time">299 ms</text>
+<text x="585.0" y="496.0" text-anchor="middle" class="box-time">49 ms</text>
 <line class="arrow" x1="630.0" y1="512" x2="630.0" y2="534"/>
 <path class="arrowhead" d="M625.0,533 L635.0,533 L630.0,542 z"/>
 <rect class="box" x="666.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="705.0" y="479.0" text-anchor="middle" class="frame">E</text>
-<text x="705.0" y="496.0" text-anchor="middle" class="box-time">400.8 ms</text>
+<text x="705.0" y="496.0" text-anchor="middle" class="box-time">67.5 ms</text>
 <line class="arrow" x1="750.0" y1="512" x2="750.0" y2="534"/>
 <path class="arrowhead" d="M745.0,533 L755.0,533 L750.0,542 z"/>
 <rect class="box" x="786.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="825.0" y="479.0" text-anchor="middle" class="frame">F</text>
-<text x="825.0" y="496.0" text-anchor="middle" class="box-time">499 ms</text>
+<text x="825.0" y="496.0" text-anchor="middle" class="box-time">82.3 ms</text>
 <line class="arrow" x1="870.0" y1="512" x2="870.0" y2="534"/>
 <path class="arrowhead" d="M865.0,533 L875.0,533 L870.0,542 z"/>
 <rect class="box" x="906.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="945.0" y="479.0" text-anchor="middle" class="frame">G</text>
-<text x="945.0" y="496.0" text-anchor="middle" class="box-time">600.6 ms</text>
+<text x="945.0" y="496.0" text-anchor="middle" class="box-time">100.6 ms</text>
 <line class="arrow" x1="990.0" y1="512" x2="990.0" y2="534"/>
 <path class="arrowhead" d="M985.0,533 L995.0,533 L990.0,542 z"/>
 <rect class="box" x="1026.0" y="460" width="78.0" height="44" rx="8"/>
 <text x="1065.0" y="479.0" text-anchor="middle" class="frame">H</text>
-<text x="1065.0" y="496.0" text-anchor="middle" class="box-time">700.2 ms</text>
+<text x="1065.0" y="496.0" text-anchor="middle" class="box-time">116.9 ms</text>
 <line class="arrow" x1="1110.0" y1="512" x2="1110.0" y2="534"/>
 <path class="arrowhead" d="M1105.0,533 L1115.0,533 L1110.0,542 z"/>
 <rect class="ok" x="302.0" y="546" width="116.0" height="40" rx="6"/>
@@ -234,44 +234,44 @@
 <text x="360.0" y="694.0" text-anchor="middle" class="zero">–</text>
 <rect class="off" x="422.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="480.0" y="571.0" text-anchor="middle" class="cell-text">B</text>
-<text x="480.0" y="642.0" text-anchor="middle">100.2 ms</text>
-<text x="480.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="480.0" y="642.0" text-anchor="middle">16.9 ms</text>
+<text x="480.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="445.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="480.0" y="694.0" text-anchor="middle" class="err">+0.2 ms</text>
 <rect class="off" x="542.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="600.0" y="571.0" text-anchor="middle" class="cell-text">C</text>
-<text x="600.0" y="642.0" text-anchor="middle">102.2 ms</text>
-<text x="600.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="600.0" y="642.0" text-anchor="middle">18.9 ms</text>
+<text x="600.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="565.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="600.0" y="694.0" text-anchor="middle" class="err">+2.2 ms</text>
 <rect class="off" x="662.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="720.0" y="571.0" text-anchor="middle" class="cell-text">D</text>
-<text x="720.0" y="642.0" text-anchor="middle">96.6 ms</text>
-<text x="720.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="720.0" y="642.0" text-anchor="middle">13.3 ms</text>
+<text x="720.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="685.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="720.0" y="694.0" text-anchor="middle" class="err">−3.4 ms</text>
 <rect class="off" x="782.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="840.0" y="571.0" text-anchor="middle" class="cell-text">E</text>
-<text x="840.0" y="642.0" text-anchor="middle">101.8 ms</text>
-<text x="840.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="840.0" y="642.0" text-anchor="middle">18.5 ms</text>
+<text x="840.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="805.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="840.0" y="694.0" text-anchor="middle" class="err">+1.8 ms</text>
 <rect class="off" x="902.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="960.0" y="571.0" text-anchor="middle" class="cell-text">F</text>
-<text x="960.0" y="642.0" text-anchor="middle">98.2 ms</text>
-<text x="960.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="960.0" y="642.0" text-anchor="middle">14.9 ms</text>
+<text x="960.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="925.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="960.0" y="694.0" text-anchor="middle" class="err">−1.8 ms</text>
 <rect class="off" x="1022.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="1080.0" y="571.0" text-anchor="middle" class="cell-text">G</text>
-<text x="1080.0" y="642.0" text-anchor="middle">101.6 ms</text>
-<text x="1080.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="1080.0" y="642.0" text-anchor="middle">18.3 ms</text>
+<text x="1080.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="1045.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="1080.0" y="694.0" text-anchor="middle" class="err">+1.6 ms</text>
 <rect class="off" x="1142.0" y="546" width="116.0" height="40" rx="6"/>
 <text x="1200.0" y="571.0" text-anchor="middle" class="cell-text">H</text>
-<text x="1200.0" y="642.0" text-anchor="middle">99.6 ms</text>
-<text x="1200.0" y="668.0" text-anchor="middle">100 ms</text>
+<text x="1200.0" y="642.0" text-anchor="middle">16.3 ms</text>
+<text x="1200.0" y="668.0" text-anchor="middle">16.7 ms</text>
 <rect class="err-pill" x="1165.1" y="679" width="69.8" height="21" rx="10.5"/>
 <text x="1200.0" y="694.0" text-anchor="middle" class="err">−0.4 ms</text>
 <rect class="box" x="20" y="752" width="30" height="16" rx="4"/>

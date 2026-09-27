@@ -39,9 +39,9 @@ class PatternTests(unittest.TestCase):
         # Slow frames: A on time and held two refreshes (B misses its refresh), B late, C catching up; the diagram is two of these
         slow = replay.pattern("slow-frames")
         self.assertEqual((slow.shown, slow.animation, slow.length), ((0, 2, 3), (0, 1, 3), 4))
-        # Bad half rate: frames held for 1 and 3 refreshes, the animation stepping 2 each
+        # Bad half rate: frames held for 3 and 1 refreshes, the animation stepping 2 each
         bad = replay.pattern("half-rate-bad-pacing")
-        self.assertEqual((bad.shown, bad.animation, bad.length), ((0, 1), (0, 2), 4))
+        self.assertEqual((bad.shown, bad.animation, bad.length), ((0, 3), (0, 2), 4))
         # Hysteresis does not repeat within itself: its unit is the diagram up to its last frame, which is also the next unit's first
         self.assertEqual(replay.pattern("switching-hysteresis").length, 13)
 
@@ -64,10 +64,10 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(holds(simulated), [2, 1, 1] * 120)
         self.assertEqual(errors_ms(simulated), [0, Fraction(-50, 3), Fraction(50, 3)] * 120)
 
-    def test_bad_half_rate_holds_frames_one_and_three_refreshes(self) -> None:
+    def test_bad_half_rate_holds_frames_three_and_one_refreshes(self) -> None:
         simulated = frames("60-diagram-half-rate-bad-pacing")
-        self.assertEqual(holds(simulated), [1, 3] * 120)
-        self.assertEqual(errors_ms(simulated), [Fraction(-50, 3), Fraction(50, 3)] * 120)
+        self.assertEqual(holds(simulated), [3, 1] * 120)
+        self.assertEqual(errors_ms(simulated), [Fraction(50, 3), Fraction(-50, 3)] * 120)
 
     def test_a_unit_that_does_not_divide_the_clip_is_filled_with_on_time_frames(self) -> None:
         # Hysteresis: 13 refreshes, repeated every 15 (480 / 15 = 32), centred with a frame at full rate before and after
