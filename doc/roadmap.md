@@ -58,6 +58,10 @@ Sample first each time.
 - [ ] A web page slide of its own on frame generation (kept out of the lower target slide's "what high-end gaming chose").
 - [ ] Decide on the set-aside slides (switching rates, recovering): merge them into one "when to go back to full rate" slide, or
       drop them.
+- [ ] The web page's appendix, staying within the frame budget (not pacing strategies): render scale, dynamic resolution, then
+      render scale with a better upscaler (DLSS, FSR) as a slide of its own; after them removing
+      the spikes a game causes (shaders compiled ahead, streaming early) and queuing frames ahead (a queued frame absorbs a slow
+      one, at the cost of latency; taken off the "Rule one" slide's list of strategies).
 - [ ] VRR and vsync off: the right approach is still open ([strategies](frame-pacing-strategies.md#still-open-vrr-and-vsync-off)).
 - [ ] Drift table: audio time stamps on Linux (PipeWire, ALSA) and Apple (Core Audio), verified.
 - [ ] Name the platforms where `wl_surface.frame` misbehaves.

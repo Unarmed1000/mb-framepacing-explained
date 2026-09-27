@@ -25,6 +25,10 @@ describe("the slides' content", () => {
 
   it("asks only for clips the export makes", () => {
     const made = new Set(clips.pairs.map(([top, bottom]) => `${clips.motion} ${top ?? ""} ${bottom ?? ""}`));
+    const rendered = new Set(clips.rendered.map((video) => video.name));
+    for (const [id, source] of FILES) {
+      for (const [, name] of source.matchAll(/^:::video file (\S+)/gm)) expect(rendered, `${id}: ${name}`).toContain(name);
+    }
     for (const [id, source] of FILES) {
       for (const [, motion, top, bottom] of source.matchAll(/^:::video (?:single|pair) (\S+) (\S+) (\S+)/gm)) {
         expect(made, `${id}: ${motion} ${top} ${bottom}`).toContain(`${motion} ${top} ${bottom}`);

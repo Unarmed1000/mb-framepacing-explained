@@ -24,11 +24,12 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install FFmpeg and Pillow
+      # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl)
+      - name: Install FFmpeg, Pillow and OpenGL
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ffmpeg
-          python -m pip install "Pillow>=12"
+          sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri
+          python -m pip install "Pillow>=12" "moderngl>=5.12"
           python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
 
       - name: Test the clip export

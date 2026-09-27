@@ -7,6 +7,12 @@ import { EXPLANATION_SLIDES } from "./explain/slides";
 import { menuSlide } from "./menu";
 import { startSlides, type Slide } from "./slides";
 
+/** Who made the page: on the welcome page and in the top bar. */
+const AUTHOR = "Rene Thrane";
+const AUTHOR_LINK = "https://www.linkedin.com/in/ren%C3%A9-thrane-7163a17";
+const ORGANISATION = "Mana Battery";
+const ORGANISATION_LINK = "https://manabattery.com/";
+
 /** The clips are 1280 x 384 video pixels (the two boxes and a margin, no labels), shown at 1:1 device pixels. */
 const VIDEO = { width: 1280, height: 384 };
 
@@ -21,6 +27,8 @@ const welcome: Slide = {
         thing: the slides, wording, diagrams, videos and the blind test will all still change, and several slides are unfinished.</p>
       <p class="eyebrow">An interactive explanation</p>
       <h1>Frame pacing, explained</h1>
+      <p class="byline">By <a href="${AUTHOR_LINK}" target="_blank" rel="noopener">${AUTHOR}</a> ·
+        <a href="${ORGANISATION_LINK}" target="_blank" rel="noopener">${ORGANISATION}</a></p>
       <p class="lead">
         A game, an interface or any real-time animation can run at a perfect 60 fps and still stutter. This page starts with a blind test: videos you compare yourself,
         before knowing what to look for. Then it explains what you saw, and how apps and games get it right. First, a quick check that your
@@ -90,4 +98,5 @@ startSlides(
     { href: "#/menu", label: "Menu" },
     { href: "#/topics", label: "Topics" },
   ],
+  `by ${AUTHOR}, ${ORGANISATION}`,
 );

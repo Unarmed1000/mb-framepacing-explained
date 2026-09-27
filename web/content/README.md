@@ -38,6 +38,7 @@ The rest is Markdown: **bold**, _italic_, `code`, [links](https://example.com), 
 | `:::figures` … `:::`                        | The diagrams inside side by side                                                                                                                                |
 | `:::links Heading` … `:::`                  | A card of links, a list of `- [Title](https://…) what it is`                                                                                                    |
 | `:::video single MOTION TOP BOTTOM …` `:::` | A live clip: one box of the clip with `TOP` above and `BOTTOM` below (`top` or `bottom`, `chart` for its animation error chart), the text inside as its caption |
+| `:::video file NAME` `:::`                  | A rendered video (clips.json's `rendered`), the text inside as its caption                                                                                      |
 | `:::video pair MOTION TOP BOTTOM …` `:::`   | Both boxes of the clip, with their chart unless `nochart`                                                                                                       |
 | `::strip HZ FPS`                            | A refresh strip: `FPS` on an `HZ` display                                                                                                                       |
 | `A paragraph. {.note}`                      | A note, in smaller text                                                                                                                                         |

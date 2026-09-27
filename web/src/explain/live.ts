@@ -9,6 +9,9 @@ import { PixelVideo } from "../video/pixel-video";
 /** The lane height of a single box's chart, in the chart's units (the pairs' charts use 92). */
 const SINGLE_LANE_HEIGHT = 56;
 
+/** The rendered videos' size and frame rate, as the render scale video's generator makes them. */
+const RENDERED = { width: 1280, height: 384, fps: 60 };
+
 /** The clip of a motion with `top` above and `bottom` below (the single box, never the rows). */
 export function findClip(videos: readonly VideoEntry[], top: string, bottom: string): VideoEntry | undefined {
   return videos.find((video) => video.scene === "box" && video.top.mode === top && video.bottom.mode === bottom);
@@ -45,6 +48,22 @@ export function liveComparison(motion: string, top: string, bottom: string, capt
       player.play();
     })
     .catch((error: unknown) => holder.replaceChildren(missingClips(error)));
+  return holder;
+}
+
+/** A rendered video (clips.json's "rendered", made by tools/frame_pacing_video/generate_render_scale_video.py): the whole frame at
+ * 1:1 device pixels, with a caption. */
+export function renderedClip(name: string, caption: string): HTMLElement {
+  const holder = document.createElement("div");
+  holder.className = "live";
+  const src = `videos/rendered/${name}.mp4`;
+  const player = new PixelVideo(src, RENDERED, RENDERED.fps, { label: caption });
+  const text = document.createElement("p");
+  text.className = "live-caption";
+  text.textContent = caption;
+  player.video.addEventListener("error", () => holder.replaceChildren(missingClips(new Error(`${src} is missing`))));
+  holder.replaceChildren(player.element, text, player.readout);
+  player.play();
   return holder;
 }
 

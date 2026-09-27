@@ -13,7 +13,7 @@
     {
       "name": "Stutter from late frames",
       "about": "The second cause of stutter, **bad frame pacing**: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with a lower target frame rate.",
-      "slides": ["slow-frames", "missed-frames", "lower-target", "half-rate", "other-rates"]
+      "slides": ["slow-frames", "missed-frames", "lower-target", "half-rate", "other-rates", "adapt-rate"]
     },
     {
       "name": "Beyond vsync: VRR and input latency",
@@ -24,6 +24,11 @@
       "name": "Go further",
       "about": "Why the average frame rate hides stutter, how to measure animation error, and where to read more.",
       "slides": ["average-frame-rate", "measure", "further-reading"]
+    },
+    {
+      "name": "Appendix: staying within the frame budget",
+      "about": "Not pacing strategies, but ways to keep frames within their budget: render scale, dynamic resolution and better upscalers.",
+      "slides": ["render-scale", "dynamic-resolution", "upscalers"]
     }
   ],
   "parked": {

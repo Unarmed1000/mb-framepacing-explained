@@ -4,7 +4,8 @@
 The questions live in web/src/blind-test/trials.json, the one place both the page and this script read. For every motion (a
 speed of the single-box scene; never the rows) it collects the top/bottom pairs: identical pairs once, every other pair in both
 orders (the page asks each pair once with each mode on top), plus the warm-up pairs for the warm-up's motions. Then it runs the video
-tool once per motion, so each motion's folder (videos/box/<motion>) gets all its clips and one complete manifest.json.
+tool once per motion, so each motion's folder (videos/box/<motion>) gets all its clips and one complete manifest.json. Last, it
+renders the slides' rendered videos (clips.json's "rendered", e.g. the dynamic resolution example) into videos/rendered.
 
 Run from the repository's .venv:
   python tools/web_export/build_blind_test.py [--output-dir DIR] [--ffmpeg PATH]
@@ -25,6 +26,8 @@ TRIALS = REPO_ROOT / "web" / "src" / "blind-test" / "trials.json"
 # The explanation slides' clips, top and bottom mode of each, in one motion
 EXPLANATION_CLIPS = REPO_ROOT / "web" / "src" / "explain" / "clips.json"
 GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_videos.py"
+# The slides' rendered videos (3D scenes, OpenGL): not clips of the video tool
+RENDER_GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_render_scale_video.py"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "web" / "public" / "videos"
 
 
@@ -65,6 +68,16 @@ def generator_command(motion: str, pairs: list[tuple[str, str]], clip_arguments:
     return command + (["--ffmpeg", ffmpeg] if ffmpeg else [])
 
 
+def rendered_commands(clips: dict[str, object], output_dir: Path, ffmpeg: str | None) -> list[list[str]]:
+    """The command for each of clips.json's rendered videos: its generator's arguments, into videos/rendered/<name>.mp4."""
+    commands: list[list[str]] = []
+    for video in cast(list[dict[str, object]], clips.get("rendered", [])):
+        output = output_dir / "rendered" / f"{video['name']}.mp4"
+        command = [sys.executable, str(RENDER_GENERATOR), *cast(list[str], video["arguments"]), "--output", str(output)]
+        commands.append(command + (["--ffmpeg", ffmpeg] if ffmpeg else []))
+    return commands
+
+
 class Arguments(argparse.Namespace):
     output_dir: Path
     ffmpeg: str | None
@@ -86,6 +99,11 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"{TRIALS.name} compares two bad timers ({', '.join(bad_pairs)}): the blind test never does")
         print(f"{motion}: {len(pairs)} clips", flush=True)
         result = subprocess.run(generator_command(motion, pairs, clip_arguments, args.output_dir, args.ffmpeg), check=False)
+        if result.returncode != 0:
+            return result.returncode
+    for command in rendered_commands(clips, args.output_dir, args.ffmpeg):
+        print(f"rendered: {Path(command[command.index('--output') + 1]).name}", flush=True)
+        result = subprocess.run(command, check=False)
         if result.returncode != 0:
             return result.returncode
     return 0

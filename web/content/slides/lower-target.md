@@ -23,8 +23,8 @@ steps twice as far.
 
 - **Optimizing is not enough:** the app cannot hold the higher rate, and the misses would be frequent. A rare spike is better
   handled by one of the other strategies than paid for on every frame.
-- **The app and its audience accept it:** a 30 fps mode is familiar on consoles, but PC players are rarely happy with less than
-  60 fps, and many expect more.
+- **The app and its audience accept it:** a 30 fps mode is familiar on consoles, but given the choice most console players pick the
+  higher frame rate (below). PC players are rarely happy with less than 60 fps, and many expect more.
 - **The frames fit the lower rate with room to spare,** spikes included, measured on the real content.
 - **Steady matters more than fast:** slower motion, and input that does not need every frame of latency back.
 - **The platform can hold a frame** for a whole number of refreshes, and for 40 fps the display runs at 120 Hz.

@@ -16,7 +16,7 @@ error shows.
 
 - **Pick a target every frame can hold, with room to spare.** If 60 fps does not fit, a steady 30 fps on 60 Hz or 40 fps on
   120 Hz may, [paced right](#/half-rate).
-- **Keep the frame cost steady:** dynamic resolution lowers the render resolution under load, at some cost to image quality.
+- **Keep the frame cost steady:** [dynamic resolution](#/dynamic-resolution) lowers the render resolution under load, at some cost to image quality.
 - **Remove the spikes the game causes itself:** compile shaders ahead of time, stream assets in before they are needed.
 
 :::
@@ -26,9 +26,8 @@ error shows.
 :::card When it happens anyway
 
 - **Take the hitch:** stay at full rate and show the late frame a refresh late. Costs a visible jump every time.
-- **Queue frames ahead:** a frame that is ready in advance covers for a slow one, as long as the frames fit on average. Costs
-  input latency on every frame.
-- **Switch rates:** drop to half rate through a busy stretch. Costs smoothness while there, and deciding when to go back up.
+- **[Adapt the rate](#/adapt-rate):** drop to half rate through a busy stretch, and back up when the frames fit again. Costs smoothness while
+  there, and deciding when to switch.
 - **Let the display wait:** [VRR](#/vrr) shows the frame when it is ready, vsync off shows it at once. Needs a VRR display, or
   tears.
 

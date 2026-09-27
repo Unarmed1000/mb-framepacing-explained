@@ -6,7 +6,7 @@
 import topicData from "../../content/topics.json";
 import type { SlideMeta } from "../../build/slide-markdown";
 import type { Slide } from "../slides";
-import { liveComparison, singleBox } from "./live";
+import { liveComparison, renderedClip, singleBox } from "./live";
 import { refreshStrip } from "./strips";
 
 interface Topic {
@@ -54,13 +54,15 @@ function topicCards(): HTMLElement {
 }
 
 /** A `:::video` block's clip: `single MOTION TOP BOTTOM [top|bottom] [chart]` shows one box of the clip, `pair MOTION TOP BOTTOM
- * [nochart]` both, each with the block's text as the caption. The clips are listed in clips.json, for the export. */
+ * [nochart]` both, `file NAME` a rendered video, each with the block's text as the caption. The clips are listed in clips.json, for
+ * the export. */
 function video(args: readonly string[], caption: string): HTMLElement {
   const [kind, motion = "", top = "", bottom = "", ...flags] = args;
   if (kind === "single")
     return singleBox(motion, top, bottom, flags.includes("top") ? "top" : "bottom", caption, flags.includes("chart"));
   if (kind === "pair") return liveComparison(motion, top, bottom, caption, !flags.includes("nochart"));
-  throw new Error(`a video is single or pair, not ${kind ?? "nothing"}`);
+  if (kind === "file") return renderedClip(motion, caption);
+  throw new Error(`a video is single, pair or file, not ${kind ?? "nothing"}`);
 }
 
 /** The live parts of a slide's HTML, filled in: videos, refresh strips, the topics' cards, the link to the first draft, and each

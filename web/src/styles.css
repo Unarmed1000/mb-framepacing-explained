@@ -895,3 +895,22 @@ code {
 .contribute .note {
   margin: 0;
 }
+
+/* Who made the page: small after its name in the top bar, and a byline under the welcome page's title */
+.credit {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.byline {
+  margin: -6px 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .credit {
+    display: none;
+  }
+}

@@ -8,5 +8,31 @@
     ["60-diagram-half-rate-even", "60-diagram-half-rate-bad-pacing"],
     ["60-diagram-switching-naive-every-1s", "60-diagram-switching-hysteresis-every-1s"],
     ["60-diagram-recovery-half-rate-every-1s", "60-diagram-recovery-targeting-every-1s"]
+  ],
+  "rendered": [
+    {
+      "name": "render-scale",
+      "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured"]
+    },
+    {
+      "name": "render-scale-ui",
+      "arguments": ["--pattern", "fixed", "--scale", "0.5", "--textured", "--ui"]
+    },
+    {
+      "name": "dynamic-resolution",
+      "arguments": ["--pattern", "model-low", "--textured"]
+    },
+    {
+      "name": "dynamic-resolution-minimum",
+      "arguments": ["--pattern", "jumps", "--textured"]
+    },
+    {
+      "name": "dynamic-resolution-too-low",
+      "arguments": ["--pattern", "low", "--textured"]
+    },
+    {
+      "name": "dynamic-resolution-ui",
+      "arguments": ["--pattern", "jumps", "--textured", "--ui"]
+    }
   ]
 }

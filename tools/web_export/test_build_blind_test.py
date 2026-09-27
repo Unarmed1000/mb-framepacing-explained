@@ -42,6 +42,14 @@ class PairTests(unittest.TestCase):
         self.assertLessEqual({(top, bottom) for top, bottom in pairs}, set(merged["fast"]))
         self.assertIn(("60", "60-diagram-slow-frames-every-1s"), merged["fast"])
 
+    def test_rendered_commands(self) -> None:
+        clips: dict[str, object] = {"rendered": [{"name": "example", "arguments": ["--pattern", "model-low"]}]}
+        (command,) = export.rendered_commands(clips, Path("out"), None)
+        self.assertEqual(command[1], str(export.RENDER_GENERATOR))
+        self.assertEqual(command[2:], ["--pattern", "model-low", "--output", str(Path("out") / "rendered" / "example.mp4")])
+        self.assertEqual(export.rendered_commands(clips, Path("out"), "D:/ffmpeg")[0][-2:], ["--ffmpeg", "D:/ffmpeg"])
+        self.assertEqual(export.rendered_commands({}, Path("out"), None), [])
+
     def test_generator_command(self) -> None:
         command = export.generator_command("fast", [("60", "30"), ("30", "60")], ["--web"], Path("out"), None)
         self.assertEqual(command[2:], ["--web", "--speed", "fast", "--output-dir", "out", "--pairs", "60:30", "30:60"])

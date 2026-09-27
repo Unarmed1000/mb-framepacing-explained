@@ -11,12 +11,14 @@ license-files = ["LICENSE"]
 authors = [{ name = "Mana Battery ApS" }]
 dependencies = [
     "Pillow>=12",
+    "moderngl>=5.12",
 ]
 
 [dependency-groups]
 # Everything the .venv needs: the runtime dependencies above plus the lint and type check tools (pinned, so every machine agrees).
 dev = [
     "Pillow>=12",
+    "moderngl>=5.12",
     "basedpyright==1.40.1",
     "ruff==0.16.8",
 ]

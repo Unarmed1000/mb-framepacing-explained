@@ -19,10 +19,13 @@ export function startSlides(
   root: HTMLElement,
   slides: readonly Slide[],
   links: readonly { href: string; label: string }[] = [],
+  /** Who made the page, after its name in the top bar (hidden on narrow screens). */
+  credit = "",
 ): void {
   root.innerHTML = `
     <header class="topbar">
       <a class="brand" href="#/${slides[0]?.id ?? ""}">Frame pacing, explained</a>
+      ${credit ? `<span class="credit">${credit}</span>` : ""}
       <div class="progress" role="progressbar" aria-valuemin="1"><span></span></div>
       <nav class="topbar-links" aria-label="Sections"></nav>
       <span class="counter"></span>
