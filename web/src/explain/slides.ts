@@ -310,14 +310,59 @@ const lowerTarget: Slide = {
           </ul>
         </div>
       </div>
-      <div class="card">
-        <h2>What players choose</h2>
-        <p class="note">Players notice the cost. Presenting the PS5 Pro in September 2024, Sony's Mark Cerny said that when asked
-          to decide on a mode, PS5 players choose performance over fidelity about three quarters of the time
-          (<a href="https://www.youtube.com/watch?v=X24BzyzQQ-8&amp;t=172s" target="_blank" rel="noopener">PS5 Pro Technical
-            Presentation, 2:52</a>). A performance mode is usually 60 fps and a fidelity mode 30 fps, though not in every game,
-          and Sony has not published the data behind the figure.</p>
+      <p class="note">What high-end devices do shows what the best experience looks like: there, hardware limits matter least,
+        so the choices of their makers and players are about the experience itself.</p>
+      <div class="guide">
+        <div class="card">
+          <h2>What players choose</h2>
+          <p class="note">Players notice the cost. Presenting the PS5 Pro in September 2024, Sony's Mark Cerny said that when
+            asked to decide on a mode, PS5 players choose performance over fidelity about three quarters of the time
+            (<a href="https://www.youtube.com/watch?v=X24BzyzQQ-8&amp;t=172s" target="_blank" rel="noopener">PS5 Pro Technical
+              Presentation, 2:52</a>). A performance mode is usually 60 fps and a fidelity mode 30 fps, though not in every
+            game, and Sony has not published the data behind the figure.</p>
+        </div>
+        <div class="card">
+          <h2>What high-end PC gaming chose</h2>
+          <p class="note">Gaming monitors keep climbing: 500 Hz and more are sold, up to 750 Hz, and 1000 Hz monitors were
+            announced for 2026 (<a href="https://www.flatpanelshd.com/news.php?subaction=showfull&amp;id=1762337599"
+              target="_blank" rel="noopener">FlatpanelsHD, 2025</a>). In a study of 101 gamers at 60, 144 and 360 Hz, they told
+            60 from 360 Hz apart but not 144 from 360 Hz, and their aim improved from 60 Hz up, with smaller gains at the top
+            (<a href="https://research.nvidia.com/publication/2026-06_monitor-refresh-rate-impacts-fps-video-gamers-perceptions-display-smoothness"
+              target="_blank" rel="noopener">Toth et al., 2026</a>). Earlier NVIDIA research found that much of that gain is
+            the lower latency that comes with the higher rate
+            (<a href="https://research.nvidia.com/publication/2019-11_latency-30-ms-benefits-first-person-targeting-tasks-more-refresh-rate-above-60"
+              target="_blank" rel="noopener">Spjut et al., 2019</a>). To see it tried: Linus Tech Tips had Shroud and other
+            players compete at 60, 144 and 240 fps
+            (<a href="https://www.youtube.com/watch?v=OX31kZbAXsA" target="_blank" rel="noopener">Does High FPS make you a
+              better gamer?</a>, 2019, sponsored by NVIDIA).</p>
+        </div>
+        <div class="card">
+          <h2>What phone makers chose</h2>
+          <p class="note">High-end phones moved to 90 and 120 Hz displays for "smoother animations, lower latency, and an overall
+            nicer user experience" (<a href="https://android-developers.googleblog.com/2020/04/high-refresh-rate-rendering-on-android.html"
+              target="_blank" rel="noopener">Google, 2020</a>), "making the touch experience faster and more responsive"
+            (<a href="https://www.apple.com/newsroom/2021/09/apple-unveils-iphone-13-pro-and-iphone-13-pro-max-more-pro-than-ever-before/"
+              target="_blank" rel="noopener">Apple, iPhone 13 Pro, 2021</a>). Users see it: in a study of 76 people scrolling at
+            60, 90 and 120 Hz, both higher rates looked smoother than 60 Hz, with little difference between 90 and 120 Hz
+            (<a href="https://www.tandfonline.com/doi/full/10.1080/0144929X.2025.2462266" target="_blank" rel="noopener">Li et
+              al., 2025</a>).</p>
+        </div>
+        <div class="card">
+          <h2>What TV boxes chose</h2>
+          <p class="note">A remote is indirect input, and even the Apple TV 4K stays at 60 Hz: it outputs "up to 4K 60Hz"
+            (<a href="https://www.flatpanelshd.com/review.php?subaction=showfull&amp;id=1668063491" target="_blank"
+              rel="noopener">FlatpanelsHD</a>). What it adds is pacing: Match Frame Rate switches the TV to the content's own
+            rate, doubling 25 and 30 fps to 50 and 60 Hz "while preserving a fluid user interface"
+            (<a href="https://support.apple.com/en-us/102277" target="_blank" rel="noopener">Apple</a>). Android TV does the same,
+            as a mismatch gives "unpleasant motion judder"
+            (<a href="https://developer.android.com/training/tv/playback/adjust-display-settings" target="_blank"
+              rel="noopener">Android</a>).</p>
+        </div>
       </div>
+      <p class="note">Games and phones are also about input latency. A gamepad and a finger on a touch screen are direct input,
+        and at a higher rate the result of every press or swipe reaches the screen sooner: a frame lasts 33.3 ms at 30 fps and
+        16.7 ms at 60 fps. Google names "lower latency" among its reasons. A TV box, driven by a remote, puts even pacing first.
+        More under <a href="#/input-latency">input latency</a>.</p>
       <p class="note">And it has to be paced right: the next slides show how.</p>`,
     ),
 };

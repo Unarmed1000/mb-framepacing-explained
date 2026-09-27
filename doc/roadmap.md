@@ -55,6 +55,7 @@ Sample first each time.
       buffering), what to do with the late frame itself (show it late, drop it, render it for when it will appear), dynamic
       resolution, and how engines and platforms do it (Unreal, Unity, Apple frame rate ranges, DXGI and Vulkan present timing).
       The web page's "No easy fix for a missed frame" slide is the short version.
+- [ ] A web page slide of its own on frame generation (kept out of the lower target slide's "what high-end gaming chose").
 - [ ] Decide on the set-aside slides (switching rates, recovering): merge them into one "when to go back to full rate" slide, or
       drop them.
 - [ ] VRR and vsync off: the right approach is still open ([strategies](frame-pacing-strategies.md#still-open-vrr-and-vsync-off)).
