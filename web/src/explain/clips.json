@@ -11,6 +11,23 @@
   ],
   "rendered": [
     {
+      "name": "follow-jitter",
+      "generator": "generate_one_video.py",
+      "arguments": [
+        "--scene",
+        "follow",
+        "--follow-boxes",
+        "60",
+        "60-naive-light-realistic",
+        "60-naive-typical-realistic",
+        "60-naive-heavy-realistic",
+        "--labels",
+        "--web",
+        "--height",
+        "480"
+      ]
+    },
+    {
       "name": "adaptive-history",
       "generator": "generate_adaptive_history.py",
       "arguments": []

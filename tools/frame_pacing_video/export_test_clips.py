@@ -7,7 +7,8 @@ scenario, named after its mode, holding video.mp4 and its own manifest.json.
 Each clip is generate_videos.py --single MODE --marker --speed fast: lossless, 1280 x 720, 8 s plus 3 refreshes of start marker
 before and 3 of end marker after. Its manifest is the generator's, for that one clip: per frame the refresh it is flipped on, its
 animation error, how late it is and the rate the game aims for (targetFps), and the marker frame index of the clip's first frame.
-The clips are this repository's videos, under its license (the manifest's "license").
+The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
+data (the manifest's "license"); this repository's own videos stay CC BY-NC-ND 4.0.
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
@@ -36,6 +37,8 @@ SCENARIOS = (
     "60-naive-5ms-diagram-slow-frames-every-1s",
 )
 VIDEO_NAME = "video.mp4"
+# The license of the copies in mb-framepacing's test-data/videos, as its README says, so they can be copied there unchanged
+TEST_DATA_LICENSE = "PolyForm Perimeter License 1.0.1 (mb-framepacing LICENSE), (c) 2026 Mana Battery ApS; made by mb-framepacing-explained"
 
 
 class Arguments(argparse.Namespace):
@@ -45,8 +48,9 @@ class Arguments(argparse.Namespace):
 
 
 def clip_manifest(settings: gv.Settings, job: gv.VideoJob) -> dict[str, object]:
-    """The generator's manifest for one clip, renamed to the folder's video.mp4."""
+    """The generator's manifest for one clip, renamed to the folder's video.mp4, under mb-framepacing's license."""
     manifest = gv.build_manifest(settings, [job])
+    manifest["license"] = TEST_DATA_LICENSE
     video = cast(list[dict[str, object]], manifest["videos"])[0]
     video["file"] = VIDEO_NAME
     video["measure"] = f"mb-framepacing import {VIDEO_NAME} --analyze -o analysis"

@@ -36,6 +36,12 @@
       ]
     },
     {
+      "name": "Jitter up close",
+      "appendix": true,
+      "about": "**Delta time jitter** through a camera that follows the moving object, after Unity's demo: only the timing error moves a box.",
+      "slides": ["follow-camera"]
+    },
+    {
       "name": "Further reading",
       "appendix": true,
       "about": "The sources and where to read more.",

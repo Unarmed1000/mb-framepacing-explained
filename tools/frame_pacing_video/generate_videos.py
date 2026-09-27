@@ -1143,8 +1143,8 @@ def _hex_color(color: Rgb) -> str:
     return f"#{color[0]:02X}{color[1]:02X}{color[2]:02X}"
 
 
-def _milliseconds(values: Sequence[Fraction]) -> list[float]:
-    return [round(float(value * 1000), 3) for value in values]
+def _milliseconds(values: Sequence[Fraction], digits: int = 3) -> list[float]:
+    return [round(float(value * 1000), digits) for value in values]
 
 
 def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, object]:
@@ -1161,12 +1161,15 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         # The rate the game aims for: at full speed (Swappy's adaptive rule aims lower through its busy stretch, frames.targetFps)
         "targetFps": _json_number(settings.fps / min(frames.intervals)),
         # Every frame of the clip: the output refresh it is flipped on, when the naive loop read the clock (ms, the first frame is
-        # shown at 0), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError) and how many refreshes
+        # shown at 0), the animation time it shows (ms, the clip's first refresh is 0; the marker carries it in ticks), the dt its
+        # animation advanced by, its animation error (PresentMon's MsAnimationError) and how many refreshes
         # after the one it was rendered for it is flipped (0: on time), and the rate the game aims for while showing it (the refresh
         # rate divided by the swap interval it is paced at)
         "frames": {
             "refresh": list(frames.flips),
             "sampleMs": _milliseconds(frames.samples),
+            # To the 100 ns tick the marker uses, so ms x 10 000 is exactly the marker's animation ticks
+            "animationMs": _milliseconds(animation, 4),
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
             "late": refreshes_late(settings, mode, speed),

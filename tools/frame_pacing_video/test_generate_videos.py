@@ -793,6 +793,11 @@ class SingleAndMarkerTests(unittest.TestCase):
         # The animation time of the frame on screen, in ticks
         self.assertEqual(payloads[lead + 3].animation_ticks, round(gv.content_time(settings, job.top, job.speed, 3) * 10_000_000))
         self.assertEqual({payload.run_id for payload in payloads}, {gv.MARKER_RUN_ID})
+        # The manifest's animation time of each frame is the marker's, in ms
+        animation_ms = cast(dict[str, list[float]], gv._mode_entry(settings, job.top, job.speed)["frames"])["animationMs"]  # pyright: ignore[reportPrivateUsage]
+        clip = [payload for payload in payloads if payload.kind == MarkerKind.FRAME]
+        by_index = {payload.frame_index - frames // 2: payload.animation_ticks for payload in clip}
+        self.assertEqual([round(ms * 10_000) for ms in animation_ms], [by_index[k] for k in range(len(animation_ms))])
         # The pacer's plan: 30 fps, each frame meant for its own refresh (every second one), counted from the clip's first refresh
         self.assertEqual({payload.target_frame_ticks for payload in payloads}, {333_333})
         self.assertEqual([payload.intended_display_ticks for payload in payloads[lead : lead + 3]], [0, 0, 333_333])

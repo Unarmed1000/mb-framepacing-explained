@@ -21,6 +21,7 @@ class ClipManifestTests(unittest.TestCase):
         self.assertEqual(len(videos), 1)
         self.assertEqual((videos[0]["file"], videos[0]["measure"]), ("video.mp4", "mb-framepacing import video.mp4 --analyze -o analysis"))
         self.assertEqual(cast(dict[str, object], videos[0]["box"])["mode"], "60-busy-swappy")
+        self.assertTrue(cast(str, manifest["license"]).startswith("PolyForm Perimeter License 1.0.1"))
 
 
 if __name__ == "__main__":

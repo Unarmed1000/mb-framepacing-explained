@@ -184,6 +184,10 @@ thing that moves a box: it leaves the lines, ahead or behind.
 - **Drawing:** the boxes in virtual pixels (`--pixel-size`), in front of the lines; the lines and labels at native 1:1 video pixels.
   The labels start right of the furthest any box swings.
 
+The web page's appendix shows one follow video, the realistic loads at 480 px high (`follow-jitter` in
+[`web/src/explain/clips.json`](../../web/src/explain/clips.json)). `generate_one_video.py [options] --output FILE` makes it: exactly one
+video of this tool into a given file, as the page's other video generators do.
+
 ## Single box and the frame marker
 
 `--single MODE…` makes one video per mode instead of top/bottom pairs: the box alone, halfway down the frame, without the divider
@@ -224,8 +228,9 @@ the manifest's `animationErrorMs` (within 0.01 ms). Every one of the clips above
 what mb-framepacing measures.
 
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`): a folder per
-scenario, named after its mode, with `video.mp4` and its own `manifest.json`, 4 MB in all. They are this repository's videos, under
-its licence (CC BY-NC-ND 4.0, the manifest's `license`).
+scenario, named after its mode, with `video.mp4` and its own `manifest.json`, 4 MB in all. These copies are licensed for
+mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
+videos stay CC BY-NC-ND 4.0.
 
 ## Setup
 
@@ -369,7 +374,8 @@ Settings that would break the loop or the pacing are rejected with an error; not
     count, slow motion factor and video frame count, and size;
   - for the top and the bottom half (or each box of the follow stack): the mode, its timer, noise and window, its label, and
     **every frame of the clip**: the output refresh it is flipped on (`frames.refresh`), when the naive loop read the clock
-    (`frames.sampleMs`, the first frame is shown at 0), the dt its animation advanced by (`frames.dtMs`) and its **animation
+    (`frames.sampleMs`, the first frame is shown at 0), the animation time it shows (`frames.animationMs`, the clip's first
+    refresh is 0; the marker carries the same in ticks), the dt its animation advanced by (`frames.dtMs`) and its **animation
     error** in ms (`frames.animationErrorMs`), computed like PresentMon's `MsAnimationError`: positive = shown too soon,
     negative = shown too late, and how many refreshes after the one it was rendered for it is flipped (`frames.late`, 0 on
     time; the naive timer's frames are always on time), and the rate the game aims for while showing it (`frames.targetFps`:

@@ -7,7 +7,7 @@ eyebrow: Appendix
 
 That is the whole story of stutter: its two causes, delta time jitter and bad frame pacing, how games fix them, and how to
 measure animation error. The appendix goes further: how games keep their frames within budget in the first place, from render
-scale to upscalers such as DLSS and FSR, and where to read more.
+scale to upscalers such as DLSS and FSR, delta time jitter seen up close, and where to read more.
 
 ::topics appendix
 

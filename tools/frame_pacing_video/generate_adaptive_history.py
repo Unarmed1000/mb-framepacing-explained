@@ -4,8 +4,9 @@ under it the history the rule keeps (the frames of the last 2 s) as it sees it a
 it. The box is the bottom half of the adapt the rate video's clip (60-busy-full-rate against 60-busy-swappy), made by
 generate_videos.py; the history comes from the same simulation (adaptive_rate.py), frame for frame.
 
-The window is drawn as a strip of bars, one per frame by its render time, newest on the right, against a refresh and two; a missed
-frame is red. Next to it the two numbers the rule decides by (the share of the window that missed, the average render time plus
+The window is drawn as one filled strip, each frame as high as its render time and as wide as it stays on screen, newest on the
+right, against a refresh and two; a missed frame is red. The fill is dim with a bright top edge, and there are no gaps between the
+frames, so the strip does not flash as it scrolls (WCAG 2.3.1). Next to it the two numbers the rule decides by (the share of the window that missed, the average render time plus
 1 ms) against the lines they have to cross, and the target pace. After a change the rule starts a new window: the strip empties and
 fills again, and until it holds 2 s the rule decides nothing. At each change a banner says what it decided.
 
@@ -50,10 +51,15 @@ MUTED = (139, 148, 158)
 FAINT = (110, 118, 129)
 GREEN = (46, 160, 67)
 RED = (229, 83, 75)
+# The history's fill: dim, less than 0.1 in relative luminance above the card, so the scrolling shape does not flash (WCAG 2.3.1);
+# its top edge in the full colour
+GREEN_FILL = (40, 100, 55)
+RED_FILL = (120, 50, 48)
+EDGE = 2
 AMBER = (210, 153, 34)
 BLUE = (88, 166, 255)
 
-# The strip of the window's bars
+# The strip of the window's frames
 STRIP = (40, 70, 800, 300)  # left, top, right, bottom
 STRIP_MS = 36.0
 # The numbers and the pace, to the right of it
@@ -97,16 +103,24 @@ def draw_frame(frames: list[Record], refresh: int) -> Image.Image:
         return right - (refresh - shown) / WINDOW_REFRESHES * (right - left)
 
     lines = ((REFRESH_MS, "one refresh"), (2 * REFRESH_MS, "two refreshes"))
+    # One filled shape, no gaps: every frame from its own refresh to the next frame's, dim, with a bright top edge. Separate bright
+    # bars with gaps between them make a striped pattern that flashes as it scrolls
+    half = (right - left) / WINDOW_REFRESHES / 2
+    followers: list[Record | None] = [*window[1:], None] if window else []
+    for frame, following in zip(window, followers, strict=True):
+        start = max(left, x_of(frame.shown) - half)
+        end = min(right, (x_of(following.shown) if following else x_of(refresh) + half) - half)
+        if end > start:
+            y = y_of(frame.render_ms)
+            draw.rectangle([start, y, end, bottom], fill=RED_FILL if frame.missed else GREEN_FILL)
+            draw.rectangle([start, y, end, y + EDGE - 1], fill=RED if frame.missed else GREEN)
+    # The refresh lines over the history, so they show through the filled shape
     for ms, _ in lines:
         y = y_of(ms)
         for x in range(left, right, 12):
             draw.line([(x, y), (min(x + 6, right), y)], fill=AMBER, width=1)
     draw.line([(left, bottom), (right, bottom)], fill=FAINT, width=1)
-    bar = (right - left) / WINDOW_REFRESHES
-    for frame in window:
-        x = x_of(frame.shown)
-        draw.rectangle([x - max(1.5, bar * 0.35), y_of(frame.render_ms), x + max(1.5, bar * 0.35), bottom], fill=RED if frame.missed else GREEN)
-    # The lines' names over the bars, on a patch of the card so the bars do not run through them
+    # The lines' names over the strip, on a patch of the card so the strip does not run through them
     for ms, label in lines:
         y = y_of(ms)
         box = draw.textbbox((left + 4, y - 16), label, font=font(12))
