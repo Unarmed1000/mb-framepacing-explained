@@ -136,7 +136,8 @@ const invisible: Slide = {
           "60",
           "60-naive-5ms",
           "The same two timers live: both boxes at 60 fps, every frame on screen for exactly one refresh, and still the bottom one " +
-            "stutters, and the chart shows why.",
+            "stutters.",
+          false,
         ),
       );
     return element;
