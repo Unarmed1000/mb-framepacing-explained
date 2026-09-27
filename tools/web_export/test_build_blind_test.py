@@ -37,7 +37,10 @@ class PairTests(unittest.TestCase):
         self.assertEqual(merged["normal"], [("60", "60")])
         self.assertEqual(merged["fast"][:2], [("60", "60"), ("60", "30")])
         self.assertEqual(merged["fast"].count(("60", "60")), 1)
-        self.assertIn(("60", "60-diagram-slow-frames"), merged["fast"])
+        # Every clip the slides list is generated, whichever the slides use
+        pairs = cast(list[list[str]], clips["pairs"])
+        self.assertLessEqual({(top, bottom) for top, bottom in pairs}, set(merged["fast"]))
+        self.assertIn(("60", "60-diagram-slow-frames-every-1s"), merged["fast"])
 
     def test_generator_command(self) -> None:
         command = export.generator_command("fast", [("60", "30"), ("30", "60")], ["--web"], Path("out"), None)
