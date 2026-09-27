@@ -78,6 +78,6 @@ Digital Foundry use their own names for these problems throughout their console 
 Their bad 30 fps frame pacing: the animation steps evenly and every frame renders in time, but the frames are held for three
 and one refreshes instead of two.
 
-![Half rate, bad frame pacing: frames held for 1 and 3 refreshes instead of 2](images/timing-half-rate-bad-pacing.svg)
+![Half rate, bad frame pacing: frames held for 3 and 1 refreshes instead of 2](images/timing-half-rate-bad-pacing.svg)
 
 More of their videos are listed in [further reading](further-reading.md#digital-foundry).

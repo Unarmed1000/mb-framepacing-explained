@@ -40,6 +40,9 @@ function body(eyebrow: string, heading: string, lead: string, rest: string): HTM
 const figure = (src: string, caption: string): string =>
   `<figure class="diagram"><img src="${src}" alt="${caption}" loading="lazy" /></figure>`;
 
+/** An API name in code style, linked to its documentation. */
+const api = (href: string, name: string): string => `<a href="${href}" target="_blank" rel="noopener"><code>${name}</code></a>`;
+
 const more = (href: string, text: string): string =>
   `<p class="more"><a href="${href}" target="_blank" rel="noopener">${text} ↗</a></p>`;
 
@@ -209,34 +212,324 @@ const slowFramesSlide: Slide = {
     ),
 };
 
+const missedFrames: Slide = {
+  id: "missed-frames",
+  title: "Missed frames",
+  render: () =>
+    body(
+      "Missed frames",
+      "Rule one: do not miss the frame target",
+      `A game that never misses its frame target has no pacing problem to solve. In reality it will miss now and then. Some misses
+      are its own, a shader compile or a streaming spike. Others are outside its control: the host operating system, a driver or
+      another program taking the CPU or GPU for a moment. No amount of optimising removes those, so every game needs a strategy
+      for the missed frame, chosen in advance: it cannot be shown on time any more, only at a later refresh. There is no easy fix:
+      every choice costs something, and which cost is acceptable depends on the game, the platform and the player, and on what the
+      app's own animation error shows.`,
+      `<div class="card">
+        <h2>First, do not miss</h2>
+        <ul class="points">
+          <li><strong>Pick a target every frame can hold, with room to spare.</strong> If 60 fps does not fit, a steady 30 fps on
+            60 Hz or 40 fps on 120 Hz may, <a href="#/half-rate">paced right</a>.</li>
+          <li><strong>Keep the frame cost steady:</strong> dynamic resolution lowers the render resolution under load, at some
+            cost to image quality.</li>
+          <li><strong>Remove the spikes the game causes itself:</strong> compile shaders ahead of time, stream assets in before
+            they are needed.</li>
+        </ul>
+      </div>
+      <div class="guide">
+        <div class="card">
+          <h2>When it happens anyway</h2>
+          <ul class="points">
+            <li><strong>Take the hitch:</strong> stay at full rate and show the late frame a refresh late. Costs a visible jump
+              every time.</li>
+            <li><strong>Queue frames ahead:</strong> a frame that is ready in advance covers for a slow one, as long as the frames
+              fit on average. Costs input latency on every frame.</li>
+            <li><strong>Switch rates:</strong> drop to half rate through a busy stretch. Costs smoothness while there, and
+              deciding when to go back up.</li>
+            <li><strong>Let the display wait:</strong> <a href="#/vrr">VRR</a> shows the frame when it is ready, vsync off shows it
+              at once. Needs a VRR display, or tears.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>What the choice depends on</h2>
+          <ul class="points">
+            <li><strong>What the app actually does:</strong> <a href="#/measure">measure its animation error</a> before choosing.
+              It shows how often and by how much frames miss, whether as rare spikes or whole busy stretches, in which scenes,
+              and whether the cause is pacing or delta time jitter.</li>
+            <li><strong>How much latency matters:</strong> a fast game played with a mouse or gamepad, or a menu, a map, a
+              video.</li>
+            <li><strong>The display:</strong> fixed refresh or VRR and its range, 60 Hz or 120 Hz.</li>
+            <li><strong>The platform:</strong> only plain vsync, or also a swap interval, scheduled presents and feedback on when
+              frames appeared.</li>
+            <li><strong>The player:</strong> some prefer a steady 30 fps, others a higher but uneven rate, which is why many games
+              offer a quality and a performance mode.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">Whichever way a game goes, the animation time has to be right first (the
+        <a href="#/vsync-timer">vsync timer</a>): otherwise even the frames that do arrive on time show the wrong moment. The
+        next slides go through the strategies one at a time, to pick the one that fits the application.</p>`,
+    ),
+};
+
+const lowerTarget: Slide = {
+  id: "lower-target",
+  title: "A lower target",
+  render: () =>
+    body(
+      "Strategy 1",
+      "Run at a lower target frame rate",
+      `For when optimizing cannot get the app to hold the higher target, and frames would miss it often rather than in a rare
+      spike. The first strategy then avoids the miss instead of handling it: run at a frame rate every frame can hold with room
+      to spare, and hold it. If 60 fps on a 60 Hz display does not fit, 30 fps gives every frame twice the time. A 120 Hz display has steps
+      in between: 60 and 40 fps. Below, the price: the same motion at 60 and at 30 fps, both perfectly paced.`,
+      `<div class="guide">
+        <div class="card">
+          <h2>When it fits</h2>
+          <ul class="points">
+            <li><strong>Optimizing is not enough:</strong> the app cannot hold the higher rate, and the misses would be frequent.
+              A rare spike is better handled by one of the other strategies than paid for on every frame.</li>
+            <li><strong>The app and its audience accept it:</strong> a 30 fps mode is familiar on consoles, but PC players are
+              rarely happy with less than 60 fps, and many expect more.</li>
+            <li><strong>The frames fit the lower rate with room to spare,</strong> spikes included, measured on the real
+              content.</li>
+            <li><strong>Steady matters more than fast:</strong> slower motion, and input that does not need every frame of
+              latency back.</li>
+            <li><strong>The platform can hold a frame</strong> for a whole number of refreshes, and for 40 fps the display runs at
+              120 Hz.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>What it costs</h2>
+          <ul class="points">
+            <li><strong>Smoothness:</strong> at 30 fps every step of the motion is twice as far.</li>
+            <li><strong>Input latency:</strong> each frame takes longer, and waits longer to be shown.</li>
+            <li><strong>Unused headroom:</strong> most frames could have run faster.</li>
+            <li><strong>A frame over even the lower budget still misses,</strong> and then one of the other strategies has to
+              handle it.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h2>What players choose</h2>
+        <p class="note">Players notice the cost. Presenting the PS5 Pro in September 2024, Sony's Mark Cerny said that when asked
+          to decide on a mode, PS5 players choose performance over fidelity about three quarters of the time
+          (<a href="https://www.youtube.com/watch?v=X24BzyzQQ-8&amp;t=172s" target="_blank" rel="noopener">PS5 Pro Technical
+            Presentation, 2:52</a>). A performance mode is usually 60 fps and a fidelity mode 30 fps, though not in every game,
+          and Sony has not published the data behind the figure.</p>
+      </div>
+      <p class="note">And it has to be paced right: the next slides show how.</p>`,
+    ),
+};
+
 const halfRate: Slide = {
   id: "half-rate",
-  title: "Half rate",
+  title: "Pacing 30 fps",
   render: () =>
     body(
       "Half rate",
-      "Holding every frame for two refreshes",
-      `At half rate, 30 fps on a 60 Hz display, every frame should stay on screen for exactly two refreshes. A game that caps its
-      frame rate with its own clock instead, and shows each frame at the next vsync once it is done, gets frames held for three
-      refreshes and then one: every frame renders in time, and only the pacing is wrong. Digital Foundry keep finding 30 fps caps
-      like that. Bloodborne had it together with real performance drops, and a fan patch that only changes how often frames are
-      flipped fixes its pacing.`,
+      "How to pace 30 fps",
+      `At 30 fps on a 60 Hz display every frame should stay on screen for exactly two refreshes, and the animation step 33.3 ms
+      each time. Rendering in time is not enough: the display shows a frame at the first vsync after it is presented, so something
+      has to hold it back until its second refresh. A game that caps its frame rate with its own clock instead gets frames held
+      for three refreshes and then one. Digital Foundry keep finding 30 fps caps like that. Bloodborne had it together with real
+      performance drops, and a fan patch that only changes how often frames are flipped fixes its pacing.`,
       `<div class="figures">
         ${figure(halfRateEven, "Evenly paced: each frame held for two refreshes, as intended.")}
         ${figure(halfRateBad, "Bad frame pacing: frames held for 3 and 1 refreshes instead of 2, although every frame renders in time.")}
       </div>
       <div class="card">
-        <h2>Holding a frame for two refreshes</h2>
+        <h2>Three ways to hold a frame for two refreshes</h2>
         <ul class="points">
-          <li><strong>Swap interval:</strong> <code>Present(SyncInterval)</code>, <code>eglSwapInterval</code>, Unity's
-            <code>vSyncCount</code>. Whole refreshes, counted from the previous flip.</li>
-          <li><strong>Scheduled present:</strong> the frame says when it should appear (<code>VK_EXT_present_timing</code>,
-            Android's presentation time, Metal's <code>present(afterMinimumDuration:)</code>).</li>
+          <li><strong>Swap interval:</strong> every frame held for a whole number of refreshes, counted from the previous
+            flip, where the platform has one (below).</li>
+          <li><strong>Scheduled present:</strong> the frame says when it should appear, where the platform has an API for it
+            (below).</li>
           <li><strong>Sleep, then present:</strong> works anywhere, but the thread wakes up a little late, differently every time.
             Unity: "Always use vSyncCount &gt; 0 when smooth frame pacing is needed".</li>
         </ul>
+        <p class="note">Whichever holds the frames, step the animation by two refreshes, counted as the
+          <a href="#/vsync-timer">vsync timer</a> does, so each frame shows the moment it is on screen.</p>
+      </div>
+      <div class="card">
+        <h2>Swap intervals per platform</h2>
+        <table class="ways">
+          <thead>
+            <tr><th>Platform</th><th>API</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Windows, DXGI</td>
+              <td>${api("https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present", "Present(SyncInterval)")}</td>
+              <td>1 to 4: the frame stays "for at least <em>n</em> vertical blanks" (flip model). Given with every present, so it
+                can change per frame</td>
+            </tr>
+            <tr>
+              <td>OpenGL, Windows</td>
+              <td>${api("https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt", "wglSwapIntervalEXT")}</td>
+              <td>"the minimum number of video frames that are displayed before a buffer swap"</td>
+            </tr>
+            <tr>
+              <td>OpenGL, Linux X11</td>
+              <td>${api("https://registry.khronos.org/OpenGL/extensions/EXT/EXT_swap_control.txt", "glXSwapIntervalEXT")}</td>
+              <td>The same: "a value of two means that the color buffers will be swapped at most every other video frame"</td>
+            </tr>
+            <tr>
+              <td>EGL, Android</td>
+              <td>${api("https://registry.khronos.org/EGL/sdk/docs/man/html/eglSwapInterval.xhtml", "eglSwapInterval")}</td>
+              <td>The same, clamped to the implementation's <code>EGL_MAX_SWAP_INTERVAL</code></td>
+            </tr>
+            <tr>
+              <td>Android, Swappy</td>
+              <td>${api("https://developer.android.com/games/sdk/reference/frame-pacing/group/swappy-g-l", "SwappyGL_setSwapIntervalNS")}</td>
+              <td>A minimum interval in nanoseconds (<code>SWAPPY_SWAP_30FPS</code>); in its auto mode Swappy may still go
+                slower</td>
+            </tr>
+            <tr>
+              <td>Vulkan</td>
+              <td>None in core</td>
+              <td>FIFO "is equivalent to … a swap interval of 1": hold a frame longer by presenting it twice, or with a scheduled
+                present</td>
+            </tr>
+            <tr>
+              <td>Wayland</td>
+              <td>${api("https://wayland.app/protocols/fifo-v1", "wp_fifo_v1")}</td>
+              <td>An interval of 1 only: an update stays "for at least one refresh cycle"</td>
+            </tr>
+            <tr>
+              <td>Apple</td>
+              <td>None</td>
+              <td>A display link's
+                ${api("https://developer.apple.com/documentation/quartzcore/cadisplaylink/preferredframeraterange", "preferredFrameRateRange")}
+                sets how often the app is asked for a frame; to hold one, schedule its present</td>
+            </tr>
+            <tr>
+              <td>Engines</td>
+              <td>${api("https://docs.unity3d.com/ScriptReference/QualitySettings-vSyncCount.html", "vSyncCount")} (Unity),
+                <code>rhi.SyncInterval</code> (Unreal)</td>
+              <td>Unity: 0 to 4, the refresh rate divided by <code>vSyncCount</code>; Unreal's frame pacer sets
+                <code>rhi.SyncInterval</code> from the display's refresh rate</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Scheduled presents per platform</h2>
+        <table class="ways">
+          <thead>
+            <tr><th>Platform</th><th>API</th><th>The frame gives</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Vulkan</td>
+              <td>${api("https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_present_timing.html", "VK_EXT_present_timing")}</td>
+              <td>A target time, absolute or relative to the previous frame</td>
+            </tr>
+            <tr>
+              <td>Vulkan, older</td>
+              <td>${api("https://docs.vulkan.org/refpages/latest/refpages/source/VK_GOOGLE_display_timing.html", "VK_GOOGLE_display_timing")}</td>
+              <td>A desired present time (not ratified)</td>
+            </tr>
+            <tr>
+              <td>Android</td>
+              <td>${api("https://registry.khronos.org/EGL/extensions/ANDROID/EGL_ANDROID_presentation_time.txt", "eglPresentationTimeANDROID")},
+                ${api("https://developer.android.com/ndk/reference/group/native-activity#asurfacetransaction_setdesiredpresenttime", "ASurfaceTransaction_setDesiredPresentTime")}</td>
+              <td>A desired presentation time, per frame or per surface transaction</td>
+            </tr>
+            <tr>
+              <td>Apple, Metal</td>
+              <td>${api("https://developer.apple.com/documentation/metal/mtldrawable/present(at:)", "present(at:)")},
+                ${api("https://developer.apple.com/documentation/metal/mtldrawable/present(afterminimumduration:)", "present(afterMinimumDuration:)")}</td>
+              <td>A host time, or how long the previous frame stays on screen at least</td>
+            </tr>
+            <tr>
+              <td>Windows</td>
+              <td>${api("https://learn.microsoft.com/en-us/windows/win32/api/presentation/nf-presentation-ipresentationmanager-settargettime", "IPresentationManager::SetTargetTime")}</td>
+              <td>A target time for the next present (composition swapchain, Windows 11)</td>
+            </tr>
+            <tr>
+              <td>Linux, X11</td>
+              <td>${api("https://registry.khronos.org/OpenGL/extensions/OML/GLX_OML_sync_control.txt", "glXSwapBuffersMscOML")}</td>
+              <td>A target vblank count, not a time</td>
+            </tr>
+            <tr>
+              <td>Linux, Wayland</td>
+              <td>${api("https://wayland.app/protocols/commit-timing-v1", "wp_commit_timing_v1")}</td>
+              <td>A time the update is shown "as closely as possible to, but not before" (staging; KWin, Mutter, Sway, Weston,
+                gamescope and others)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">Plain DXGI and core Vulkan have none: there a swap interval, or presenting each frame twice, holds a
+          frame.</p>
       </div>
       ${more(doc("doc/frame-pacing-strategies.md#holding-a-frame-for-more-than-one-refresh"), "Holding a frame for more than one refresh")}`,
+    ),
+};
+
+/** A refresh strip of the first 1/6 s of `fps` on a `hz` display, one cell per refresh, the shade changing with each new frame
+ * (after the average chart's strips), and how many refreshes each frame is held. A frame is shown at the first refresh at or after
+ * the moment it is due, as with plain vsync; the rows share one time scale, so the strips line up (a refresh rate that 1/6 s does
+ * not divide, like 500 Hz, ends in a part of a cell). */
+function refreshStrip(hz: number, fps: number): string {
+  const refreshes = hz / 6;
+  const flips: number[] = [];
+  // Integers throughout: k x hz / fps is exact whenever it is whole
+  for (let frame = 0; Math.ceil((frame * hz) / fps) < refreshes; frame++) flips.push(Math.ceil((frame * hz) / fps));
+  const cells: string[] = [];
+  let shade = 0;
+  for (let refresh = 0; refresh < refreshes; refresh++) {
+    if (refresh > 0 && flips.includes(refresh)) shade ^= 1;
+    const part = refreshes - refresh < 1 ? ` style="flex: ${(refreshes - refresh).toFixed(3)}"` : "";
+    cells.push(`<span${shade ? ' class="b"' : ""}${part}></span>`);
+  }
+  const holds = flips.slice(1).map((flip, index) => flip - (flips[index] ?? 0));
+  const even = holds.every((hold) => hold === holds[0]);
+  const shown = even
+    ? `every frame ${holds[0]} refreshes, ${((1000 * (holds[0] ?? 0)) / hz).toFixed(1).replace(/\.0$/, "")} ms`
+    : `${holds.slice(0, 5).join(", ")} … refreshes: uneven`;
+  return `<div class="strip-row">
+      <div class="strip-label"><strong>${fps} fps on ${hz} Hz</strong><span>${shown}</span></div>
+      <div class="refresh-strip">${cells.join("")}</div>
+    </div>`;
+}
+
+const otherRates: Slide = {
+  id: "other-rates",
+  title: "Other rates",
+  render: () =>
+    body(
+      "Other rates",
+      "Any rate that divides the refresh rate",
+      `Half rate is one case of a general rule: a frame rate can be paced evenly when it divides the display's refresh rate, so
+      every frame is held for the same whole number of refreshes, the same way as at 30 fps. On a 120 Hz display that gives 60,
+      40 and 30 fps. Digital Foundry on
+      <a href="https://www.youtube.com/watch?v=QXi7uO7wxdc" target="_blank" rel="noopener">Ratchet &amp; Clank's 40 fps mode</a>:
+      "the same consistency but smoother" than 30 fps on 60 Hz. A rate that does not divide, like 60 fps on 144 Hz or 40 fps on
+      60 Hz, cannot be even however well it is paced: its frames alternate between two hold lengths.`,
+      `<div class="card">
+        <h2>Even: the rate divides the refresh rate</h2>
+        ${refreshStrip(60, 30)}
+        ${refreshStrip(120, 60)}
+        ${refreshStrip(120, 40)}
+        ${refreshStrip(120, 30)}
+        ${refreshStrip(144, 72)}
+        ${refreshStrip(144, 48)}
+        ${refreshStrip(240, 120)}
+        ${refreshStrip(240, 60)}
+        ${refreshStrip(500, 250)}
+        ${refreshStrip(500, 100)}
+      </div>
+      <div class="card">
+        <h2>Uneven: it does not</h2>
+        ${refreshStrip(144, 60)}
+        ${refreshStrip(60, 40)}
+        ${refreshStrip(500, 60)}
+      </div>
+      <p class="note">Every strip is the same 1/6 s: one cell per refresh, the shade changing with each new frame. A 40 fps mode
+        needs a display running at 120 Hz: on 60 Hz the same game is uneven. With VRR a steady rate inside the display's range is
+        even without dividing anything, as long as the frame times stay steady.</p>
+      ${more(doc("doc/display-sync.md#fixed-or-adaptive-frame-rate"), "Fixed or adaptive frame rate")}`,
     ),
 };
 
@@ -337,6 +630,47 @@ const inputLatency: Slide = {
     ),
 };
 
+const averageFrameRate: Slide = {
+  id: "average-frame-rate",
+  title: "Average frame rate",
+  render: () =>
+    body(
+      "Why the usual numbers miss it",
+      "The average frame rate hides stutter",
+      `An average frame rate counts frames, not when they reach the screen. Both rows below are 30 fps on a 60 Hz display, 30
+      frames every second, and every frame renders in time: the top one holds each frame for two refreshes, the bottom one for
+      three and then one, and only the top one is smooth. The average cannot tell them apart.`,
+      `${figure(averageHalfRate, "Same 30 fps on average, different motion: 60 Hz, two refreshes every time, or three and then one.")}
+      <div class="card">
+        <h2>What each number sees</h2>
+        <table class="ways">
+          <thead>
+            <tr><th>Number</th><th>Bad frame pacing</th><th><a href="#/invisible">Delta time jitter</a></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Average frame rate</strong></td>
+              <td>30 fps, the same as evenly paced</td>
+              <td>60 fps, the same as a perfect timer</td>
+            </tr>
+            <tr>
+              <td><strong>Display time per frame</strong></td>
+              <td>Uneven: 50 and 16.7 ms instead of 33.3 ms</td>
+              <td>Even: 16.7 ms, the same as a perfect timer</td>
+            </tr>
+            <tr>
+              <td><strong>Animation error</strong></td>
+              <td>±16.7 ms</td>
+              <td>Up to ±5 ms in the videos</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">A graph of display times catches bad pacing, but only animation error catches both causes of stutter,
+          because only it looks at the moment each frame shows.</p>
+      </div>`,
+    ),
+};
+
 const PRESENTMON = "https://github.com/GameTechDev/PresentMon";
 
 const measure: Slide = {
@@ -349,11 +683,7 @@ const measure: Slide = {
       `<a href="#/two-clocks">Animation error</a> needs two clocks for every frame: the moment it shows (its animation time) and
       when it reached the screen (its display time). The ways to measure it differ in where they get each, and so in what they
       can catch.`,
-      `<h2 class="section-title">Why the usual numbers miss it</h2>
-      <p class="note">The average frame rate is the same for evenly and badly paced 30 fps, and frame times are the same for a
-        perfect and a <a href="#/invisible">jittery timer</a>: only animation error tells them apart.</p>
-      ${figure(averageHalfRate, "Same 30 fps on average, different motion: 60 Hz, two refreshes every time, or three and then one.")}
-      <h2 class="section-title">Ways to measure it</h2>
+      `<h2 class="section-title">Ways to measure it</h2>
       <div class="card">
         <table class="ways">
           <thead>
@@ -500,15 +830,19 @@ const TOPICS: readonly { name: string; about: string; slides: readonly Slide[] }
   {
     name: "Stutter from late frames",
     about:
-      "The second cause of stutter, <strong>bad frame pacing</strong>: frames that reach the screen late or unevenly, and how engines hold and switch rates.",
-    slides: [slowFramesSlide, halfRate, switching, recovery],
+      "The second cause of stutter, <strong>bad frame pacing</strong>: frames that reach the screen late or unevenly, why missed frames have no easy fix, and the strategies for them, starting with a lower target frame rate.",
+    slides: [slowFramesSlide, missedFrames, lowerTarget, halfRate, otherRates],
   },
   {
     name: "Beyond vsync: VRR and input latency",
     about: "What VRR changes, and how pacing meets input latency.",
     slides: [vrr, inputLatency],
   },
-  { name: "Go further", about: "How to measure animation error, and where to read more.", slides: [measure, furtherReading] },
+  {
+    name: "Go further",
+    about: "Why the average frame rate hides stutter, how to measure animation error, and where to read more.",
+    slides: [averageFrameRate, measure, furtherReading],
+  },
 ];
 
 const topics: Slide = {
@@ -545,7 +879,7 @@ const topics: Slide = {
 };
 
 /** The slides that are not ready yet: each carries a work-in-progress notice, and so does its topic's card. */
-const WORK_IN_PROGRESS: ReadonlySet<Slide> = new Set([halfRate, switching, recovery, vrr, inputLatency, furtherReading]);
+const WORK_IN_PROGRESS: ReadonlySet<Slide> = new Set([switching, recovery, vrr, inputLatency, furtherReading]);
 
 /** The notice before the slides that are not ready yet: continue anyway, or go to the measuring slide, which is. */
 const notReady: Slide = {
@@ -555,11 +889,11 @@ const notReady: Slide = {
     body(
       "Work in progress",
       "The rest is not ready yet",
-      `The slides after this one, on half rate, switching rates, VRR, input latency and further reading, are drafts: their text,
-      diagrams and videos are still changing, and some videos are missing. The slide on measuring animation error is ready.`,
+      `The slides after this one, on VRR, input latency and further reading, are drafts: their text, diagrams and
+      videos are still changing, and some videos are missing. The slides on measuring animation error are ready.`,
       `<div class="menu-actions">
-        <a class="button" href="#/half-rate">Continue anyway →</a>
-        <a class="button ghost" href="#/measure">How to measure animation error →</a>
+        <a class="button" href="#/${topicSlides[firstNotReady]?.slide.id ?? "topics"}">Continue anyway →</a>
+        <a class="button ghost" href="#/average-frame-rate">Measuring animation error →</a>
         <a class="button ghost" href="#/topics">Back to the topics</a>
       </div>`,
     ),
@@ -590,6 +924,29 @@ const CLIPS: ReadonlyMap<Slide, () => HTMLElement> = new Map([
         "60-diagram-half-rate-bad-pacing",
         "Top: half rate, evenly paced, every frame held for two refreshes. Bottom: bad frame pacing, frames held for three and " +
           "one refreshes. Both are 30 fps on average; only the bottom one stutters.",
+      ),
+  ],
+  [
+    lowerTarget,
+    () =>
+      liveComparison(
+        "fast",
+        "60",
+        "30",
+        "Top: 60 fps. Bottom: 30 fps. Both perfectly paced, every frame showing the moment it is on screen: the bottom one only " +
+          "moves in steps twice as far.",
+        false,
+      ),
+  ],
+  [
+    averageFrameRate,
+    () =>
+      liveComparison(
+        "fast",
+        "60-diagram-half-rate-even",
+        "60-diagram-half-rate-bad-pacing",
+        "Both boxes at 30 fps, 30 frames every second. Top: every frame held for two refreshes. Bottom: for three and then one.",
+        false,
       ),
   ],
   [
@@ -642,8 +999,31 @@ function withTopic(slide: Slide, topic: (typeof TOPICS)[number], position: numbe
   };
 }
 
+/** Slides set aside to be reworked later: after every topic, not on the topics page. */
+const PARKED: (typeof TOPICS)[number] = {
+  name: "Stuff we might use",
+  about: "Set aside to be reworked later.",
+  slides: [switching, recovery],
+};
+
+const parked: Slide = {
+  id: "parked",
+  title: "Stuff we might use",
+  render: () =>
+    body(
+      "Set aside",
+      "Stuff we might use",
+      `The explanation ends before this slide. The slides after it are set aside, to be merged or rewritten later: when a game
+      that dropped to half rate should go back to full rate, in a busy stretch and after a single slow frame.`,
+      `<div class="menu-actions">
+        <a class="button" href="#/switching">Show them anyway →</a>
+        <a class="button ghost" href="#/topics">Back to the topics</a>
+      </div>`,
+    ),
+};
+
 /** The explanation slides, in order: the topics first, then every topic's slides, with the notice before the first one that is
- * not ready yet. */
+ * not ready yet, and the set-aside slides last. */
 const topicSlides = TOPICS.flatMap((topic) =>
   topic.slides.map((slide, position) => ({ slide, placed: withTopic(slide, topic, position) })),
 );
@@ -653,4 +1033,6 @@ export const EXPLANATION_SLIDES: readonly Slide[] = [
   ...topicSlides.slice(0, firstNotReady).map(({ placed }) => placed),
   notReady,
   ...topicSlides.slice(firstNotReady).map(({ placed }) => placed),
+  parked,
+  ...PARKED.slides.map((slide, position) => withTopic(slide, PARKED, position)),
 ];

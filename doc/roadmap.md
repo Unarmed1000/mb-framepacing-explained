@@ -50,6 +50,13 @@ Sample first each time.
 
 ## Docs and research
 
+- [ ] Rework [strategies](frame-pacing-strategies.md) around the missed frame: why it needs a strategy, the options side by side
+      with what each costs and when it fits, then the existing detail. Research what is missing: frame queue depth (triple
+      buffering), what to do with the late frame itself (show it late, drop it, render it for when it will appear), dynamic
+      resolution, and how engines and platforms do it (Unreal, Unity, Apple frame rate ranges, DXGI and Vulkan present timing).
+      The web page's "No easy fix for a missed frame" slide is the short version.
+- [ ] Decide on the set-aside slides (switching rates, recovering): merge them into one "when to go back to full rate" slide, or
+      drop them.
 - [ ] VRR and vsync off: the right approach is still open ([strategies](frame-pacing-strategies.md#still-open-vrr-and-vsync-off)).
 - [ ] Drift table: audio time stamps on Linux (PipeWire, ALSA) and Apple (Core Audio), verified.
 - [ ] Name the platforms where `wl_surface.frame` misbehaves.

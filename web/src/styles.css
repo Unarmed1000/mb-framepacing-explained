@@ -825,3 +825,52 @@ code {
   font-size: 15px;
   line-height: 1.5;
 }
+
+/* Refresh strips (the other rates slide): one row per frame rate, one cell per refresh, the shade changing with each new frame,
+   in the average chart's colours */
+.strip-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--card-border);
+}
+
+.card h2 + .strip-row {
+  border-top: none;
+}
+
+.strip-label strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.strip-label span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.refresh-strip {
+  display: flex;
+  gap: 2px;
+}
+
+.refresh-strip span {
+  flex: 1;
+  height: 22px;
+  border-radius: 2px;
+  background: #6e7681;
+}
+
+.refresh-strip span.b {
+  background: #adbac7;
+}
+
+@media (max-width: 640px) {
+  .strip-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
