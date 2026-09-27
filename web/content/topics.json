@@ -21,7 +21,7 @@
       "slides": ["measure"]
     },
     {
-      "name": "Appendix: staying within the frame budget",
+      "name": "Staying within the frame budget",
       "appendix": true,
       "about": "Not pacing strategies, but ways to keep frames within their budget: render scale, dynamic resolution and better upscalers such as DLSS and FSR.",
       "slides": [
@@ -36,7 +36,7 @@
       ]
     },
     {
-      "name": "Appendix: further reading",
+      "name": "Further reading",
       "appendix": true,
       "about": "The sources and where to read more.",
       "slides": ["further-reading"]

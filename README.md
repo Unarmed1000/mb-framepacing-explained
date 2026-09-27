@@ -13,8 +13,8 @@ What it covers:
 - **Animation error** is the one measurement that catches both, and there are several ways to measure it in your own game or app.
 - How games and apps fix it: a vsync timer, holding frames for whole refreshes, switching rates with hysteresis, recovering from a spike.
 
-It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing), which measures animation error on a real
-display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
+It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing) (pre-alpha), which measures animation error
+on a real display output. Both follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
 [Gamers Nexus animation error methodology](https://gamersnexus.net/gpus-gn-extras-cpus/problem-gpu-benchmarks-reality-vs-numbers-animation-error-methodology-white).
 
 ## What is in this repository

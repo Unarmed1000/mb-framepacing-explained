@@ -51,6 +51,8 @@ to 5 ms early or late, and two frames in the middle of every move that miss thei
 Made for developers, to check their own application on the real output and to automate the checks: its command line captures a
 run from start to end, analyses it and writes the results as JSON and CSV, ready for a script to compare against a limit.
 
+**It is still pre-alpha:** its commands, output and results may change, so check the numbers before relying on them. {.note}
+
 :::guide
 
 :::card How it works

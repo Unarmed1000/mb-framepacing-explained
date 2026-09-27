@@ -34,8 +34,8 @@ const PARKED: Topic = topicData.parked;
 const about = (text: string): string => text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
 /** The topics' cards, on the topics page and the appendix page: each one link to its topic's first slide, marked when some of
- * its slides are drafts. */
-function topicCards(topics: readonly Topic[]): HTMLElement {
+ * its slides are drafts, and, with `tagAppendix`, when it is in the appendix. */
+function topicCards(topics: readonly Topic[], tagAppendix: boolean): HTMLElement {
   const grid = document.createElement("div");
   grid.className = "topics";
   for (const topic of topics) {
@@ -47,7 +47,8 @@ function topicCards(topics: readonly Topic[]): HTMLElement {
       drafts === 0
         ? ""
         : `<span class="topic-wip">${drafts === topic.slides.length ? "Work in progress" : "Partly work in progress"}</span>`;
-    card.innerHTML = `<h2></h2>${mark}<p></p><span class="topic-start">Start →</span>`;
+    const tag = tagAppendix && topic.appendix ? `<span class="topic-tag">Appendix</span>` : "";
+    card.innerHTML = `<h2></h2>${tag}${mark}<p></p><span class="topic-start">Start →</span>`;
     card.querySelector("h2")!.textContent = topic.name;
     // Static text of topics.json, with the causes of stutter marked
     card.querySelector("p")!.innerHTML = about(topic.about);
@@ -90,7 +91,14 @@ function fill(element: HTMLElement): void {
         break;
       case "topics":
         // `::topics appendix`: only the appendix's topics
-        holder.replaceWith(topicCards(args[0] === "appendix" ? TOPICS.filter((topic) => topic.appendix) : TOPICS));
+        holder.replaceWith(
+          args[0] === "appendix"
+            ? topicCards(
+                TOPICS.filter((topic) => topic.appendix),
+                false,
+              )
+            : topicCards(TOPICS, true),
+        );
         break;
     }
   }
