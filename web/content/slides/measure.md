@@ -5,7 +5,7 @@ eyebrow: Measure it yourself
 
 # How to measure animation error
 
-[Animation error](#/two-clocks) needs two clocks for every frame: the moment it shows (its animation time) and when it reached
+[Animation error](#/timer-jitter) needs two clocks for every frame: the moment it shows (its animation time) and when it reached
 the screen (its display time). The ways to measure it differ in where they get each, and so in what they can catch.
 
 ## Ways to measure it

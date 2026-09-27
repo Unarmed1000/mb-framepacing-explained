@@ -28,7 +28,7 @@ error shows.
 - **Take the hitch:** stay at full rate and show the late frame a refresh late. Costs a visible jump every time.
 - **[Adapt the rate](#/adapt-rate):** drop to half rate through a busy stretch, and back up when the frames fit again. Costs smoothness while
   there, and deciding when to switch.
-- **Let the display wait:** [VRR](#/vrr) shows the frame when it is ready, vsync off shows it at once. Needs a VRR display, or
+- **Let the display wait:** VRR shows the frame when it is ready, vsync off shows it at once. Needs a VRR display, or
   tears.
 
 :::

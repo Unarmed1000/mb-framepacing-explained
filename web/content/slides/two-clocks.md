@@ -15,8 +15,8 @@ it at work. We say _game_ for anything that animates in real time: games, user i
 
 :::video single fast 60 60 top chart
 
-60 fps with the perfect timer: every frame shows exactly the moment it is on screen. The chart shows each frame's animation
-error, following the video: always 0.
+60 fps with the perfect timer (the ideal timer, in the chart): every frame shows exactly the moment it is on screen. The chart
+shows each frame's animation error, following the video: always 0.
 
 :::
 
@@ -27,7 +27,8 @@ error, following the video: always 0.
 - A **60 Hz display**, a refresh every 16.7 ms, as in the videos.
 - **Render:** each box is one frame, as wide as it takes to render, labelled with its **predicted display time**, when the game
   expects it to be shown. That becomes its animation time.
-- The **arrow** is where the game presents it: the frame is done and waits for the next vsync.
+- The **arrow** is where the game **presents** it: the frame is done and handed to the display, and waits for the next
+  **vsync**, the moment the display starts a new refresh. Swapping it in there is the **flip**.
 - **Display:** which frame is on screen at each refresh. The rows below compute the animation error the way PresentMon does:
   positive is shown too soon, negative too late.
 

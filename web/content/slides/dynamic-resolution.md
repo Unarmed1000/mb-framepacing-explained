@@ -32,10 +32,10 @@ below, deepened to 60 %, at half speed.
   of the screen by default (`r.DynamicRes.MinScreenPercentage`, `MaxScreenPercentage`), against `r.DynamicRes.FrameTimeBudget`.
   In [Unity](https://docs.unity3d.com/6000.3/Documentation/Manual/DynamicResolution-control.html) the app sets the scale itself
   (`ScalableBufferManager.ResizeBuffers`).
-- **Scale up to a fixed output:** a temporal upscaler takes the changing resolution. DLSS: "the input buffer can change
-  dimensions from frame to frame whilst the output size remains fixed"
-  ([NVIDIA](https://github.com/NVIDIA/DLSS/blob/main/doc/DLSS_Programming_Guide_Release.pdf)); Intel's XeSS works the same way, and
-  Unreal's TSR does on consoles.
+- **Scale up to a fixed output:** a [temporal upscaler](#/upscalers) takes the changing resolution. DLSS: "the input buffer can
+  change dimensions from frame to frame whilst the output size remains fixed"
+  ([NVIDIA](https://github.com/NVIDIA/DLSS/blob/main/doc/DLSS_Programming_Guide_Release.pdf)); Intel's XeSS works the same way,
+  and Unreal's TSR does on consoles.
 
 :::
 

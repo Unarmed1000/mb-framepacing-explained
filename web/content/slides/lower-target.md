@@ -95,7 +95,7 @@ Rate switches the TV to the content's own rate, doubling 25 and 30 fps to 50 and
 
 Games and phones are also about input latency. A gamepad and a finger on a touch screen are direct input, and at a higher rate
 the result of every press or swipe reaches the screen sooner: a frame lasts 33.3 ms at 30 fps and 16.7 ms at 60 fps. Google
-names "lower latency" among its reasons. A TV box, driven by a remote, puts even pacing first. More under
-[input latency](#/input-latency). {.note}
+names "lower latency" among its reasons. A TV box, driven by a remote, puts even pacing first. More in
+[input latency](https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/input-latency.md). {.note}
 
-And it has to be paced right: the next slides show how. {.note}
+And it has to be paced right: the next slide shows how. {.note}
