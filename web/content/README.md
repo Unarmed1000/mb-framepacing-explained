@@ -22,8 +22,7 @@ The rest is Markdown: **bold**, _italic_, `code`, [links](https://example.com), 
 ```
 
 - `title` is the slide's short name, shown in the navigation; `eyebrow` is the small heading above the title.
-- `draft: true` marks a slide that is not ready: it gets a work-in-progress notice, and the page puts a notice before the first
-  one.
+- `draft: true` marks a slide that is not ready: it gets a work-in-progress notice.
 - A link to another slide is its address: `[the vsync timer](#/vsync-timer)`. Links to other sites open in a new tab.
 - A paragraph with only an image is a diagram: `![Its description.](../../../doc/images/timing-slow-frames.svg)`. The timing
   diagrams are made by [tools/timing_diagrams](../../tools/timing_diagrams).

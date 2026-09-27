@@ -90,9 +90,6 @@ function fill(element: HTMLElement): void {
         break;
     }
   }
-  for (const link of element.querySelectorAll<HTMLAnchorElement>('a[href="#/@first-draft"]')) {
-    link.href = `#/${topicSlides[firstNotReady]?.id ?? "topics"}`;
-  }
   for (const list of element.querySelectorAll("[data-links] ul")) {
     list.className = "links";
     for (const item of list.querySelectorAll("li")) {
@@ -147,15 +144,10 @@ function withTopic(id: string, topic: Topic, position: number): Slide {
   };
 }
 
-/** The explanation slides, in order: the topics first, then every topic's slides, with the notice before the first draft, and
- * the set-aside slides last. */
-const topicSlides = TOPICS.flatMap((topic) => topic.slides.map((id, position) => withTopic(id, topic, position)));
-const firstNotReady = topicSlides.findIndex((slide) => content(slide.id).meta.draft);
+/** The explanation slides, in order: the topics first, then every topic's slides, and the set-aside slides last. */
 export const EXPLANATION_SLIDES: readonly Slide[] = [
   markdownSlide("topics"),
-  ...topicSlides.slice(0, firstNotReady),
-  markdownSlide("not-ready"),
-  ...topicSlides.slice(firstNotReady),
+  ...TOPICS.flatMap((topic) => topic.slides.map((id, position) => withTopic(id, topic, position))),
   markdownSlide("parked"),
   ...PARKED.slides.map((id, position) => withTopic(id, PARKED, position)),
 ];

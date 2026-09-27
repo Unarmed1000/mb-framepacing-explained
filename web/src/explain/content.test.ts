@@ -6,8 +6,8 @@ import clips from "./clips.json";
 // The slides' Markdown as text (?raw: not through the slide plugin)
 const SOURCES = import.meta.glob<string>("../../content/slides/*.md", { query: "?raw", import: "default", eager: true });
 const FILES = new Map(Object.entries(SOURCES).map(([path, source]) => [path.replace(/^.*\/|\.md$/g, ""), source]));
-/** The slides that are not in a topic: the topics page, the notice before the drafts, the page before the set-aside ones. */
-const PAGES = ["topics", "not-ready", "parked"];
+/** The slides that are not in a topic: the topics page and the page before the set-aside ones. */
+const PAGES = ["topics", "parked"];
 
 describe("the slides' content", () => {
   it("has a file for every slide of the topics, and every file is shown", () => {

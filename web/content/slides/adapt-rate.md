@@ -33,6 +33,9 @@ This is **frame pacing** again: how evenly frames reach the screen, not only how
 shows more frames, but unevenly paced; the bottom half fewer, evenly paced, and it is the one that moves smoothly. Android's
 library for it carries the name: the [Frame Pacing library](https://developer.android.com/games/sdk/frame-pacing) (Swappy). {.note}
 
+Dropping to half rate means holding every frame for exactly two refreshes and stepping the animation by two: [How to pace 30
+fps](#/half-rate) shows how it can be done, with the swap interval and scheduled present APIs of each platform. {.note}
+
 :::video file adaptive-history 574 controls
 
 The bottom box of the video above, with the history its rule keeps: the frames of the last 2 s, newest on the right, and the two
