@@ -11,7 +11,7 @@ import unittest
 from dataclasses import dataclass
 from pathlib import Path
 
-from .. import MarkerKind, Options, Payload, Point, StartMetadata
+from .. import MarkerKind, Options, Payload, Point, SequenceId, StartMetadata
 
 ENVIRONMENT_VARIABLE = "MB_FRAMEMARKER_TEST_DATA"
 
@@ -56,8 +56,10 @@ def require_marker_directory(test: unittest.TestCase) -> Path:
     return directory
 
 
-def _name(hex_text: str) -> str:
-    return bytes.fromhex(hex_text).decode("utf-8")
+def _start(row: dict[str, str]) -> StartMetadata:
+    """The start metadata; sequenceIdHex is 32 hex digits for a start marker and empty for the other kinds."""
+    sequence_id = row["sequenceIdHex"]
+    return StartMetadata(int(row["startUtcTicks"]), SequenceId(bytes.fromhex(sequence_id)) if sequence_id else SequenceId())
 
 
 def _payload(row: dict[str, str]) -> Payload:
@@ -68,6 +70,8 @@ def _payload(row: dict[str, str]) -> Payload:
         MarkerKind(int(row["kind"])),
         int(row["intendedDisplayTicks"]),
         int(row["targetFrameTicks"]),
+        int(row["cpuStartTicks"]),
+        int(row["cpuBusyTicks"]),
     )
 
 
@@ -78,7 +82,7 @@ def markers(directory: Path) -> list[GoldenMarker]:
         GoldenMarker(
             row["file"],
             _payload(row),
-            StartMetadata(int(row["startUtcTicks"]), _name(row["startNameHex"])),
+            _start(row),
             Options(int(row["moduleSizePx"]), int(row["quietZoneModules"])),
             Point(int(row["originX"]), int(row["originY"])),
             int(row["width"]),
@@ -95,7 +99,7 @@ def module_digest(directory: Path) -> list[ModuleDigestRow]:
         ModuleDigestRow(
             line,
             _payload(row),
-            StartMetadata(int(row["startUtcTicks"]), _name(row["startNameHex"])),
+            _start(row),
             int(row["size"]),
             row["modulesHex"],
         )

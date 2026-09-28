@@ -12,6 +12,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+import uuid
 from fractions import Fraction
 from pathlib import Path
 from typing import cast
@@ -21,7 +22,9 @@ from PIL import Image
 
 import generate_videos as gv
 from frame_timing import parse_mode
-from mb_framemarker import MAX_START_NAME_BYTES, MarkerKind
+from mb_framemarker import MarkerKind, Point, SequenceId, StartMetadata, fill_quads
+from mb_framemarker import Options as MarkerOptions
+from mb_framemarker import generate_start_quads as start_marker_quads
 
 SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
 MODE = parse_mode
@@ -830,12 +833,72 @@ class SingleAndMarkerTests(unittest.TestCase):
                 self.assertEqual(entry["targetFps"], max(expected))
         self.assertIn("CC BY-NC-SA 4.0", cast(str, gv.build_manifest(settings, gv.plan_videos(settings))["license"]))
 
-    def test_the_start_marker_names_the_mode_within_the_limit(self) -> None:
-        settings, _ = self.marked("60")
-        long = MODE("60-naive-5ms-diagram-slow-frames-every-1s")
-        name = gv.marker_name(settings, long)
-        self.assertLessEqual(len(name.encode("utf-8")), MAX_START_NAME_BYTES)
-        self.assertTrue(settings.label(long).startswith(name))
+    def test_the_sequence_id_is_the_mode_name_or_a_uuid_made_from_it(self) -> None:
+        # A name of at most 16 characters is the text tag itself, padded with zeros
+        short = gv.marker_sequence_id(MODE("60-busy-swappy"))
+        self.assertEqual((short, str(short)), (SequenceId(b"60-busy-swappy\0\0"), "60-busy-swappy"))
+        # A longer one is a version 5 UUID from the repository's URL and the name, shown as the UUID
+        name = "60-naive-5ms-diagram-slow-frames-every-1s"
+        expected = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/Unarmed1000/mb-framepacing-explained/" + name)
+        long = gv.marker_sequence_id(MODE(name))
+        self.assertEqual((long, str(long)), (SequenceId(expected.bytes), str(expected)))
+        self.assertEqual(
+            str(gv.marker_sequence_id(MODE("60-diagram-half-rate-even"))), str(uuid.uuid5(uuid.NAMESPACE_URL, gv.SEQUENCE_ID_URL + "60-diagram-half-rate-even"))
+        )
+        # The start marker carries it, with no start time; the manifest shows it as mb-framepacing does, and its bytes in hex
+        for mode, sequence_id in (("60-busy-swappy", short), (name, long)):
+            settings, jobs = self.marked(mode)
+            job = jobs[0]
+            payload = gv.marker_payload(settings, job, -1)
+            self.assertEqual(payload.kind, MarkerKind.SEQUENCE_START)
+            blank = bytes(3 * settings.width * settings.height)
+            expected_quads = start_marker_quads(
+                payload, StartMetadata(0, sequence_id), MarkerOptions(settings.marker_module_px), Point(*settings.marker_origin)
+            )
+            expected_image = bytearray(blank)
+            fill_quads(expected_image, settings.width, settings.height, expected_quads, channels=3)
+            self.assertEqual(gv.draw_marker(settings, job, -1, blank), bytes(expected_image))
+            video = cast(list[dict[str, object]], gv.build_manifest(settings, jobs)["videos"])[0]
+            self.assertEqual((video["sequenceId"], video["sequenceIdHex"]), (str(sequence_id), sequence_id.data.hex()))
+            self.assertRegex(cast(str, video["sequenceIdHex"]), "^[0-9a-f]{32}$")
+
+    def test_the_markers_carry_the_manifests_cpu_start_and_busy_times(self) -> None:
+        modes = ("60", "30", "60-naive-5ms", "60-busy-full-rate", "60-busy-swappy", "60-diagram-half-rate-bad-pacing", "60-diagram-slow-frames-every-1s")
+        for mode in modes:
+            with self.subTest(mode):
+                settings, jobs = self.marked(mode)
+                job = jobs[0]
+                count = settings.frame_count(job.speed)
+                first = len(gv.simulated_frames(settings, job.top, job.speed).flips)
+                entry = cast(dict[str, list[int]], gv._mode_entry(settings, job.top, job.speed)["frames"])  # pyright: ignore[reportPrivateUsage]
+                starts, cpu = entry["cpuStartTicks"], entry["cpuBusyTicks"]
+                # Loop 0: every frame of the clip, by its marker frame index (a held frame keeps its values)
+                payloads = {payload.frame_index - first: payload for payload in (gv.marker_payload(settings, job, frame) for frame in range(count))}
+                self.assertEqual(sorted(payloads), list(range(len(starts))))
+                self.assertEqual([payloads[index].cpu_start_ticks for index in range(len(starts))], starts)
+                self.assertEqual([payloads[index].cpu_busy_ticks for index in range(len(starts))], cpu)
+                # Starts only move forward
+                self.assertTrue(all(a < b for a, b in itertools.pairwise(starts)))
+                clip_ticks = count * 10_000_000 // 60
+                # The lead-in shows the previous loop's last frame, one clip earlier; the lead-out the next loop's first, one clip later
+                before, after = gv.marker_payload(settings, job, -1), gv.marker_payload(settings, job, count)
+                self.assertEqual((before.cpu_start_ticks, before.cpu_busy_ticks), (starts[-1] - clip_ticks, cpu[-1]))
+                self.assertEqual((after.cpu_start_ticks, after.cpu_busy_ticks), (starts[0] + clip_ticks, cpu[0]))
+                # A frame is done before the refresh it is flipped on
+                flips = entry["refresh"]
+                self.assertTrue(all(start + took <= flip * clip_ticks // count + 1 for start, took, flip in zip(starts, cpu, flips, strict=True)))
+        # CPU busy is known in every frame except the on-time frames around a replayed diagram's own
+        for mode in modes[:-1]:
+            settings, jobs = self.marked(mode)
+            entry = cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])  # pyright: ignore[reportPrivateUsage]
+            self.assertTrue(all(took > 0 for took in entry["cpuBusyTicks"]), mode)
+        settings, jobs = self.marked("60")
+        self.assertEqual(set(cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])["cpuBusyTicks"]), {50_000})  # pyright: ignore[reportPrivateUsage]
+
+    def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
+        settings, jobs = self.marked("60-busy-swappy")
+        entry = cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])  # pyright: ignore[reportPrivateUsage]
+        self.assertEqual(entry["cpuStartTicks"][1:], [round(Fraction(flip, 60) * 10_000_000) for flip in entry["refresh"][:-1]])
 
     def test_the_manifest_says_how_to_measure(self) -> None:
         settings, jobs = self.marked("60")

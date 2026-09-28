@@ -200,10 +200,13 @@ import them and measure their animation error, and its numbers can be checked ag
 - **What it carries:** at every refresh, the index of the frame on screen (a held frame keeps its index, so mb-framepacing sees one
   presented frame), the animation time it shows, and the frame pacer's plan for it: its intended display time (the refresh it was
   rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 166 667 ticks at
-  60 fps, 333 333 at 30), all in 100 ns ticks; run id 1. The index counts on across loops; the manifest's `markerFirstFrameIndex`
-  is the clip's first frame.
-- **Start and end:** 3 refreshes of start marker before the clip (named after the mode, cut to the marker's 60 bytes) and 3 of end
-  marker after it, showing the previous and next loop's frames. The measured run is then exactly the clip, and the video 6
+  60 fps, 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
+  long the CPU worked on it before presenting it); all in 100 ns ticks, 0 = unknown (the diagram modes' filler frames have no CPU
+  busy); run id 1. The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first frame, and its
+  `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
+- **Start and end:** 3 refreshes of start marker before the clip and 3 of end marker after it, showing the previous and next loop's
+  frames. The start marker's sequence id is the mode's name when it fits 16 characters, else a UUID made from it (the manifest's
+  `sequenceId`). The measured run is then exactly the clip, and the video 6
   refreshes longer; it no longer loops seamlessly.
 - **Where:** mb-framepacing's recommended place, 32 px from the top-left corner, left of the box's path, in pure black and white,
   modules of `--marker-module-px` video pixels (3; 2 is enough lossless, `--web` needs 3).

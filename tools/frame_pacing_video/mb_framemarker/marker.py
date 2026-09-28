@@ -13,7 +13,7 @@ import struct
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from .structures import MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, StartMetadata, Vertex
+from .structures import SEQUENCE_ID_BYTE_COUNT, MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, SequenceId, StartMetadata, Vertex
 from .third_party.qrcodegen import encode as _encode_qr
 
 QR_VERSION = 6
@@ -21,7 +21,8 @@ QR_VERSION = 6
 changes size."""
 QR_MODULE_COUNT = (4 * QR_VERSION) + 17
 QR_CAPACITY_BYTES = 106
-"""Version 6-M holds 106 bytes: a frame or end marker uses PAYLOAD_BYTE_COUNT of them, the rest is room for future fields."""
+"""Version 6-M holds 106 bytes: a frame or end marker uses PAYLOAD_BYTE_COUNT of them, a start marker START_PAYLOAD_BYTE_COUNT; the rest
+is room for future fields."""
 
 SYNC_QR_VERSION = 2
 """The sync marker (MarkerKind.SYNC) is QR version 2 (25x25 modules), error correction level M: magic | format version | kind | frame
@@ -29,16 +30,17 @@ index u64."""
 SYNC_QR_MODULE_COUNT = (4 * SYNC_QR_VERSION) + 17
 SYNC_PAYLOAD_BYTE_COUNT = 12
 
-PAYLOAD_BYTE_COUNT = 36
+PAYLOAD_BYTE_COUNT = 48
 """Payload header, shared by every marker kind (little endian): magic "MF" | format version | kind | frame index u64 | animation
-ticks i64 | run id u32 | intended display ticks i64 | target frame ticks u32."""
+ticks i64 | run id u32 | intended display ticks i64 | target frame ticks u32 | CPU start ticks i64 | CPU busy ticks u32. Start and end
+markers carry the values of the frame that shows them."""
 PAYLOAD_MAGIC = b"MF"
 PAYLOAD_FORMAT_VERSION = 1
 
-MAX_START_NAME_BYTES = 60
-"""Start marker payload: header | start time UTC i64 | name length u8 | name UTF-8 (0..MAX_START_NAME_BYTES)."""
-START_PAYLOAD_FIXED_BYTE_COUNT = PAYLOAD_BYTE_COUNT + 8 + 1
-MAX_ENCODED_PAYLOAD_BYTE_COUNT = START_PAYLOAD_FIXED_BYTE_COUNT + MAX_START_NAME_BYTES
+START_PAYLOAD_BYTE_COUNT = PAYLOAD_BYTE_COUNT + 8 + SEQUENCE_ID_BYTE_COUNT
+"""Start marker payload: header | start time UTC i64 | sequence id (16 bytes)."""
+MAX_ENCODED_PAYLOAD_BYTE_COUNT = START_PAYLOAD_BYTE_COUNT
+"""The longest payload of any kind: the start marker's."""
 
 TICKS_PER_SECOND = 10_000_000
 """TimeSpan / DateTime resolution."""
@@ -56,9 +58,9 @@ RECOMMENDED_QUIET_ZONE_MODULES = 4
 MAX_QUAD_COUNT = 1 + (QR_MODULE_COUNT * ((QR_MODULE_COUNT + 1) // 2))
 """Upper bound on the number of quads for any marker: one background quad plus at most one quad per dark run."""
 
-_HEADER = struct.Struct("<2sBBQqIqI")
+_HEADER = struct.Struct("<2sBBQqIqIqI")
 _SYNC = struct.Struct("<2sBBQ")
-_START_FIELDS = struct.Struct("<qB")
+_START_FIELDS = struct.Struct(f"<q{SEQUENCE_ID_BYTE_COUNT}s")
 _DATE_TIME_EPOCH = datetime(1, 1, 1, tzinfo=UTC)
 
 
@@ -110,8 +112,8 @@ def seconds_to_ticks(seconds: float) -> int:
 
 def encode_payload(payload: Payload, metadata: StartMetadata | None = None) -> bytes:
     """Serialize the payload. Start markers append the metadata, other kinds ignore it; a sync marker is SYNC_PAYLOAD_BYTE_COUNT bytes
-    (the start of the header, up to the frame index) and ignores the other fields. Raises ValueError when the name is longer than
-    MAX_START_NAME_BYTES bytes as UTF-8, or an encoded field is out of its range."""
+    (the start of the header, up to the frame index) and ignores the other fields. Raises ValueError when an encoded field is out of its
+    range."""
     if payload.kind == MarkerKind.SYNC:
         try:
             return _SYNC.pack(PAYLOAD_MAGIC, PAYLOAD_FORMAT_VERSION, payload.kind, payload.frame_index)
@@ -127,26 +129,24 @@ def encode_payload(payload: Payload, metadata: StartMetadata | None = None) -> b
             payload.run_id,
             payload.intended_display_ticks,
             payload.target_frame_ticks,
+            payload.cpu_start_ticks,
+            payload.cpu_busy_ticks,
         )
     except struct.error as error:
         raise ValueError(f"payload out of range: {payload}") from error
     if payload.kind != MarkerKind.SEQUENCE_START:
         return header
     start = metadata or StartMetadata()
-    name = start.name.encode("utf-8")
-    if len(name) > MAX_START_NAME_BYTES:
-        raise ValueError(f"the start name is {len(name)} bytes as UTF-8, more than {MAX_START_NAME_BYTES}")
     try:
-        fields = _START_FIELDS.pack(start.utc_ticks, len(name))
+        fields = _START_FIELDS.pack(start.utc_ticks, start.sequence_id.data)
     except struct.error as error:
         raise ValueError(f"start time out of range: {start.utc_ticks}") from error
-    return header + fields + name
+    return header + fields
 
 
 def try_decode_payload(data: bytes) -> tuple[Payload, StartMetadata | None] | None:
-    """Parse the wire format: the payload and, for a start marker, its metadata. None on a wrong length, magic, format version, an
-    unknown kind or (start markers) a name that is not valid UTF-8. A sync payload (exactly SYNC_PAYLOAD_BYTE_COUNT bytes) decodes to
-    its frame index with the other fields 0."""
+    """Parse the wire format: the payload and, for a start marker, its metadata. None on a wrong length, magic, format version or an
+    unknown kind. A sync payload (exactly SYNC_PAYLOAD_BYTE_COUNT bytes) decodes to its frame index with the other fields 0."""
     if len(data) < SYNC_PAYLOAD_BYTE_COUNT:
         return None
     magic, version, kind, frame_index = cast(tuple[bytes, int, int, int], _SYNC.unpack_from(data))
@@ -156,27 +156,30 @@ def try_decode_payload(data: bytes) -> tuple[Payload, StartMetadata | None] | No
         return (Payload(frame_index, 0, 0, MarkerKind.SYNC), None) if len(data) == SYNC_PAYLOAD_BYTE_COUNT else None
     if len(data) < PAYLOAD_BYTE_COUNT:
         return None
-    _, _, _, _, animation_ticks, run_id, intended_display_ticks, target_frame_ticks = cast(
-        tuple[bytes, int, int, int, int, int, int, int], _HEADER.unpack_from(data)
+    _, _, _, _, animation_ticks, run_id, intended_display_ticks, target_frame_ticks, cpu_start_ticks, cpu_busy_ticks = cast(
+        tuple[bytes, int, int, int, int, int, int, int, int, int], _HEADER.unpack_from(data)
     )
-    payload = Payload(frame_index, animation_ticks, run_id, MarkerKind(kind), intended_display_ticks, target_frame_ticks)
+    payload = Payload(
+        frame_index,
+        animation_ticks,
+        run_id,
+        MarkerKind(kind),
+        intended_display_ticks,
+        target_frame_ticks,
+        cpu_start_ticks,
+        cpu_busy_ticks,
+    )
     if payload.kind != MarkerKind.SEQUENCE_START:
         return (payload, None) if len(data) == PAYLOAD_BYTE_COUNT else None
-    if len(data) < START_PAYLOAD_FIXED_BYTE_COUNT:
+    if len(data) != START_PAYLOAD_BYTE_COUNT:
         return None
-    utc_ticks, name_length = cast(tuple[int, int], _START_FIELDS.unpack_from(data, PAYLOAD_BYTE_COUNT))
-    if name_length > MAX_START_NAME_BYTES or len(data) != START_PAYLOAD_FIXED_BYTE_COUNT + name_length:
-        return None
-    try:
-        name = data[START_PAYLOAD_FIXED_BYTE_COUNT:].decode("utf-8")
-    except UnicodeDecodeError:
-        return None
-    return payload, StartMetadata(utc_ticks, name)
+    utc_ticks, sequence_id = cast(tuple[int, bytes], _START_FIELDS.unpack_from(data, PAYLOAD_BYTE_COUNT))
+    return payload, StartMetadata(utc_ticks, SequenceId(sequence_id))
 
 
 def generate_modules(payload: Payload, metadata: StartMetadata | None = None) -> ModuleMatrix:
-    """Build the QR module matrix for the payload. The metadata is only used by start markers. Raises ValueError if the start name is
-    too long."""
+    """Build the QR module matrix for the payload. The metadata is only used by start markers. Raises ValueError when an encoded field is
+    out of its range."""
     data = encode_payload(payload, metadata)
     # Every kind is pinned to one version, so the symbol never changes size between frames
     version = SYNC_QR_VERSION if payload.kind == MarkerKind.SYNC else QR_VERSION

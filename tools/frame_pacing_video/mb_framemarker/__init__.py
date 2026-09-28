@@ -4,9 +4,9 @@
 """mb_framemarker: the frame marker of mb-framepacing, in Python.
 
 Draw a QR marker with the frame index, the animation time, the run id and (optionally) the frame pacer's intended display time and
-target frame time into every frame of an application, so mb-framepacing can measure the animation error on the real display output.
-It draws exactly the same pixels as the C++ and C# libraries: the tests check it against the golden images the C++ library writes
-(test-data/markers). The format is specified in doc/marker-format.md.
+target frame time, the CPU start time and CPU busy into every frame of an application, so mb-framepacing can measure the animation
+error on the real display output. It draws exactly the same pixels as the C++ and C# libraries: the tests check
+it against the golden images the C++ library writes (test-data/markers). The format is specified in doc/marker-format.md.
 
     from mb_framemarker import Options, Payload, generate_quads, fill_quads, recommended_origin, seconds_to_ticks, MarkerKind
 
@@ -27,7 +27,6 @@ from .marker import (
     MAX_MODULE_SIZE_PX,
     MAX_QUAD_COUNT,
     MAX_QUIET_ZONE_MODULES,
-    MAX_START_NAME_BYTES,
     MIN_MODULE_SIZE_PX,
     PAYLOAD_BYTE_COUNT,
     PAYLOAD_FORMAT_VERSION,
@@ -37,7 +36,7 @@ from .marker import (
     QR_VERSION,
     RECOMMENDED_INSET_PX,
     RECOMMENDED_QUIET_ZONE_MODULES,
-    START_PAYLOAD_FIXED_BYTE_COUNT,
+    START_PAYLOAD_BYTE_COUNT,
     SYNC_PAYLOAD_BYTE_COUNT,
     SYNC_QR_MODULE_COUNT,
     SYNC_QR_VERSION,
@@ -64,7 +63,7 @@ from .marker import (
     try_decode_payload,
 )
 from .raster import fill_quads
-from .structures import MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, StartMetadata, Vertex
+from .structures import SEQUENCE_ID_BYTE_COUNT, MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, SequenceId, StartMetadata, Vertex
 
 __version__ = "0.1.0"
 
@@ -73,7 +72,6 @@ __all__ = [
     "MAX_MODULE_SIZE_PX",
     "MAX_QUAD_COUNT",
     "MAX_QUIET_ZONE_MODULES",
-    "MAX_START_NAME_BYTES",
     "MIN_MODULE_SIZE_PX",
     "PAYLOAD_BYTE_COUNT",
     "PAYLOAD_FORMAT_VERSION",
@@ -83,7 +81,8 @@ __all__ = [
     "QR_VERSION",
     "RECOMMENDED_INSET_PX",
     "RECOMMENDED_QUIET_ZONE_MODULES",
-    "START_PAYLOAD_FIXED_BYTE_COUNT",
+    "SEQUENCE_ID_BYTE_COUNT",
+    "START_PAYLOAD_BYTE_COUNT",
     "SYNC_PAYLOAD_BYTE_COUNT",
     "SYNC_QR_MODULE_COUNT",
     "SYNC_QR_VERSION",
@@ -95,6 +94,7 @@ __all__ = [
     "Payload",
     "Point",
     "Quad",
+    "SequenceId",
     "StartMetadata",
     "Vertex",
     "encode_payload",

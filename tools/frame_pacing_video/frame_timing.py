@@ -212,13 +212,18 @@ class TimingParameters:
 class SimulatedFrames:
     """The frames of one clip, in order: the output refresh each is flipped on, the wall clock reading of the naive loop (seconds;
     the first frame is shown at 0), the animation time each shows, the refresh each is rendered for (a frame flipped later is
-    late), and the swap interval each is paced at, in refreshes: the rate the game aims for is the refresh rate divided by it."""
+    late), the swap interval each is paced at, in refreshes (the rate the game aims for is the refresh rate divided by it),
+    when the loop starts each frame (seconds, on the same clock as the flips: the clip's first refresh is 0; the first frame
+    starts before it, during the previous loop; the step between two frames' starts is the frame time), and how long each takes
+    from its start until it is done and presented, its CPU busy time (seconds; 0 when the model does not know it)."""
 
     flips: tuple[int, ...]
     samples: tuple[Fraction, ...]
     animation: tuple[Fraction, ...]
     targets: tuple[int, ...]
     intervals: tuple[int, ...]
+    starts: tuple[Fraction, ...]
+    cpu: tuple[Fraction, ...]
 
 
 def swap_interval(mode: FrameMode, fps: Fraction) -> int:
@@ -403,39 +408,51 @@ def _largest_early(delays: list[Fraction], ranges: list[tuple[Fraction, Fraction
 @functools.cache
 def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> SimulatedFrames:
     """The loop over a clip of `refreshes` output refreshes. Every frame makes its vsync, so frame n is flipped on refresh n x the
-    swap interval; it reads the clock the wake-up delay after the previous flip. The naive timer's animation time is that reading
-    minus the average delay: a constant delay is only latency and cannot be seen, so each frame is off by how much its delay
-    differs from the average, ahead or behind. The clip loops: the frame after the last is the first frame of the next loop, one
-    clip later."""
+    swap interval; it reads the clock the wake-up delay after the previous flip, and starts there. The naive timer's animation time
+    is that reading minus the average delay: a constant delay is only latency and cannot be seen, so each frame is off by how much
+    its delay differs from the average, ahead or behind. The clip loops: the frame after the last is the first frame of the next
+    loop, one clip later.
+
+    A busy stretch (adaptive_rate) starts every frame when the previous one is shown, its first frame when the last frame of the
+    pass before is shown, and takes its render time. A replayed diagram starts every frame at the previous frame's flip, its first
+    frame at the last frame's flip one clip earlier, or when the diagram starts it by the game's own clock (a cap), and takes the
+    diagram's render time (unknown for the on-time frames around the diagram's). The timer loop renders for the frame cost's share
+    of the frame time after it reads the clock."""
     validate(mode, parameters)
     interval = swap_interval(mode, parameters.fps)
     if refreshes % interval:
         raise ValueError(f"{refreshes} refreshes are not a whole number of {mode.rate} Hz frames")
     if mode.busy is not None:
         from adaptive_rate import intervals as busy_intervals  # noqa: PLC0415
+        from adaptive_rate import render_times as busy_render_times  # noqa: PLC0415
         from adaptive_rate import schedule as busy_schedule  # noqa: PLC0415
+        from adaptive_rate import starts as busy_starts  # noqa: PLC0415
 
         flips, animation = busy_schedule(mode.busy, refreshes, parameters.fps)
         targets = tuple(round(moment * parameters.fps) for moment in animation)
         paced = tuple(busy_intervals(mode.busy, refreshes, parameters.fps))
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced)
+        starts = tuple(busy_starts(mode.busy, refreshes, parameters.fps))
+        cpu = tuple(busy_render_times(mode.busy, refreshes, parameters.fps))
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced, starts, cpu)
     if mode.diagram is not None:
         from diagram_replay import schedule  # noqa: PLC0415
 
-        flips, animation = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
+        replay = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
+        flips, animation = replay.flips, replay.animation
         targets = tuple(round(moment * parameters.fps) for moment in animation)
         # The rate the diagram aims for: its smallest step between the refreshes frames are rendered for (half rate: 2)
         steps = [b - a for a, b in zip(targets, targets[1:], strict=False) if b > a]
         paced = (min(steps, default=interval),) * len(targets)
+        starts, cpu = tuple(replay.starts), tuple(replay.render)
         if mode.timer is Timer.NAIVE:
             # The perfect storm: the diagram's frames, each read off the clock by its wake-up delay around the window's middle, as
             # the naive timer does; late frames stay late, and every frame shows a moment a little off
             window = mode.window or Fraction(0)
             offsets = [wake - window for wake in wake_delays(mode, parameters, len(flips))]
             animation = [moment + offset for moment, offset in zip(animation, offsets, strict=True)]
-            return SimulatedFrames(tuple(flips), tuple(animation), tuple(animation), targets, paced)
+            return SimulatedFrames(tuple(flips), tuple(animation), tuple(animation), targets, paced, starts, cpu)
         # The perfect timer reads no clock: each frame's sample is its own flip
-        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced)
+        return SimulatedFrames(tuple(flips), tuple(Fraction(flip) / parameters.fps for flip in flips), tuple(animation), targets, paced, starts, cpu)
     count = refreshes // interval
     frame_time = Fraction(interval) / parameters.fps
     wakes = wake_delays(mode, parameters, count)
@@ -449,8 +466,9 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
         average = (mode.window or Fraction(0)) if mode.burst is not None else sum(wakes, Fraction(0)) / count
         latency = average - frame_time
         animation = tuple(sample - latency for sample in samples)
-    # Every frame of this loop makes its vsync: it is flipped on the refresh it is rendered for
-    return SimulatedFrames(flips, samples, animation, flips, (interval,) * count)
+    # Every frame of this loop makes its vsync: it is flipped on the refresh it is rendered for; it starts when it reads the clock
+    # and renders for the frame cost's share of the frame time (validate: it is done before its vsync)
+    return SimulatedFrames(flips, samples, animation, flips, (interval,) * count, samples, (parameters.frame_cost * frame_time,) * count)
 
 
 def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:

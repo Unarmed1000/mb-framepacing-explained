@@ -2,7 +2,8 @@
 than a refresh about half the time, with calm stretches before and after, and a game that either stays at full rate or adapts its
 swap interval the way Android's Frame Pacing library (Swappy) does.
 
-Every frame starts when the previous one is shown and takes its render time; it targets the refresh its swap interval after the
+Every frame starts when the previous one is shown (starts: the clip's first frame when the last frame of the pass before is shown)
+and takes its render time; it targets the refresh its swap interval after the
 previous one, and is shown there, or at the first refresh after it is done when it is done too late (a missed frame). Its animation
 time is the refresh it targets, the moment it is meant for, as with the vsync timer: a frame that is shown later shows a moment
 already past.
@@ -141,3 +142,17 @@ def schedule(policy: str, refreshes: int, fps: Fraction) -> tuple[list[int], lis
     (s), the refresh it targets."""
     frames = records(policy, refreshes, fps)
     return [frame.shown for frame in frames], [Fraction(frame.target) / fps for frame in frames]
+
+
+def starts(policy: str, refreshes: int, fps: Fraction) -> list[Fraction]:
+    """When each frame of the clip starts (s, the clip's first refresh is 0): when the previous frame is shown. The clip's first
+    frame follows the last frame of the pass before it, shown before the clip."""
+    frames = with_lead(policy, refreshes, fps)
+    first = next(index for index, frame in enumerate(frames) if frame.shown >= 0)
+    assert first > 0, "the pass before the clip always shows frames"
+    return [Fraction(frame.shown) / fps for frame in frames[first - 1 : -1]]
+
+
+def render_times(policy: str, refreshes: int, fps: Fraction) -> list[Fraction]:
+    """How long each frame of the clip takes from its start until it is done and handed over to be presented (s): its render time."""
+    return [Fraction(frame.render_ms) / 1000 for frame in records(policy, refreshes, fps)]

@@ -24,11 +24,27 @@ import generate_diagrams as diagrams  # noqa: E402  (after the path to tools/tim
 @dataclass(frozen=True)
 class Pattern:
     """A diagram's smallest repeating unit, in diagram refreshes: the refresh each frame is shown on, the animation time it shows,
-    and the unit's length (the next unit's first frame is shown then)."""
+    the unit's length (the next unit's first frame is shown then), how long each frame takes until it is presented (its render
+    time), and, when the game starts its frames by its own clock (a cap: half rate, bad frame pacing), when each starts; without,
+    None: a frame starts when the previous one is shown."""
 
     shown: tuple[int, ...]
     animation: tuple[Fraction, ...]
     length: int
+    render: tuple[Fraction, ...] = ()
+    starts: tuple[Fraction, ...] | None = None
+
+
+@dataclass(frozen=True)
+class Replay:
+    """The frames of a clip replaying a diagram: the refresh each is flipped on, and in seconds (the clip's first refresh is 0) the
+    animation time it shows, when it starts and how long it takes until it is presented (0: unknown, the on-time frames that fill
+    the clip around the diagram's)."""
+
+    flips: list[int]
+    animation: list[Fraction]
+    starts: list[Fraction]
+    render: list[Fraction]
 
 
 def replayable() -> tuple[str, ...]:
@@ -52,19 +68,35 @@ def pattern(name: str, whole: bool = False) -> Pattern:
     timed = diagrams.simulate(diagram)
     shown = [_refreshes(frame.shown) for frame in timed]
     animation = [_refreshes(frame.animation) for frame in timed]
+    render = [_refreshes(frame.end - frame.start) for frame in timed]
+    # Without a cap a frame starts when the previous one is shown (the diagram's first somewhere inside the refresh before it)
+    starts = [None if diagram.cpu_cap is None else _refreshes(frame.start) for frame in timed]
     if any(value.denominator != 1 for value in shown):
         raise ValueError(f"the {name} diagram shows a frame between refreshes")
     last = timed[-1]
     length = int(shown[-1]) + last.frame.interval
-    frames = list(zip(shown, animation, strict=True))
-    if whole:
-        return Pattern(tuple(int(at) for at in shown), tuple(animation), length)
-    for period in range(1, length + 1):
-        unit = [(at, moment) for at, moment in frames if at < period]
-        tiled = [(at + copy * period, moment + copy * period) for copy in range(length // period + 1) for at, moment in unit]
-        if [frame for frame in tiled if frame[0] < length] == frames:
-            return Pattern(tuple(int(at) for at, _ in unit), tuple(moment for _, moment in unit), period)
-    raise AssertionError("the whole diagram always repeats itself")
+    frames = list(zip(shown, animation, render, starts, strict=True))
+    if not whole:
+        for period in range(1, length + 1):
+            unit = [frame for frame in frames if frame[0] < period]
+            tiled = [
+                (at + copy * period, moment + copy * period, took, None if start is None else start + copy * period)
+                for copy in range(length // period + 1)
+                for at, moment, took, start in unit
+            ]
+            if [frame for frame in tiled if frame[0] < length] == frames:
+                frames, length = unit, period
+                break
+        else:
+            raise AssertionError("the whole diagram always repeats itself")
+    clocked = tuple(start for _, _, _, start in frames if start is not None)
+    return Pattern(
+        tuple(int(at) for at, _, _, _ in frames),
+        tuple(moment for _, moment, _, _ in frames),
+        length,
+        tuple(took for _, _, took, _ in frames),
+        None if diagram.cpu_cap is None else clocked,
+    )
 
 
 def title(name: str) -> str:
@@ -77,9 +109,11 @@ def title(name: str) -> str:
 SPREAD = Fraction(2, 5)
 
 
-def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> tuple[list[int], list[Fraction]]:
-    """The frames of a clip of `refreshes` output refreshes replaying the diagram: the refresh each is flipped on and its animation
-    time (s). One diagram refresh is `interval` output refreshes. The unit repeats every `every` seconds, or, without, every
+def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> Replay:
+    """The frames of a clip of `refreshes` output refreshes replaying the diagram: the refresh each is flipped on, its animation
+    time, when it starts and its render time (s). One diagram refresh is `interval` output refreshes. A frame starts when the
+    previous one is flipped (the clip's first when the last one is, one clip earlier), or, in a diagram with a cap, when the
+    diagram starts it; the on-time frames around the diagram's have no known render time (0). The unit repeats every `every` seconds, or, without, every
     whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest. With
     `every`, `times` copies play per period, spread over its middle SPREAD. Raises ValueError when the unit does not fit, the
     copies overlap or the repetition does not divide the clip."""
@@ -103,17 +137,29 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
         raise ValueError(f"{times} copies of the {name} diagram ({length} refreshes) do not fit apart in {period} refreshes")
     flips: list[int] = []
     moments: list[Fraction] = []
+    # Per frame, in output refreshes: when the diagram starts it (None: when the previous frame is flipped) and its render time
+    clocked: list[Fraction | None] = []
+    renders: list[Fraction] = []
+    unit_starts = unit.starts or (None,) * len(unit.shown)
     for start in range(0, refreshes, period):
         at = start
         for offset in offsets:
             for filler in range(at, start + offset, interval):
                 flips.append(filler)
                 moments.append(Fraction(filler))
-            for shown, moment in zip(unit.shown, unit.animation, strict=True):
+                clocked.append(None)
+                renders.append(Fraction(0))
+            for shown, moment, took, begin in zip(unit.shown, unit.animation, unit.render, unit_starts, strict=True):
                 flips.append(start + offset + shown * interval)
                 moments.append(start + offset + moment * interval)
+                clocked.append(None if begin is None else start + offset + begin * interval)
+                renders.append(took * interval)
             at = start + offset + length
         for filler in range(at, start + period, interval):
             flips.append(filler)
             moments.append(Fraction(filler))
-    return flips, [moment / fps for moment in moments]
+            clocked.append(None)
+            renders.append(Fraction(0))
+    previous = [flips[-1] - refreshes, *flips[:-1]]
+    starts = [Fraction(before) if begin is None else begin for before, begin in zip(previous, clocked, strict=True)]
+    return Replay(flips, [moment / fps for moment in moments], [start / fps for start in starts], [took / fps for took in renders])

@@ -9,7 +9,6 @@ from .. import (
     MAX_ENCODED_PAYLOAD_BYTE_COUNT,
     MAX_QUAD_COUNT,
     MAX_QUIET_ZONE_MODULES,
-    MAX_START_NAME_BYTES,
     QR_CAPACITY_BYTES,
     QR_MODULE_COUNT,
     QR_VERSION,
@@ -20,6 +19,7 @@ from .. import (
     Payload,
     Point,
     Quad,
+    SequenceId,
     StartMetadata,
     Vertex,
     fill_quads,
@@ -46,7 +46,7 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual(SYNC_QR_VERSION, 2)
         self.assertEqual(SYNC_QR_MODULE_COUNT, 25)
         self.assertEqual(MAX_QUAD_COUNT, 862)
-        self.assertEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, 105)
+        self.assertEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, 72)
         self.assertLessEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, QR_CAPACITY_BYTES)
 
     def test_marker_size(self) -> None:
@@ -102,9 +102,9 @@ class GeometryTests(unittest.TestCase):
             with self.subTest(kind):
                 self.assertEqual(generate_modules(Payload(1, 2, 3, kind, 4, 5)).size, 41)
         start = Payload(1, 2, 3, MarkerKind.SEQUENCE_START)
-        self.assertEqual(generate_modules(start, StartMetadata(0, "x" * MAX_START_NAME_BYTES)).size, QR_MODULE_COUNT)
+        self.assertEqual(generate_modules(start, StartMetadata(-1, SequenceId(bytes([0xFF]) * 16))).size, QR_MODULE_COUNT)
         with self.assertRaises(ValueError):
-            _ = generate_modules(start, StartMetadata(0, "x" * (MAX_START_NAME_BYTES + 1)))
+            _ = generate_modules(start, StartMetadata(1 << 63, SequenceId()))
 
     def test_sync_markers_are_version_2(self) -> None:
         self.assertEqual(generate_modules(Payload(1, 2, 3, MarkerKind.SYNC, 4, 5)).size, SYNC_QR_MODULE_COUNT)
@@ -125,7 +125,7 @@ class GeometryTests(unittest.TestCase):
         start = Payload(1, 2, 3, MarkerKind.SEQUENCE_START)
         self.assertEqual(generate_quads(Payload(1, 2, 3), options, origin)[0], expected)
         self.assertEqual(generate_quads(Payload(1, 2, 3, MarkerKind.SEQUENCE_END), options, origin)[0], expected)
-        self.assertEqual(generate_start_quads(start, StartMetadata(0, "x" * MAX_START_NAME_BYTES), options, origin)[0], expected)
+        self.assertEqual(generate_start_quads(start, StartMetadata(1, SequenceId.from_text("x" * 16)), options, origin)[0], expected)
 
     def test_quads_are_pixel_aligned_background_first(self) -> None:
         quads = generate_quads(Payload(5, 6, 7), Options(3, 4), Point(10, 20))

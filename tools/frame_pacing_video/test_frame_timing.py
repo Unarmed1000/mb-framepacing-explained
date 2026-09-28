@@ -6,6 +6,7 @@ import itertools
 import unittest
 from fractions import Fraction
 
+import adaptive_rate
 import frame_timing as ft
 
 PARAMETERS = ft.TimingParameters()
@@ -92,6 +93,78 @@ class LoopTests(unittest.TestCase):
             dts = ft.delta_times(frames(name), Fraction(8))
             self.assertEqual(sum(dts), 8, name)
             self.assertTrue(all(0 < dt < 2 * FRAME for dt in dts), name)
+
+    def test_every_frame_starts_before_it_is_flipped_and_after_the_one_before(self) -> None:
+        names = ("60", "30", "60-naive-heavy", "60-naive-5ms", "60-diagram-half-rate-bad-pacing", "60-busy-full-rate", "60-busy-swappy")
+        for name in (*names, "60-naive-5ms-diagram-slow-frames-every-1s"):
+            simulated = frames(name)
+            self.assertEqual(len(simulated.starts), len(simulated.flips), name)
+            self.assertTrue(all(a <= b for a, b in itertools.pairwise(simulated.starts)), name)
+            self.assertTrue(all(start < Fraction(flip, 60) for start, flip in zip(simulated.starts, simulated.flips, strict=True)), name)
+            # The first frame starts during the loop before the clip
+            self.assertLess(simulated.starts[0], 0, name)
+
+    def test_the_timer_loop_starts_a_frame_when_it_reads_the_clock(self) -> None:
+        for name in ("60", "30-naive-typical", "60-naive-4ms"):
+            simulated = frames(name)
+            self.assertEqual(simulated.starts, simulated.samples, name)
+        # The ideal timer reads the clock at the previous flip
+        self.assertEqual(frames("30").starts[:3], (-2 * FRAME, Fraction(0), 2 * FRAME))
+
+    def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
+        for name in ("60-busy-full-rate", "60-busy-swappy"):
+            simulated = frames(name)
+            self.assertEqual(simulated.starts[1:], tuple(Fraction(flip, 60) for flip in simulated.flips[:-1]), name)
+            # The first frame starts when the last frame of the pass before the clip is shown
+            before = [record for record in adaptive_rate.with_lead(name.removeprefix("60-busy-"), CLIP, Fraction(60)) if record.shown < 0]
+            self.assertEqual(simulated.starts[0], Fraction(before[-1].shown, 60), name)
+            # Its CPU time is its render time; it is shown at the first refresh it targets once it is done
+            records = adaptive_rate.records(name.removeprefix("60-busy-"), CLIP, Fraction(60))
+            self.assertEqual(simulated.cpu, tuple(Fraction(record.render_ms) / 1000 for record in records), name)
+            for start, cpu, flip, record in zip(simulated.starts, simulated.cpu, simulated.flips, records, strict=True):
+                self.assertGreater(cpu, 0, name)
+                self.assertLessEqual(start + cpu, Fraction(flip, 60), name)
+                if record.missed:
+                    # Too late for the refresh before
+                    self.assertGreater(start + cpu, Fraction(flip - 1, 60), name)
+
+    def test_a_diagram_frame_starts_at_the_previous_flip(self) -> None:
+        for name in ("60-diagram-slow-frames", "60-diagram-half-rate-even", "60-naive-5ms-diagram-slow-frames-every-1s"):
+            simulated = frames(name)
+            self.assertEqual(simulated.starts[1:], tuple(Fraction(flip, 60) for flip in simulated.flips[:-1]), name)
+            self.assertEqual(simulated.starts[0], Fraction(simulated.flips[-1] - CLIP, 60), name)
+
+    def test_a_capped_diagram_starts_its_frames_by_the_games_own_clock(self) -> None:
+        # Half rate, bad frame pacing: a frame every 2 refreshes by the game's clock, 0.2 refreshes into one, rendering 0.75 and
+        # 1.3 refreshes; so an even frame time of 2 refreshes while the frames are held 3 and 1
+        simulated = frames("60-diagram-half-rate-bad-pacing")
+        self.assertEqual(simulated.starts[:4], tuple(Fraction(start, 600) for start in (-8, 12, 32, 52)))
+        self.assertEqual(simulated.cpu[:4], (Fraction(3, 4) * FRAME, Fraction(13, 10) * FRAME) * 2)
+        self.assertEqual({b - a for a, b in itertools.pairwise(simulated.starts)}, {2 * FRAME})
+
+    def test_a_diagram_frame_takes_the_diagrams_render_time(self) -> None:
+        # Slow frames, the whole diagram once a second: A to F render 0.75, 1.25, 0.75, 0.75, 1.25 and 0.75 refreshes; the on-time
+        # frames around them have no known render time
+        simulated = frames("60-diagram-slow-frames-every-1s")
+        known = [(flip, cpu) for flip, cpu in zip(simulated.flips, simulated.cpu, strict=True) if cpu > 0]
+        self.assertEqual(len(known), 6 * 8)
+        self.assertEqual(
+            [cpu / FRAME for _, cpu in known[:6]], [Fraction(3, 4), Fraction(5, 4), Fraction(3, 4), Fraction(3, 4), Fraction(5, 4), Fraction(3, 4)]
+        )
+        for name in ("60-diagram-slow-frames-every-1s", "60-diagram-half-rate-even", "60-naive-5ms-diagram-slow-frames-every-1s"):
+            simulated = frames(name)
+            # Done before the refresh it is shown on, and too late for the one before when it is held
+            for start, cpu, flip in zip(simulated.starts, simulated.cpu, simulated.flips, strict=True):
+                self.assertLessEqual(start + cpu, Fraction(flip, 60), name)
+
+    def test_the_timer_loop_renders_for_the_frame_cost(self) -> None:
+        for name, frame_time in (("60", FRAME), ("30", 2 * FRAME), ("60-naive-5ms", FRAME), ("60-naive-heavy", FRAME)):
+            simulated = frames(name)
+            self.assertEqual(set(simulated.cpu), {PARAMETERS.frame_cost * frame_time}, name)
+            # Every frame is done before its vsync
+            self.assertTrue(
+                all(start + cpu < Fraction(flip, 60) for start, cpu, flip in zip(simulated.starts, simulated.cpu, simulated.flips, strict=True)), name
+            )
 
     def test_deterministic_per_mode_and_clip(self) -> None:
         mode = ft.parse_mode("60-naive-heavy")

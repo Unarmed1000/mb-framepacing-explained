@@ -69,6 +69,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+import uuid
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
@@ -81,10 +82,10 @@ from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
 from mb_framemarker import (
-    MAX_START_NAME_BYTES,
     TICKS_PER_SECOND,
     MarkerKind,
     Payload,
+    SequenceId,
     StartMetadata,
     fill_quads,
     marker_size_px,
@@ -118,6 +119,8 @@ MARKER_RUN_ID = 1
 MARKER_MIN_MODULE_PX = 2
 # Near-lossless web encoding softens the module edges a little: 3 video pixels per module, as mb-framepacing recommends
 MARKER_MIN_WEB_MODULE_PX = 3
+# The start marker's sequence id of a mode whose name is no short text tag: a UUID (version 5) from this URL plus the mode's name
+SEQUENCE_ID_URL = "https://github.com/Unarmed1000/mb-framepacing-explained/"
 
 # The modes of the default run: 60, 30 and 20 Hz with the ideal timer, then 60 and 30 Hz with the naive timer under light, typical
 # and heavy system load (the demo profile: errors in most frames; 20 Hz only as the ideal reference). Opt-in: the realistic loads,
@@ -889,25 +892,45 @@ def renderer_for(settings: Settings, job: VideoJob) -> Renderer:
     return FollowRenderer(settings, job) if job.scene == "follow" else RowRenderer(settings, job)
 
 
-def marker_name(settings: Settings, mode: FrameMode) -> str:
-    """The start marker's name: the mode's label, cut to the marker's limit (MAX_START_NAME_BYTES of UTF-8) on a character boundary."""
-    return settings.label(mode).encode("utf-8")[:MAX_START_NAME_BYTES].decode("utf-8", errors="ignore")
+def marker_sequence_id(mode: FrameMode) -> SequenceId:
+    """The start marker's sequence id, one per clip: the mode's name as a text tag when it is 1 to 16 printable ASCII characters,
+    otherwise a UUID made from it (version 5, from this repository's URL and the name), so it never changes."""
+    try:
+        return SequenceId.from_text(mode.name)
+    except ValueError:
+        return SequenceId.from_uuid(uuid.uuid5(uuid.NAMESPACE_URL, SEQUENCE_ID_URL + mode.name))
+
+
+def cpu_start_ticks(settings: Settings, mode: FrameMode, speed: Speed, index: int, loops: int) -> int:
+    """The CPU start time of frame `index` of loop `loops` of the clip (when the CPU started working on it), in the marker's 100 ns
+    ticks on the clock of its intended display time (0 is the clip's first refresh; a loop adds a clip)."""
+    frames = simulated_frames(settings, mode, speed)
+    return round((frames.starts[index] + loops * settings.duration(speed)) * TICKS_PER_SECOND)
+
+
+def cpu_busy_ticks(settings: Settings, mode: FrameMode, speed: Speed, index: int) -> int:
+    """The CPU busy time of frame `index` of the clip: how long the CPU worked on it before presenting it, from its CPU start time, in
+    ticks (0: unknown)."""
+    return round(simulated_frames(settings, mode, speed).cpu[index] * TICKS_PER_SECOND)
 
 
 def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     """What the marker carries in output frame `frame` (negative in the lead-in, past the clip in the lead-out): the index of the
     frame on screen, counted on across loops so it never repeats (the clip's first frame is the clip's frame count), the animation
     time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
-    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval), all in ticks. A held frame keeps its
-    index, so mb-framepacing sees one presented frame. Start marker in the lead-in, end marker in the lead-out."""
+    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval); then its CPU start time (on the same
+    clock) and CPU busy (until it was presented; 0 when unknown), all in ticks. A held frame keeps its index, so mb-framepacing sees one presented frame. Start marker in
+    the lead-in, end marker in the lead-out: they carry the values of the frame they show."""
     index, loops = frame_on_screen(settings, job.top, job.speed, frame)
     frames = simulated_frames(settings, job.top, job.speed)
     ticks = round(content_time(settings, job.top, job.speed, frame) * TICKS_PER_SECOND)
     refresh_ticks = TICKS_PER_SECOND / settings.fps
     intended = round((frames.targets[index] + loops * settings.frame_count(job.speed)) * refresh_ticks)
     target = round(frames.intervals[index] * refresh_ticks)
+    started = cpu_start_ticks(settings, job.top, job.speed, index, loops)
+    busy = cpu_busy_ticks(settings, job.top, job.speed, index)
     kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
-    return Payload(((loops + 1) * len(frames.flips)) + index, ticks, MARKER_RUN_ID, kind, intended, target)
+    return Payload(((loops + 1) * len(frames.flips)) + index, ticks, MARKER_RUN_ID, kind, intended, target, started, busy)
 
 
 def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> bytes:
@@ -915,7 +938,7 @@ def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> 
     payload = marker_payload(settings, job, frame)
     origin = MarkerPoint(*settings.marker_origin)
     if payload.kind == MarkerKind.SEQUENCE_START:
-        quads = start_marker_quads(payload, StartMetadata(0, marker_name(settings, job.top)), settings.marker_options, origin)
+        quads = start_marker_quads(payload, StartMetadata(0, marker_sequence_id(job.top)), settings.marker_options, origin)
     else:
         quads = marker_quads(payload, settings.marker_options, origin)
     pixels = bytearray(image)
@@ -1174,6 +1197,11 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
             "late": refreshes_late(settings, mode, speed),
             "targetFps": [_json_number(settings.fps / interval) for interval in frames.intervals],
+            # Its CPU start time, in the marker's 100 ns ticks on the clock of its intended display time (the clip's first refresh is
+            # 0; the first frame starts before it), and its CPU busy (how long the CPU worked on it before presenting it; 0: unknown):
+            # the marker carries exactly these in the clip's first loop
+            "cpuStartTicks": [cpu_start_ticks(settings, mode, speed, index, 0) for index in range(len(frames.starts))],
+            "cpuBusyTicks": [cpu_busy_ticks(settings, mode, speed, index) for index in range(len(frames.cpu))],
         },
     }
 
@@ -1203,12 +1231,15 @@ def _marker_settings(settings: Settings) -> dict[str, object] | None:
 
 
 def _marker_video(settings: Settings, job: VideoJob) -> dict[str, object]:
-    """A marked video's measurement: the marker frame index of the clip's first frame (the per-frame lists start there) and the
-    command that measures it."""
+    """A marked video's measurement: the marker frame index of the clip's first frame (the per-frame lists start there), the start
+    marker's sequence id (as mb-framepacing shows it, and its 16 bytes in hex) and the command that measures it."""
     if not job.marker:
         return {}
+    sequence_id = marker_sequence_id(job.top)
     return {
         "markerFirstFrameIndex": len(frame_schedule(settings, job.top, job.speed).shown),
+        "sequenceId": str(sequence_id),
+        "sequenceIdHex": sequence_id.data.hex(),
         "measure": f"mb-framepacing import {job.filename} --analyze -o {Path(job.filename).stem}",
     }
 
