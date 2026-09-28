@@ -494,7 +494,7 @@ def validate_marker(settings: Settings) -> None:
     if not settings.single:
         raise ValueError("--marker needs --single: mb-framepacing times one marker per frame, so a marked video shows one mode")
     if settings.slow_motions != (1,):
-        raise ValueError("--marker needs real speed: repeated video frames (--slow-motion) would read as longer display times")
+        raise ValueError("--marker needs real speed: repeated video frames (--slow-motion) would read as longer display time steps")
     minimum = MARKER_MIN_WEB_MODULE_PX if settings.web else MARKER_MIN_MODULE_PX
     if settings.marker_module_px < minimum:
         raise ValueError(f"--marker-module-px must be at least {minimum}{' for --web' if settings.web else ''}, got {settings.marker_module_px}")

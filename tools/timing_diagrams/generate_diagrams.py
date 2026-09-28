@@ -7,7 +7,7 @@ where it is presented. Whether it really appears at its predicted display time i
 display row shows which frame is on screen at each refresh: green when it shows that refresh's moment, light green when it is held
 for a refresh as intended (swap interval 2), amber when the previous frame is held because the next one is not ready, red when it
 shows another moment. The time of every refresh is written just below it. Under that, for every frame when it first appears, the
-animation time step, the display time (how long the previous frame was on screen) and their difference: the animation error as
+animation time step, the display time step (how long the previous frame was on screen) and their difference: the animation error as
 PresentMon computes it (positive: shown too soon, negative: shown too late).
 
 The loop is double buffered: a frame starts rendering when the previous one appears (the first one somewhere inside a refresh). With vsync it appears at the first refresh
@@ -73,7 +73,7 @@ DISPLAY_H = 40
 AXIS_Y = DISPLAY_Y + DISPLAY_H + 20  # the refresh times, just below the display row
 ROWS_Y = AXIS_Y + 36
 ROW_STEP = 26
-ROW_LABELS = ("Animation time step", "Display time", "Animation error")
+ROW_LABELS = ("Animation time step", "Display time step", "Animation error")
 # The vsync timer's rows above those: what the clock measured since the previous frame, and that rounded to whole refreshes
 VSYNC_TIMER_ROWS = ("Clock reading step", "Rounded to refreshes")
 LEGEND_Y = ROWS_Y + ROW_STEP * len(ROW_LABELS) + 22
@@ -395,7 +395,7 @@ def _key(vrr: bool, used: set[str], legend_y: float) -> list[str]:
             parts.append(f'<rect class="{kind}" x="{x:.1f}" y="{colours_y - 11}" width="14" height="14" rx="4"/>')
             parts.append(text(x + 22, colours_y + 1, label, "sub", "start"))
             x += 22 + len(label) * 6.9 + 28
-    parts.append(text(20, colours_y + 26, "Animation error = animation time step − display time: + shown too soon, − shown too late", "sub", "start"))
+    parts.append(text(20, colours_y + 26, "Animation error = animation time step − display time step: + shown too soon, − shown too late", "sub", "start"))
     return parts
 
 
@@ -420,7 +420,7 @@ def render(diagram: Diagram, background: str | None) -> str:
 @dataclass(frozen=True)
 class Comparison:
     """Diagrams one above the other, each with its full timeline (render, display and the values), on one time axis: the frame
-    rate, frametimes and display times are the same in each, and what differs is only in the animation error."""
+    rate, frametimes and display time steps are the same in each, and what differs is only in the animation error."""
 
     name: str
     title: str
@@ -506,7 +506,7 @@ DIAGRAMS = (
         "perfect-timer",
         "Perfect timer, every frame on time",
         (
-            "Each frame shows the moment it is displayed: the animation time step equals the display time, so the animation error is 0.",
+            "Each frame shows the moment it is displayed: the animation time step equals the display time step, so the animation error is 0.",
             "A 60 Hz display with vsync, a refresh every 16.7 ms, as in the videos.",
         ),
         tuple(Frame(name, 75) for name in "ABCDEFGH"),
@@ -515,7 +515,7 @@ DIAGRAMS = (
         "timer-jitter",
         "Delta time jitter: frames on time, animation time off",
         (
-            "Frame rate, frametimes and display times are identical to the perfect timer's, but the game's clock is read at an uneven",
+            "Frame rate, frametimes and display time steps are identical to the perfect timer's, but the game's clock is read at an uneven",
             "point after each flip, so each frame shows a moment a little off: delta time jitter. Only the animation error reveals it.",
         ),
         JITTER,

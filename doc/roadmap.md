@@ -23,7 +23,7 @@ the topics interactively. Notes: [the web page](web-page.md).
       conditions.
 - [ ] Later: classify each clip's animation sequence from its animation error: how much of it has stutter, and the other
       categories (jitter, hitches, ...), which can overlap; show it as shares of the sequence and as marked stretches on the chart.
-- [x] A "Reading a measurement" card on the measure slide: animation error while the display time stays flat is delta time
+- [x] A "Reading a measurement" card on the measure slide: animation error while the display time step stays flat is delta time
       jitter, where it jumps is bad pacing; misses bunched into stretches or scattered decide the strategy.
 
 ## Videos
@@ -86,7 +86,7 @@ Ideas for the sister project, from [charts](charts.md#ideas-for-mb-framepacing).
       the other categories (jitter, hitches, ...), which can overlap; as shares in the report and marked stretches on its charts.
       Build it once and share the rules, so both projects label a sequence the same way.
 - [ ] Display time steps and animation error on one time axis, late frames marked (shown after the refresh they were rendered
-      for, as the web page's charts do): error with a flat display time is delta time jitter, error where it jumps is bad pacing,
+      for, as the web page's charts do): error with a flat display time step is delta time jitter, error where it jumps is bad pacing,
       so the report can name the cause.
 - [ ] The share of frames missed over the last 2 s, over time (the web page's adaptive rate chart): rare spikes or busy
       stretches, which decides the strategy.

@@ -4,14 +4,14 @@
 The data comes from the frame pacing videos' own simulation (tools/frame_pacing_video/frame_timing.py), so each chart shows exactly
 the frames of the video of that mode: the refresh each frame appears on and the animation time it was rendered for. From those:
 
-- summary tiles: frames, display time, error per frame (the mean absolute animation error, Gamers Nexus's "error per frame"),
+- summary tiles: frames, display time step, error per frame (the mean absolute animation error, Gamers Nexus's "error per frame"),
   the worst error, and how many frames are off by more than 1 ms;
 - animation error per frame, as signed bars around zero (after Gamers Nexus's scatter);
-- display time and animation time step per frame, two lines on one scale (the two clocks; mb-framepacing's "display vs animation");
+- display time step and animation time step per frame, two lines on one scale (the two clocks; mb-framepacing's "display vs animation");
 - a refresh strip of the first second: one cell per refresh, the colour changing with each new frame (after FCAT and TestUFO).
 
 The default run also draws comparisons of averages: modes with the same average frame rate, at the display's own rate, their
-display times against the average and their refresh strips (chart-average-half-rate.svg: 30 fps evenly and badly paced).
+display time steps against the average and their refresh strips (chart-average-half-rate.svg: 30 fps evenly and badly paced).
 
 Run from the repository's .venv:
   python tools/timing_diagrams/generate_charts.py [--output-dir DIR] [--png] [--background COLOUR] [MODE ...]
@@ -67,7 +67,7 @@ CHART_STYLE = """
 
 @dataclass(frozen=True)
 class FrameData:
-    """Per frame, in ms: the display time (how long the previous frame was on screen), the animation time step and the error."""
+    """Per frame, in ms: the display time step (how long the previous frame was on screen), the animation time step and the error."""
 
     display: list[float]
     step: list[float]
@@ -126,7 +126,7 @@ def render_chart(mode_name: str, background: str | None) -> str:
     display_text = f"{ms(display_values[0])} ms" if len(display_values) == 1 else f"{ms(display_values[0])}–{ms(display_values[-1])} ms"
     tiles = (
         ("FRAMES", f"{count}", f"{rate:.0f} fps, never a missed vsync" if len(display_values) == 1 else "presented frames"),
-        ("DISPLAY TIME", display_text, "every frame" if len(display_values) == 1 else "range"),
+        ("DISPLAY TIME STEP", display_text, "every frame" if len(display_values) == 1 else "range"),
         ("ERROR PER FRAME", f"{mean_abs:.2f} ms", "mean |error|"),
         ("WORST ERROR", f"{ms(round(worst, 2), sign=True)} ms", "shown too soon" if worst > 0 else "shown too late" if worst < 0 else "none"),
         (f"OFF BY > {OFF_THRESHOLD_MS:g} MS", f"{off}", f"{100 * off / count:.0f} % of the frames"),
@@ -173,16 +173,16 @@ def render_chart(mode_name: str, background: str | None) -> str:
     parts.append(text(PLOT_X0 - 10, zero_y + 4, "0", "vsync-n", "end"))
     frame_ticks(ERROR_Y + ERROR_H)
 
-    # Display time and animation time step: two lines on one scale
+    # Display time step and animation time step: two lines on one scale
     top_ms = max(max(data.step), max(data.display)) * 1.1
     bottom_ms = min(0.0, min(data.step))
 
     def y_step(value: float) -> float:
         return STEP_Y + STEP_H - (value - bottom_ms) / (top_ms - bottom_ms) * STEP_H
 
-    parts.append(text(20, STEP_Y - 16, "DISPLAY TIME AND ANIMATION TIME STEP", "label", "start"))
+    parts.append(text(20, STEP_Y - 16, "DISPLAY TIME STEP AND ANIMATION TIME STEP", "label", "start"))
     legend_x = PLOT_X1
-    for cls, label in (("step-line", "animation time step"), ("display-line", "display time")):
+    for cls, label in (("step-line", "animation time step"), ("display-line", "display time step")):
         width = len(label) * 6.2
         parts.append(text(legend_x, STEP_Y - 16, label, "vsync-n", "end"))
         parts.append(f'<line class="{cls}" x1="{legend_x - width - 26:.1f}" y1="{STEP_Y - 20}" x2="{legend_x - width - 8:.1f}" y2="{STEP_Y - 20}"/>')
@@ -223,7 +223,7 @@ def render_chart(mode_name: str, background: str | None) -> str:
 
 @dataclass(frozen=True)
 class AverageComparison:
-    """Modes with the same average frame rate side by side, at the display's own rate: their display time per frame over the
+    """Modes with the same average frame rate side by side, at the display's own rate: their display time step per frame over the
     first second against the average, and their refresh strips, so the same average and the different pacing show at once."""
 
     name: str
@@ -281,7 +281,7 @@ def render_average_comparison(comparison: AverageComparison, background: str | N
         def y_of(value: float, plot_bottom: float = plot_bottom) -> float:
             return plot_bottom - value / top_ms * AVG_PLOT_H
 
-        # The frames of the first second: each frame's display time, held until the next frame
+        # The frames of the first second: each frame's display time step, held until the next frame
         in_second = [index for index, flip in enumerate(data.flips) if flip < refreshes]
         cell_w = (PLOT_X1 - PLOT_X0) / refreshes
         tick = data.refresh_ms
@@ -293,7 +293,7 @@ def render_average_comparison(comparison: AverageComparison, background: str | N
         parts.append(f'<line class="zero-line" x1="{PLOT_X0}" y1="{plot_bottom}" x2="{PLOT_X1}" y2="{plot_bottom}"/>')
         points: list[str] = []
         for index in in_second:
-            # A frame's display time is how long the previous one was on screen: draw it from the previous frame's flip
+            # A frame's display time step is how long the previous one was on screen: draw it from the previous frame's flip
             end = data.flips[index]
             start = end - round(data.display[index] / data.refresh_ms)
             y = y_of(data.display[index])

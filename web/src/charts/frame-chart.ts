@@ -1,4 +1,4 @@
-// How long each frame stays on screen (its display time), one lane per half of the video, as steps: in green, or in red when it
+// How long each frame stays on screen (its display time step), one lane per half of the video, as steps: in green, or in red when it
 // stays longer than planned because the next frame came late, with a playhead that follows playback. The same card and scale conventions as the animation error chart.
 
 import type { Lane } from "./error-chart";
@@ -46,7 +46,7 @@ export function heldTooLong(late: readonly number[]): boolean[] {
   return late.map((_, index) => (late[index + 1] ?? late[0] ?? 0) > 0);
 }
 
-/** A chart of the lanes' display times on one shared scale; `refreshes` is the clip length in output refreshes. */
+/** A chart of the lanes' display time steps on one shared scale; `refreshes` is the clip length in output refreshes. */
 export function frameChart(lanes: readonly Lane[], refreshes: number, fps: number): FrameChart {
   const height = TOP + lanes.length * LANE_H + (lanes.length - 1) * GAP + 36;
   const svg = element("svg", { viewBox: `0 0 ${WIDTH} ${height}`, class: "error-chart frame-chart", role: "img" });
@@ -58,7 +58,7 @@ export function frameChart(lanes: readonly Lane[], refreshes: number, fps: numbe
   const longest = Math.max(2, ...onScreen.flat());
   const limit = (longest + 0.5) * refreshMs;
   svg.append(
-    label(LEFT, 20, "DISPLAY TIME: HOW LONG EACH FRAME IS ON SCREEN", "chart-label"),
+    label(LEFT, 20, "DISPLAY TIME STEP: HOW LONG EACH FRAME IS ON SCREEN", "chart-label"),
     label(WIDTH - RIGHT, 20, "green as planned, red held too long", "chart-note", "end"),
   );
 

@@ -41,9 +41,9 @@ Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), opti
 
 We say _game_ for anything that animates in real time: games, user interfaces, video playback, VR, simulators.
 
-Every frame a game shows is a picture of one moment of game time, its **animation time**, and it stays on screen for some
-**display time**. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of the game stays on screen
-for 16.7 ms. **Animation error** is how far they disagree, per frame, in milliseconds, as PresentMon measures it. A high average
+Every frame a game shows is a picture of one moment of game time, its **animation time**, and it appears on screen at a moment
+of real time, its **display time**. Motion looks smooth when the two advance together: a frame that shows 16.7 ms more of the
+game than the one before it appears 16.7 ms after it. **Animation error** is how far they disagree, per frame, in milliseconds, as PresentMon measures it. A high average
 frame rate says nothing about it.
 
 ![Perfect timer: every frame shows the moment it is displayed, so the animation error is 0](doc/images/timing-perfect-timer.svg)
@@ -63,9 +63,9 @@ explain the two ways it goes wrong with a flipbook:
 
 ![Delta time jitter: frames reach the screen on time, but each shows a moment a little off](doc/images/timing-timer-jitter.svg)
 
-**Delta time jitter is invisible to the usual numbers.** Frame rate, frametime, display time and a frame-time graph are identical to
-the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion, and only
-animation error shows why, because only it looks at the moment each frame shows:
+**Delta time jitter is invisible to the usual numbers.** Frame rate, frametime, display time step and a frame-time graph are
+identical to the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion,
+and only animation error shows why, because only it looks at the moment each frame shows:
 
 ![Same frame rate, same frametimes, different motion: only the animation error differs](doc/images/timing-perfect-vs-jitter.svg)
 
@@ -83,25 +83,26 @@ How frames reach the screen, and how fast input gets there, depends on vsync, VR
 The terms used here and in mb-framepacing, in one line each. The [full vocabulary](doc/vocabulary.md) maps them to PresentMon,
 Gamers Nexus, Digital Foundry, Unity, Unreal, Android and VR, with sources and the video modes.
 
-| Term                       | In one line                                                                                     | Also called                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Animation error**        | Animation time step minus display time. Positive: shown too soon; negative: late.               | `MsAnimationError` (PresentMon), simulation time error                 |
-| **Animation time**         | The moment of game time a frame shows.                                                          | Simulation time, game time                                             |
-| **Animation time step**    | How far the animation time advanced from one shown frame to the next.                           | Delta time, `Time.deltaTime`                                           |
-| **Predicted display time** | When the game expects a frame to be shown, from recent frame times; the frame's animation time. | Expected presentation time (Android), `targetTimestamp` (Apple)        |
-| **Display time**           | How long the previous frame stayed on screen.                                                   | `MsBetweenDisplayChange`, display delta; "frame time" in overlays      |
-| **Frametime**              | CPU start to CPU start: the application side.                                                   | `MsBetweenPresents`, `MsBetweenAppStart`, CPU frame time               |
-| **Frame pacing**           | How evenly frames reach the screen.                                                             | Frame delivery, cadence; "bad frame-pacing" (Digital Foundry)          |
-| **Stutter**                | Motion that suddenly speeds up or slows down: what the eye sees.                                | Judder, jerkiness                                                      |
-| **Hitch**                  | A single, severe frametime spike.                                                               | Spike; shader compilation stutter, traversal stutter (Digital Foundry) |
-| **Delta time jitter**      | The measured delta time wobbles while frames reach the screen evenly.                           | Timestep jitter                                                        |
-| **Microstutter**           | Uneven delivery while the average frame rate looks fine.                                        | Micro stuttering; from multi-GPU, with its runt frames                 |
-| **Judder**                 | Uneven display durations for constant motion.                                                   | Pulldown judder (film), stale frames (VR)                              |
-| **Dropped frame**          | Rendered but never shown.                                                                       | Skipped frame                                                          |
-| **Swap interval**          | How many vsyncs a frame stays on screen: 1, 2, 3 for 60, 30, 20 fps at 60 Hz.                   | Present interval, `SyncInterval`                                       |
-| **Tearing**                | Vsync off: one refresh shows parts of two frames.                                               | Screen tearing                                                         |
-| **VRR**                    | The display refreshes when the frame is ready.                                                  | G-SYNC, FreeSync, Adaptive-Sync, HDMI VRR                              |
-| **Input lag**              | From input to its result on screen.                                                             | End-to-end latency, click-to-photon, button to pixel (Digital Foundry) |
+| Term                       | In one line                                                                                                       | Also called                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Animation error**        | Animation time step minus display time step. Positive: shown too soon; negative: late.                            | `MsAnimationError` (PresentMon), simulation time error                                           |
+| **Animation time**         | The moment of game time a frame shows.                                                                            | Simulation time, game time                                                                       |
+| **Animation time step**    | How far the animation time advanced from one shown frame to the next.                                             | Delta time, `Time.deltaTime`                                                                     |
+| **Predicted display time** | When the game expects a frame to be shown, from recent frame times; the frame's animation time.                   | Expected presentation time (Android), `targetTimestamp` (Apple)                                  |
+| **Display time**           | The moment a frame appeared on screen: a vsync.                                                                   | Present time                                                                                     |
+| **Display time step**      | How far the display time advanced from one shown frame to the next: how long the previous frame stayed on screen. | `MsBetweenDisplayChange`, display delta, display time (mb-framepacing); "frame time" in overlays |
+| **Frametime**              | CPU start to CPU start: the application side.                                                                     | `MsBetweenPresents`, `MsBetweenAppStart`, CPU frame time                                         |
+| **Frame pacing**           | How evenly frames reach the screen.                                                                               | Frame delivery, cadence; "bad frame-pacing" (Digital Foundry)                                    |
+| **Stutter**                | Motion that suddenly speeds up or slows down: what the eye sees.                                                  | Judder, jerkiness                                                                                |
+| **Hitch**                  | A single, severe frametime spike.                                                                                 | Spike; shader compilation stutter, traversal stutter (Digital Foundry)                           |
+| **Delta time jitter**      | The measured delta time wobbles while frames reach the screen evenly.                                             | Timestep jitter                                                                                  |
+| **Microstutter**           | Uneven delivery while the average frame rate looks fine.                                                          | Micro stuttering; from multi-GPU, with its runt frames                                           |
+| **Judder**                 | Uneven display durations for constant motion.                                                                     | Pulldown judder (film), stale frames (VR)                                                        |
+| **Dropped frame**          | Rendered but never shown.                                                                                         | Skipped frame                                                                                    |
+| **Swap interval**          | How many vsyncs a frame stays on screen: 1, 2, 3 for 60, 30, 20 fps at 60 Hz.                                     | Present interval, `SyncInterval`                                                                 |
+| **Tearing**                | Vsync off: one refresh shows parts of two frames.                                                                 | Screen tearing                                                                                   |
+| **VRR**                    | The display refreshes when the frame is ready.                                                                    | G-SYNC, FreeSync, Adaptive-Sync, HDMI VRR                                                        |
+| **Input lag**              | From input to its result on screen.                                                                               | End-to-end latency, click-to-photon, button to pixel (Digital Foundry)                           |
 
 ## What this covers so far
 

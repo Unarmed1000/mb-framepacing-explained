@@ -19,13 +19,13 @@ Both boxes at 30 fps, 30 frames every second. Top: every frame held for two refr
 
 :::card What each number sees
 
-| Number                     | Bad frame pacing                          | [Delta time jitter](#/invisible)           |
-| -------------------------- | ----------------------------------------- | ------------------------------------------ |
-| **Average frame rate**     | 30 fps, the same as evenly paced          | 60 fps, the same as a perfect timer        |
-| **Display time per frame** | Uneven: 50 and 16.7 ms instead of 33.3 ms | Even: 16.7 ms, the same as a perfect timer |
-| **Animation error**        | ±16.7 ms                                  | Up to ±5 ms in the videos                  |
+| Number                          | Bad frame pacing                          | [Delta time jitter](#/invisible)           |
+| ------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| **Average frame rate**          | 30 fps, the same as evenly paced          | 60 fps, the same as a perfect timer        |
+| **Display time step per frame** | Uneven: 50 and 16.7 ms instead of 33.3 ms | Even: 16.7 ms, the same as a perfect timer |
+| **Animation error**             | ±16.7 ms                                  | Up to ±5 ms in the videos                  |
 
-A graph of display times catches bad pacing, but only animation error catches both causes of stutter, because only it looks at
+A graph of display time steps catches bad pacing, but only animation error catches both causes of stutter, because only it looks at
 the moment each frame shows. {.note}
 
 :::

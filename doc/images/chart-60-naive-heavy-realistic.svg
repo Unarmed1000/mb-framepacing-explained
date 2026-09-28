@@ -52,7 +52,7 @@
 <text x="34.0" y="148.0" text-anchor="start" class="tile-value">480</text>
 <text x="76.5" y="148.0" text-anchor="start" class="vsync-n">60 fps, never a missed vsync</text>
 <rect class="tile" x="250.4" y="104" width="218.4" height="64" rx="10"/>
-<text x="264.4" y="124.0" text-anchor="start" class="label">DISPLAY TIME</text>
+<text x="264.4" y="124.0" text-anchor="start" class="label">DISPLAY TIME STEP</text>
 <text x="264.4" y="148.0" text-anchor="start" class="tile-value">16.7 ms</text>
 <text x="352.9" y="148.0" text-anchor="start" class="vsync-n">every frame</text>
 <rect class="tile" x="480.8" y="104" width="218.4" height="64" rx="10"/>
@@ -568,11 +568,11 @@
 <text x="882.5" y="388.0" text-anchor="middle" class="vsync-n">6 s</text>
 <text x="1011.2" y="388.0" text-anchor="middle" class="vsync-n">7 s</text>
 <text x="1140.0" y="388.0" text-anchor="middle" class="vsync-n">8 s</text>
-<text x="20.0" y="424.0" text-anchor="start" class="label">DISPLAY TIME AND ANIMATION TIME STEP</text>
+<text x="20.0" y="424.0" text-anchor="start" class="label">DISPLAY TIME STEP AND ANIMATION TIME STEP</text>
 <text x="1140.0" y="424.0" text-anchor="end" class="vsync-n">animation time step</text>
 <line class="step-line" x1="996.2" y1="420" x2="1014.2" y2="420"/>
-<text x="978.2" y="424.0" text-anchor="end" class="vsync-n">display time</text>
-<line class="display-line" x1="877.8" y1="420" x2="895.8" y2="420"/>
+<text x="978.2" y="424.0" text-anchor="end" class="vsync-n">display time step</text>
+<line class="display-line" x1="846.8" y1="420" x2="864.8" y2="420"/>
 <line class="grid" x1="110" y1="487.4" x2="1140" y2="487.4"/>
 <text x="100.0" y="491.4" text-anchor="end" class="vsync-n">16.7 ms</text>
 <line class="grid" x1="110" y1="570.0" x2="1140" y2="570.0"/>

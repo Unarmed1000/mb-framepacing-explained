@@ -73,7 +73,7 @@
 <text x="20.0" y="147.0" text-anchor="start" class="vsync-n">predicted display time</text>
 <text x="20.0" y="222.0" text-anchor="start" class="label">DISPLAY</text>
 <text x="20.0" y="294.0" text-anchor="start" class="label">ANIMATION TIME STEP</text>
-<text x="20.0" y="320.0" text-anchor="start" class="label">DISPLAY TIME</text>
+<text x="20.0" y="320.0" text-anchor="start" class="label">DISPLAY TIME STEP</text>
 <text x="20.0" y="346.0" text-anchor="start" class="label">ANIMATION ERROR</text>
 <rect class="box" x="204.0" y="112" width="55.5" height="44" rx="8"/>
 <text x="231.8" y="131.0" text-anchor="middle" class="frame">A</text>
@@ -169,5 +169,5 @@
 <text x="576.7" y="447.0" text-anchor="start" class="sub">held: the next frame is not ready</text>
 <rect class="off" x="832.4" y="435" width="14" height="14" rx="4"/>
 <text x="854.4" y="447.0" text-anchor="start" class="sub">shows another moment</text>
-<text x="20.0" y="472.0" text-anchor="start" class="sub">Animation error = animation time step − display time: + shown too soon, − shown too late</text>
+<text x="20.0" y="472.0" text-anchor="start" class="sub">Animation error = animation time step − display time step: + shown too soon, − shown too late</text>
 </svg>

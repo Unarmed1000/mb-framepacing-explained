@@ -69,7 +69,7 @@
 <text x="20.0" y="294.0" text-anchor="start" class="label">CLOCK READING STEP</text>
 <text x="20.0" y="320.0" text-anchor="start" class="label">ROUNDED TO REFRESHES</text>
 <text x="20.0" y="346.0" text-anchor="start" class="label">ANIMATION TIME STEP</text>
-<text x="20.0" y="372.0" text-anchor="start" class="label">DISPLAY TIME</text>
+<text x="20.0" y="372.0" text-anchor="start" class="label">DISPLAY TIME STEP</text>
 <text x="20.0" y="398.0" text-anchor="start" class="label">ANIMATION ERROR</text>
 <rect class="box" x="210.0" y="112" width="78.0" height="44" rx="8"/>
 <text x="249.0" y="131.0" text-anchor="middle" class="frame">A</text>
@@ -177,5 +177,5 @@
 <text x="571.4" y="473.0" text-anchor="start" class="sub">vsync: bright can be targeted at the frame's rate, faint is skipped</text>
 <rect class="ok" x="20.0" y="487" width="14" height="14" rx="4"/>
 <text x="42.0" y="499.0" text-anchor="start" class="sub">shows the moment of its refresh</text>
-<text x="20.0" y="524.0" text-anchor="start" class="sub">Animation error = animation time step − display time: + shown too soon, − shown too late</text>
+<text x="20.0" y="524.0" text-anchor="start" class="sub">Animation error = animation time step − display time step: + shown too soon, − shown too late</text>
 </svg>

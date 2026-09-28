@@ -9,7 +9,7 @@ With vsync on, a finished frame waits for the display's next refresh (vblank), s
 two costs ([NVIDIA](https://www.nvidia.com/en-us/geforce/news/introducing-nvidia-g-sync-revolutionary-ultra-smooth-stutter-free-gaming/)):
 
 - **Stutter below the refresh rate.** A frame that misses its refresh leaves the previous one on screen for another refresh. With
-  double buffering at 60 Hz the game falls to 30 fps (33.3 ms); with a queue of frames the display times alternate between 16.7
+  double buffering at 60 Hz the game falls to 30 fps (33.3 ms); with a queue of frames the display time steps alternate between 16.7
   and 33.3 ms.
 - **Latency.** When the game runs faster than the display, finished frames wait in a queue. NVIDIA calls it the "back pressure"
   from the display; see [input latency](input-latency.md).
@@ -57,7 +57,7 @@ from a measurement we can cite:
   naive timer modes in the videos would look the same on a VRR display. Frame rate and frametime tools do not see it either (see
   [the comparison](vocabulary.md#the-two-ways-animation-error-happens)).
 - **Hitches stay.** A frame that takes 80 ms to render is still an 80 ms frame; VRR only shows it as soon as it is ready.
-- **Uneven frame times become uneven display times.** Without vsync's fixed grid, every change in frametime reaches the screen, so
+- **Uneven frame times become uneven display time steps.** Without vsync's fixed grid, every change in frametime reaches the screen, so
   animation error then depends on how well the game's animation time step matches its own frame times.
 
 The [slow frames](../README.md#frame-pacing-in-one-minute) of the vsync diagram, on a VRR display: B and E appear as soon as they
@@ -80,7 +80,7 @@ Digital Foundry found that the PS5's VRR has
   [Bloodborne](https://www.digitalfoundry.net/articles/digitalfoundry-2015-bloodborne-performance-analysis) had it together with
   real performance drops, its frame times swinging "between 16ms and 66ms"; a fan patch that only changes how often frames are
   flipped, [30 FPS Fix (Proper Frame Pacing)](https://github.com/illusionyy/console-game-patches/blob/main/_patch0/orbis/Bloodborne-Orbis.yml), fixes its pacing on the same hardware.
-- **An unlocked frame rate** on a fixed refresh display mixes display times of one and two refreshes (or tears with vsync off), so
+- **An unlocked frame rate** on a fixed refresh display mixes display time steps of one and two refreshes (or tears with vsync off), so
   it is uneven even when the average looks high.
 - **An unlocked frame rate on VRR** is smooth as long as the frametime is stable and the game's delta time follows it.
 - **Dynamic resolution** is the other lever: games lower the render resolution under load to hold a fixed target.

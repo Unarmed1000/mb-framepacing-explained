@@ -8,10 +8,11 @@ eyebrow: Stutter at a steady frame rate
 Motion can stutter even when the frame rate never drops, because every frame is timed by two clocks and the frame rate only
 looks at one of them.
 
-Every frame a game shows is a picture of one moment of game time, its **animation time**, and it stays on screen for some
-**display time**. Motion looks smooth when the two advance together: when the game moves on 16.7 ms from one frame to the next,
-the first one stays on screen for 16.7 ms. **Animation error** is how far the two disagree, frame by frame: the next slide shows
-it at work. We say _game_ for anything that animates in real time: games, user interfaces, video playback, VR, simulators.
+Every frame a game shows is a picture of one moment of game time, its **animation time**, and it appears on screen at a moment
+of real time, its **display time**. Motion looks smooth when the two advance together: when the game moves on 16.7 ms from one
+frame to the next, the second one appears 16.7 ms after the first. **Animation error** is how far the two disagree, frame by
+frame: the next slide shows it at work. We say _game_ for anything that animates in real time: games, user interfaces, video
+playback, VR, simulators.
 
 :::video single fast 60 60 top chart
 
