@@ -2,33 +2,16 @@
 # Copyright (c) 2026, Mana Battery ApS
 
 """The Python library must draw exactly what the C++ library draws: the same module matrix for 512 pseudo random payloads
-(test-data/markers/modules.csv, 128 per marker kind) and byte identical golden images from quads, triangle lists and indexed
-triangle lists, for every kind including the sync marker.
+(test-data/markers/modules.csv, 128 per marker kind) and byte identical golden images from quads, triangle lists, indexed triangle
+lists and the bitmap, for every kind including the sync marker.
 """
 
 import unittest
 from pathlib import Path
 
-from .. import (
-    MarkerKind,
-    ModuleMatrix,
-    generate_indexed,
-    generate_modules,
-    generate_quads,
-    generate_start_indexed,
-    generate_start_quads,
-    generate_start_triangles,
-    generate_triangles,
-    qr_module_count_for,
-)
+from .. import MarkerKind, generate_modules, modules_to_bitmap, qr_module_count_for
 from . import golden_data, software_raster
-
-
-def pack(matrix: ModuleMatrix) -> str:
-    """The digest format: row major, one bit per module (1 = dark), most significant bit first, lower case hex."""
-    bits = "".join("1" if dark else "0" for row in matrix.rows for dark in row)
-    bits += "0" * (-len(bits) % 8)
-    return bytes(int(bits[i : i + 8], 2) for i in range(0, len(bits), 8)).hex()
+from .markers import generate_indexed, generate_quads, generate_start_indexed, generate_start_quads, generate_start_triangles, generate_triangles
 
 
 class CrossLanguageTests(unittest.TestCase):
@@ -38,7 +21,8 @@ class CrossLanguageTests(unittest.TestCase):
         mismatches: list[str] = []
         for row in rows:
             matrix = generate_modules(row.payload, row.start)
-            if matrix.size != row.size or pack(matrix) != row.modules_hex:
+            # The matrix is stored packed exactly as the digest writes it
+            if matrix.size != row.size or matrix.bits.hex() != row.modules_hex:
                 mismatches.append(f"line {row.line}: {row.payload} size {matrix.size} (expected {row.size})")
         self.assertEqual(mismatches, [], "\n".join(mismatches[:10]))
         # Every marker kind is pinned to its version: 6 for the main markers, 2 for the sync marker
@@ -87,6 +71,14 @@ class CrossLanguageTests(unittest.TestCase):
                 )
                 expanded = software_raster.expand(vertices, indices, base_vertex)
                 self.assert_matches_golden(directory, golden, software_raster.triangles(expanded, golden.width, golden.height))
+
+    def test_golden_images_from_the_bitmap(self) -> None:
+        directory = golden_data.require_marker_directory(self)
+        for golden in golden_data.markers(directory):
+            with self.subTest(golden.file):
+                pixels = bytearray([software_raster.BACKGROUND]) * (golden.width * golden.height)
+                modules_to_bitmap(generate_modules(golden.payload, golden.start), golden.options, golden.origin, pixels, golden.width, golden.height)
+                self.assert_matches_golden(directory, golden, bytes(pixels))
 
     def assert_matches_golden(self, directory: Path, golden: golden_data.GoldenMarker, pixels: bytes) -> None:
         expected, width, height = golden_data.read_pgm(directory / golden.file)

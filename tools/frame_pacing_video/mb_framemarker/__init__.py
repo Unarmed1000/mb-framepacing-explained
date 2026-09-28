@@ -8,23 +8,26 @@ target frame time, the CPU start time and CPU busy into every frame of an applic
 error on the real display output. It draws exactly the same pixels as the C++ and C# libraries: the tests check
 it against the golden images the C++ library writes (test-data/markers). The format is specified in doc/marker-format.md.
 
-    from mb_framemarker import Options, Payload, generate_quads, fill_quads, recommended_origin, seconds_to_ticks, MarkerKind
+    from mb_framemarker import MarkerKind, Options, Payload, PixelFormat, generate_modules, modules_to_bitmap, recommended_origin, seconds_to_ticks
 
     options = Options(module_size_px=3)
     origin = recommended_origin(MarkerKind.FRAME, width, height, options)
-    quads = generate_quads(Payload(frame_index, seconds_to_ticks(animation_seconds), run_id=1), options, origin)
-    fill_quads(rgb24_frame, width, height, quads, channels=3)
+    matrix = generate_modules(Payload(frame_index, seconds_to_ticks(animation_seconds), run_id=1))   # encode once
+    modules_to_bitmap(matrix, options, origin, rgb24_frame, width, height, PixelFormat.RGB24)       # draw it
 
     # Optional (required for camera capture): the small sync marker, bottom-left, with the same frame index
     sync_origin = recommended_origin(MarkerKind.SYNC, width, height, options)
-    fill_quads(rgb24_frame, width, height, generate_quads(Payload(frame_index, 0, kind=MarkerKind.SYNC), options, sync_origin), channels=3)
+    sync = generate_modules(Payload(frame_index, 0, kind=MarkerKind.SYNC))
+    modules_to_bitmap(sync, options, sync_origin, rgb24_frame, width, height, PixelFormat.RGB24)
 
 Standard library only, Python 3.11 or later.
 """
 
+from .bitmap import modules_to_bitmap
 from .marker import (
     MAX_ENCODED_PAYLOAD_BYTE_COUNT,
     MAX_MODULE_SIZE_PX,
+    MAX_PACKED_MODULE_BYTE_COUNT,
     MAX_QUAD_COUNT,
     MAX_QUIET_ZONE_MODULES,
     MIN_MODULE_SIZE_PX,
@@ -43,33 +46,41 @@ from .marker import (
     TICKS_PER_SECOND,
     UNIX_EPOCH_DATE_TIME_TICKS,
     encode_payload,
-    generate_indexed,
     generate_modules,
-    generate_quads,
-    generate_start_indexed,
-    generate_start_quads,
-    generate_start_triangles,
-    generate_triangles,
     is_valid,
     marker_size_px,
     minimum_module_size_px,
+    modules_to_indexed,
+    modules_to_quads,
+    modules_to_triangles,
     qr_module_count_for,
-    quads_to_indexed,
-    quads_to_triangles,
     recommend_module_size_px,
     recommended_origin,
     seconds_to_ticks,
     to_date_time_ticks,
     try_decode_payload,
 )
-from .raster import fill_quads
-from .structures import SEQUENCE_ID_BYTE_COUNT, MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, SequenceId, StartMetadata, Vertex
+from .structures import (
+    SEQUENCE_ID_BYTE_COUNT,
+    MarkerKind,
+    ModuleMatrix,
+    Options,
+    Payload,
+    PixelFormat,
+    Point,
+    Quad,
+    SequenceId,
+    StartMetadata,
+    Vertex,
+    packed_module_byte_count,
+)
 
 __version__ = "0.1.0"
 
 __all__ = [
     "MAX_ENCODED_PAYLOAD_BYTE_COUNT",
     "MAX_MODULE_SIZE_PX",
+    "MAX_PACKED_MODULE_BYTE_COUNT",
     "MAX_QUAD_COUNT",
     "MAX_QUIET_ZONE_MODULES",
     "MIN_MODULE_SIZE_PX",
@@ -92,26 +103,23 @@ __all__ = [
     "ModuleMatrix",
     "Options",
     "Payload",
+    "PixelFormat",
     "Point",
     "Quad",
     "SequenceId",
     "StartMetadata",
     "Vertex",
     "encode_payload",
-    "fill_quads",
-    "generate_indexed",
     "generate_modules",
-    "generate_quads",
-    "generate_start_indexed",
-    "generate_start_quads",
-    "generate_start_triangles",
-    "generate_triangles",
     "is_valid",
     "marker_size_px",
     "minimum_module_size_px",
+    "modules_to_bitmap",
+    "modules_to_indexed",
+    "modules_to_quads",
+    "modules_to_triangles",
+    "packed_module_byte_count",
     "qr_module_count_for",
-    "quads_to_indexed",
-    "quads_to_triangles",
     "recommend_module_size_px",
     "recommended_origin",
     "seconds_to_ticks",

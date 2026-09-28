@@ -141,12 +141,53 @@ class Vertex:
     luma: int
 
 
+def packed_module_byte_count(size: int) -> int:
+    """The bytes of a packed module matrix of size x size modules: 211 for the main marker (41), 79 for the sync marker (25)."""
+    return 0 if size <= 0 else ((size * size) + 7) // 8
+
+
 @dataclass(frozen=True, slots=True)
 class ModuleMatrix:
-    """A QR symbol: `size` modules per side, `rows[y][x]` True for dark."""
+    """The encoded marker: the QR symbol's modules, 1 bit each (1 = dark), packed row-major, most significant bit first, continuous across
+    rows, the last byte zero padded (exactly test-data/markers/modules.csv's modulesHex). generate_modules makes it once per marker; every
+    drawing output (modules_to_quads, modules_to_triangles, modules_to_indexed, modules_to_bitmap) is made from it.
+
+    `size` modules per side (41 for the main marker, 25 for the sync marker). Building one from bits checks the size (21 to 41, in steps
+    of 4) and the length (at least packed_module_byte_count(size) bytes), and ignores bits past the last module."""
 
     size: int
-    rows: tuple[tuple[bool, ...], ...] = field(repr=False)
+    bits: bytes = field(repr=False)
+
+    def __post_init__(self) -> None:
+        count = packed_module_byte_count(self.size)
+        if self.size < 21 or self.size > 41 or (self.size - 17) % 4 != 0 or len(self.bits) < count:
+            raise ValueError(f"not a packed QR symbol: size {self.size}, {len(self.bits)} bytes")
+        bits = bytearray(self.bits[:count])
+        used = (self.size * self.size) % 8
+        if used:
+            bits[-1] &= (0xFF << (8 - used)) & 0xFF
+        object.__setattr__(self, "bits", bytes(bits))
 
     def is_dark(self, x: int, y: int) -> bool:
-        return self.rows[y][x]
+        index = (y * self.size) + x
+        return (self.bits[index >> 3] >> (7 - (index & 7))) & 1 == 1
+
+
+class PixelFormat(IntEnum):
+    """The pixels modules_to_bitmap writes. Each pixel is a run of bytes in memory order; pixels follow each other left to right, rows are
+    the stride apart, top row first. Every colour channel holds the same value: 0 for a dark module, 255 for a light one.
+
+        GRAY8   1 byte:  [L]
+        RGB24   3 bytes: [R, G, B]          (R = G = B = L)
+        RGBA32  4 bytes: [R, G, B, A]       (R = G = B = L, A = 255)
+
+    Because R, G and B are equal, a BGR24 or BGRA32 buffer (PIL's "BGR;24", OpenCV's default order) gets exactly the same bytes: use RGB24
+    or RGBA32 for them. A buffer with alpha first (ARGB) is not supported."""
+
+    GRAY8 = 0
+    RGB24 = 1
+    RGBA32 = 2
+
+    @property
+    def bytes_per_pixel(self) -> int:
+        return (1, 3, 4)[self]

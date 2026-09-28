@@ -22,9 +22,8 @@ from PIL import Image
 
 import generate_videos as gv
 from frame_timing import parse_mode
-from mb_framemarker import MarkerKind, Point, SequenceId, StartMetadata, fill_quads
+from mb_framemarker import MarkerKind, PixelFormat, Point, SequenceId, StartMetadata, generate_modules, modules_to_bitmap
 from mb_framemarker import Options as MarkerOptions
-from mb_framemarker import generate_start_quads as start_marker_quads
 
 SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
 MODE = parse_mode
@@ -852,11 +851,17 @@ class SingleAndMarkerTests(unittest.TestCase):
             payload = gv.marker_payload(settings, job, -1)
             self.assertEqual(payload.kind, MarkerKind.SEQUENCE_START)
             blank = bytes(3 * settings.width * settings.height)
-            expected_quads = start_marker_quads(
-                payload, StartMetadata(0, sequence_id), MarkerOptions(settings.marker_module_px), Point(*settings.marker_origin)
-            )
+            expected_matrix = generate_modules(payload, StartMetadata(0, sequence_id))
             expected_image = bytearray(blank)
-            fill_quads(expected_image, settings.width, settings.height, expected_quads, channels=3)
+            modules_to_bitmap(
+                expected_matrix,
+                MarkerOptions(settings.marker_module_px),
+                Point(*settings.marker_origin),
+                expected_image,
+                settings.width,
+                settings.height,
+                PixelFormat.RGB24,
+            )
             self.assertEqual(gv.draw_marker(settings, job, -1, blank), bytes(expected_image))
             video = cast(list[dict[str, object]], gv.build_manifest(settings, jobs)["videos"])[0]
             self.assertEqual((video["sequenceId"], video["sequenceIdHex"]), (str(sequence_id), sequence_id.data.hex()))

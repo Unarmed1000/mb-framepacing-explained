@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2026, Mana Battery ApS
 
-"""The marker format and geometry: constants, sizing and placement, the payload wire format, generating the marker as quads, triangles
-or indexed triangles, and quad to vertex conversion. The same API as the C# library (MB.FrameMarker) and the C++ library
+"""The marker format and geometry: constants, sizing and placement, the payload wire format, encoding the marker (generate_modules) and
+drawing it from the modules as quads, triangles or indexed triangles. The same API as the C# library (MB.FrameMarker) and the C++ library
 (MB::FrameMarker), in Python's naming; the specification is doc/marker-format.md.
 
 Every output walks the marker in the same order: the light background (symbol + quiet zone) first, then one dark quad per horizontal
@@ -13,7 +13,19 @@ import struct
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from .structures import SEQUENCE_ID_BYTE_COUNT, MarkerKind, ModuleMatrix, Options, Payload, Point, Quad, SequenceId, StartMetadata, Vertex
+from .structures import (
+    SEQUENCE_ID_BYTE_COUNT,
+    MarkerKind,
+    ModuleMatrix,
+    Options,
+    Payload,
+    Point,
+    Quad,
+    SequenceId,
+    StartMetadata,
+    Vertex,
+    packed_module_byte_count,
+)
 from .third_party.qrcodegen import encode as _encode_qr
 
 QR_VERSION = 6
@@ -57,6 +69,9 @@ RECOMMENDED_QUIET_ZONE_MODULES = 4
 
 MAX_QUAD_COUNT = 1 + (QR_MODULE_COUNT * ((QR_MODULE_COUNT + 1) // 2))
 """Upper bound on the number of quads for any marker: one background quad plus at most one quad per dark run."""
+
+MAX_PACKED_MODULE_BYTE_COUNT = packed_module_byte_count(QR_MODULE_COUNT)
+"""The packed module matrix of the largest symbol: 211 bytes for 41x41."""
 
 _HEADER = struct.Struct("<2sBBQqIqIqI")
 _SYNC = struct.Struct("<2sBBQ")
@@ -178,67 +193,47 @@ def try_decode_payload(data: bytes) -> tuple[Payload, StartMetadata | None] | No
 
 
 def generate_modules(payload: Payload, metadata: StartMetadata | None = None) -> ModuleMatrix:
-    """Build the QR module matrix for the payload. The metadata is only used by start markers. Raises ValueError when an encoded field is
-    out of its range."""
+    """Encode a marker: the payload's QR symbol as a packed module matrix, the one step every drawing output starts from (the metadata is
+    only used by start markers). Draw it with modules_to_quads, modules_to_triangles, modules_to_indexed or modules_to_bitmap; one matrix
+    can feed several. Raises ValueError when an encoded field is out of its range."""
     data = encode_payload(payload, metadata)
     # Every kind is pinned to one version, so the symbol never changes size between frames
     version = SYNC_QR_VERSION if payload.kind == MarkerKind.SYNC else QR_VERSION
     symbol = _encode_qr(data, version, version)
     if symbol is None:  # every payload encode_payload accepts fits the version
         raise ValueError(f"the payload does not fit QR version {version}: {payload}")
-    return ModuleMatrix(symbol.size, tuple(tuple(row) for row in symbol.modules))
+    # Pack the symbol: row-major, most significant bit first, continuous across rows
+    bits = bytearray(packed_module_byte_count(symbol.size))
+    for index, dark in enumerate(dark for row in symbol.modules for dark in row):
+        if dark:
+            bits[index >> 3] |= 0x80 >> (index & 7)
+    return ModuleMatrix(symbol.size, bytes(bits))
 
 
-def generate_quads(payload: Payload, options: Options, origin: Point) -> list[Quad]:
-    """The marker as quads, for renderers that fill rectangles: the light background first, then one dark quad per horizontal run of
-    dark modules. Frame, end and sync markers (by the payload's kind); a start marker made this way carries empty metadata. Raises
-    ValueError if the options are invalid."""
-    return _walk(_build_matrix(payload, None, False, options), options, origin)
+def modules_to_quads(matrix: ModuleMatrix, options: Options, origin: Point) -> list[Quad]:
+    """The marker as quads, for renderers that fill rectangles: the light background (symbol + quiet zone) first, then one dark quad per
+    horizontal run of dark modules. Raises ValueError if the options are invalid."""
+    if not is_valid(options):
+        raise ValueError(f"invalid options: {options}")
+    return _walk(matrix, options, origin)
 
 
-def generate_start_quads(payload: Payload, metadata: StartMetadata, options: Options, origin: Point) -> list[Quad]:
-    """generate_quads for a start marker carrying metadata (the payload's kind is forced to SEQUENCE_START). Same size as the frame
-    and end markers."""
-    return _walk(_build_matrix(payload, metadata, True, options), options, origin)
-
-
-def generate_triangles(payload: Payload, options: Options, origin: Point) -> list[Vertex]:
-    """The marker as a triangle list: 6 vertices per quad, (TL, TR, BL) (BL, TR, BR), clockwise on screen, every vertex on a pixel
-    corner."""
-    return quads_to_triangles(generate_quads(payload, options, origin))
-
-
-def generate_start_triangles(payload: Payload, metadata: StartMetadata, options: Options, origin: Point) -> list[Vertex]:
-    """generate_triangles for a start marker carrying metadata (the payload's kind is forced to SEQUENCE_START)."""
-    return quads_to_triangles(generate_start_quads(payload, metadata, options, origin))
-
-
-def generate_indexed(payload: Payload, options: Options, origin: Point, base_vertex: int = 0) -> tuple[list[Vertex], list[int]]:
-    """The marker as an indexed triangle list: 4 vertices (TL, TR, BR, BL) and 6 indices (0,1,3)(3,1,2) per quad, clockwise on screen.
-    `base_vertex` is added to every index."""
-    return quads_to_indexed(generate_quads(payload, options, origin), base_vertex)
-
-
-def generate_start_indexed(payload: Payload, metadata: StartMetadata, options: Options, origin: Point, base_vertex: int = 0) -> tuple[list[Vertex], list[int]]:
-    """generate_indexed for a start marker carrying metadata (the payload's kind is forced to SEQUENCE_START)."""
-    return quads_to_indexed(generate_start_quads(payload, metadata, options, origin), base_vertex)
-
-
-def quads_to_triangles(quads: list[Quad]) -> list[Vertex]:
-    """Convert quads to a triangle list: 6 vertices per quad, (TL, TR, BL) (BL, TR, BR), clockwise on screen (+y down)."""
+def modules_to_triangles(matrix: ModuleMatrix, options: Options, origin: Point) -> list[Vertex]:
+    """The marker as a triangle list: 6 vertices per quad (see modules_to_quads for the order), (TL, TR, BL) (BL, TR, BR), clockwise on
+    screen, every vertex on a pixel corner."""
     vertices: list[Vertex] = []
-    for quad in quads:
+    for quad in modules_to_quads(matrix, options, origin):
         top_left, top_right, bottom_right, bottom_left = _corners(quad)
         vertices += (top_left, top_right, bottom_left, bottom_left, top_right, bottom_right)
     return vertices
 
 
-def quads_to_indexed(quads: list[Quad], base_vertex: int = 0) -> tuple[list[Vertex], list[int]]:
-    """Convert quads to an indexed triangle list: 4 vertices (TL, TR, BR, BL) and 6 indices (0,1,3)(3,1,2) per quad, clockwise on
-    screen. `base_vertex` is added to every index."""
+def modules_to_indexed(matrix: ModuleMatrix, options: Options, origin: Point, base_vertex: int = 0) -> tuple[list[Vertex], list[int]]:
+    """The marker as an indexed triangle list: 4 vertices (TL, TR, BR, BL) and 6 indices (0,1,3)(3,1,2) per quad, clockwise on screen.
+    `base_vertex` is added to every index."""
     vertices: list[Vertex] = []
     indices: list[int] = []
-    for index, quad in enumerate(quads):
+    for index, quad in enumerate(modules_to_quads(matrix, options, origin)):
         vertices += _corners(quad)
         first = base_vertex + (index * 4)
         indices += (first, first + 1, first + 3, first + 3, first + 1, first + 2)
@@ -256,14 +251,6 @@ def _corners(quad: Quad) -> tuple[Vertex, Vertex, Vertex, Vertex]:
     )
 
 
-def _build_matrix(payload: Payload, metadata: StartMetadata | None, force_start: bool, options: Options) -> ModuleMatrix:
-    if not is_valid(options):
-        raise ValueError(f"invalid options: {options}")
-    if not force_start:
-        return generate_modules(payload)
-    return generate_modules(payload.with_kind(MarkerKind.SEQUENCE_START), metadata)
-
-
 def _walk(matrix: ModuleMatrix, options: Options, origin: Point) -> list[Quad]:
     """The marker in draw order: the background quad, then every horizontal run of dark modules, row by row."""
     module_size = options.module_size_px
@@ -272,15 +259,15 @@ def _walk(matrix: ModuleMatrix, options: Options, origin: Point) -> list[Quad]:
     symbol_top = origin.y + (options.quiet_zone_modules * module_size)
 
     quads = [Quad(origin.x, origin.y, origin.x + marker_size, origin.y + marker_size, False)]
-    for y, row in enumerate(matrix.rows):
+    for y in range(matrix.size):
         top = symbol_top + (y * module_size)
         x = 0
         while x < matrix.size:
-            if not row[x]:
+            if not matrix.is_dark(x, y):
                 x += 1
                 continue
             run_start = x
-            while x < matrix.size and row[x]:
+            while x < matrix.size and matrix.is_dark(x, y):
                 x += 1
             quads.append(Quad(symbol_left + (run_start * module_size), top, symbol_left + (x * module_size), top + module_size, True))
     return quads

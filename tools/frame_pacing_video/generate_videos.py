@@ -85,16 +85,16 @@ from mb_framemarker import (
     TICKS_PER_SECOND,
     MarkerKind,
     Payload,
+    PixelFormat,
     SequenceId,
     StartMetadata,
-    fill_quads,
+    generate_modules,
     marker_size_px,
+    modules_to_bitmap,
     recommended_origin,
 )
 from mb_framemarker import Options as MarkerOptions
 from mb_framemarker import Point as MarkerPoint
-from mb_framemarker import generate_quads as marker_quads
-from mb_framemarker import generate_start_quads as start_marker_quads
 
 type Rgb = tuple[int, int, int]
 
@@ -936,13 +936,11 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
 def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> bytes:
     """The RGB24 frame `image` with the marker of output frame `frame` drawn in, in pure black and white."""
     payload = marker_payload(settings, job, frame)
-    origin = MarkerPoint(*settings.marker_origin)
-    if payload.kind == MarkerKind.SEQUENCE_START:
-        quads = start_marker_quads(payload, StartMetadata(0, marker_sequence_id(job.top)), settings.marker_options, origin)
-    else:
-        quads = marker_quads(payload, settings.marker_options, origin)
+    # Encode once (a start marker carries the clip's sequence id), then draw it into the frame
+    metadata = StartMetadata(0, marker_sequence_id(job.top)) if payload.kind == MarkerKind.SEQUENCE_START else None
+    matrix = generate_modules(payload, metadata)
     pixels = bytearray(image)
-    fill_quads(pixels, settings.width, settings.height, quads, channels=3)
+    modules_to_bitmap(matrix, settings.marker_options, MarkerPoint(*settings.marker_origin), pixels, settings.width, settings.height, PixelFormat.RGB24)
     return bytes(pixels)
 
 

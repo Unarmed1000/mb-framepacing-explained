@@ -5,15 +5,18 @@
 drawn in order. The triangle rasterizer is the C# tests' (SoftwareRaster.cs), so all three outputs are checked the same way.
 """
 
-from .. import Quad, Vertex, fill_quads
+from .. import Quad, Vertex
 
 BACKGROUND = 128
 
 
 def quads(quad_list: list[Quad], width: int, height: int) -> bytes:
-    """Fill pixel (x, y) when left <= x < right and top <= y < bottom, through the library's own fill_quads."""
+    """Fill pixel (x, y) when left <= x < right and top <= y < bottom, clipped to the canvas."""
     pixels = bytearray([BACKGROUND]) * (width * height)
-    fill_quads(pixels, width, height, quad_list)
+    for quad in quad_list:
+        for y in range(max(quad.top, 0), min(quad.bottom, height)):
+            for x in range(max(quad.left, 0), min(quad.right, width)):
+                pixels[(y * width) + x] = 0 if quad.dark else 255
     return bytes(pixels)
 
 
