@@ -880,9 +880,7 @@ code {
 
 /* The top bar's switch that pauses and plays every video on the page */
 .motion-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-grid;
   padding: 5px 12px;
   border: 1px solid var(--card-border);
   border-radius: 999px;
@@ -892,6 +890,19 @@ code {
   font-size: 13px;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.motion-state {
+  display: inline-flex;
+  grid-area: 1 / 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.motion-switch[data-paused="true"] [data-state="playing"],
+.motion-switch[data-paused="false"] [data-state="paused"] {
+  visibility: hidden;
 }
 
 .motion-switch:hover {

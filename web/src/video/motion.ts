@@ -48,10 +48,12 @@ export function motionSwitch(): HTMLButtonElement {
   button.type = "button";
   button.className = "motion-switch";
   button.setAttribute("aria-keyshortcuts", "P");
+  // Both labels are always there, on top of each other, and only the current one is visible: the button keeps the width of the
+  // longer one, so the top bar does not shift when it changes
+  button.innerHTML = `
+    <span class="motion-state" data-state="playing"><span aria-hidden="true">⏸</span><span class="motion-label">Pause videos</span></span>
+    <span class="motion-state" data-state="paused"><span aria-hidden="true">▶</span><span class="motion-label">Play videos</span></span>`;
   const update = (): void => {
-    button.innerHTML = paused
-      ? `<span aria-hidden="true">▶</span><span class="motion-label">Play videos</span>`
-      : `<span aria-hidden="true">⏸</span><span class="motion-label">Pause videos</span>`;
     button.setAttribute("aria-label", paused ? "Play videos" : "Pause videos");
     button.title = paused ? "Play every video on the page (P)" : "Pause every video on the page (P)";
     button.dataset.paused = String(paused);
