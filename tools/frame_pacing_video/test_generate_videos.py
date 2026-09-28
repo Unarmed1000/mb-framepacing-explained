@@ -828,7 +828,7 @@ class SingleAndMarkerTests(unittest.TestCase):
                 entry = gv._mode_entry(settings, MODE(name), speed)  # pyright: ignore[reportPrivateUsage]
                 self.assertEqual(set(cast(dict[str, list[int]], entry["frames"])["targetFps"]), expected)
                 self.assertEqual(entry["targetFps"], max(expected))
-        self.assertIn("CC BY-NC-ND 4.0", cast(str, gv.build_manifest(settings, gv.plan_videos(settings))["license"]))
+        self.assertIn("CC BY-NC-SA 4.0", cast(str, gv.build_manifest(settings, gv.plan_videos(settings))["license"]))
 
     def test_the_start_marker_names_the_mode_within_the_limit(self) -> None:
         settings, _ = self.marked("60")

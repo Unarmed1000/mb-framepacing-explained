@@ -230,7 +230,7 @@ what mb-framepacing measures.
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`): a folder per
 scenario, named after its mode, with `video.mp4` and its own `manifest.json`, 4 MB in all. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
-videos stay CC BY-NC-ND 4.0.
+videos stay CC BY-NC-SA 4.0.
 
 ## Setup
 
@@ -382,7 +382,7 @@ Settings that would break the loop or the pacing are rejected with an error; not
     the refresh rate divided by the swap interval it is paced at; `targetFps` of the mode at full speed, which Swappy's rule
     lowers through its busy stretch). The first frame follows the last one of the previous loop. A web page can draw the dt and
     error graphs next to the video from it.
-  - the licence of the videos (`license`): this repository's, CC BY-NC-ND 4.0.
+  - the licence of the videos (`license`): this repository's, CC BY-NC-SA 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
   RGB-to-YUV conversion reproduces the background and boxes exactly and moves in-between grays (edges, text) by at most one step.

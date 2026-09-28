@@ -51,7 +51,7 @@ The [pages workflow](.github/workflows/pages.yml) runs these on every push to ma
 
 ## License
 
-The repository is licensed under [CC BY-NC-ND 4.0](LICENSE) by Mana Battery ApS. By submitting a contribution (an issue's text, a
+The repository is licensed under [CC BY-NC-SA 4.0](LICENSE) by Mana Battery ApS. By submitting a contribution (an issue's text, a
 pull request or any other material), you confirm that you have the right to submit it, and you agree that it is published under
 the repository's license and that Mana Battery ApS may use, change and publish it as part of this project. Contributors are
 credited in the Git history.

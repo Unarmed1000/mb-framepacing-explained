@@ -6,7 +6,7 @@ name = "mb-framepacing-explained"
 version = "0.1.0"
 description = "Frame pacing and animation error, explained: generated comparison videos, timing diagrams and charts, for a slide-style web page with a blind test."
 requires-python = ">=3.14"
-license = "CC-BY-NC-ND-4.0"
+license = "CC-BY-NC-SA-4.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Mana Battery ApS" }]
 dependencies = [

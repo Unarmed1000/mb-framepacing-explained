@@ -8,7 +8,7 @@ Each clip is generate_videos.py --single MODE --marker --speed fast: lossless, 1
 before and 3 of end marker after. Its manifest is the generator's, for that one clip: per frame the refresh it is flipped on, its
 animation error, how late it is and the rate the game aims for (targetFps), and the marker frame index of the clip's first frame.
 The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
-data (the manifest's "license"); this repository's own videos stay CC BY-NC-ND 4.0.
+data (the manifest's "license"); this repository's own videos stay CC BY-NC-SA 4.0.
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
