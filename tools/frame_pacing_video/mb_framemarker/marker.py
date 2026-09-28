@@ -73,6 +73,9 @@ MAX_QUAD_COUNT = 1 + (QR_MODULE_COUNT * ((QR_MODULE_COUNT + 1) // 2))
 MAX_PACKED_MODULE_BYTE_COUNT = packed_module_byte_count(QR_MODULE_COUNT)
 """The packed module matrix of the largest symbol: 211 bytes for 41x41."""
 
+MAX_GRID_VERTEX_COUNT = 4 + ((QR_MODULE_COUNT + 1) ** 2)
+"""Vertices of the main marker's static grid (grid_vertices): 1768; the sync marker's is 680. Both fit 16-bit indices."""
+
 _HEADER = struct.Struct("<2sBBQqIqIqI")
 _SYNC = struct.Struct("<2sBBQ")
 _START_FIELDS = struct.Struct(f"<q{SEQUENCE_ID_BYTE_COUNT}s")
@@ -238,6 +241,48 @@ def modules_to_indexed(matrix: ModuleMatrix, options: Options, origin: Point, ba
         first = base_vertex + (index * 4)
         indices += (first, first + 1, first + 3, first + 3, first + 1, first + 2)
     return vertices, indices
+
+
+def grid_vertex_count(kind: MarkerKind) -> int:
+    """Vertices of a marker kind's static grid: 4 for the light background, then every module corner, (N + 1)^2."""
+    return 4 + ((qr_module_count_for(kind) + 1) ** 2)
+
+
+def grid_vertices(kind: MarkerKind, options: Options, origin: Point) -> list[Vertex]:
+    """The marker's static grid, for drawing it with per-frame indices only (modules_to_grid_indices): the vertices stay the same while the
+    kind's symbol size, the options and the origin do. Vertices 0..3 are the light background (TL, TR, BR, BL, luma 255); then the corners
+    of the modules, dark (luma 0), row-major: corner (column, row) is vertex 4 + row x (N + 1) + column, N the kind's modules per side.
+    Raises ValueError if the options are invalid."""
+    if not is_valid(options):
+        raise ValueError(f"invalid options: {options}")
+    modules = qr_module_count_for(kind)
+    size = marker_size_px(options, kind)
+    left = origin.x + (options.quiet_zone_modules * options.module_size_px)
+    top = origin.y + (options.quiet_zone_modules * options.module_size_px)
+    vertices = [
+        Vertex(origin.x, origin.y, 255),
+        Vertex(origin.x + size, origin.y, 255),
+        Vertex(origin.x + size, origin.y + size, 255),
+        Vertex(origin.x, origin.y + size, 255),
+    ]
+    for row in range(modules + 1):
+        for column in range(modules + 1):
+            vertices.append(Vertex(left + (column * options.module_size_px), top + (row * options.module_size_px), 0))
+    return vertices
+
+
+def modules_to_grid_indices(matrix: ModuleMatrix, base_vertex: int = 0) -> list[int]:
+    """The per-frame part of the grid drawing: the indices of the background, (0,1,3)(3,1,2), then 6 per horizontal run of dark modules,
+    (TL, TR, BL) (BL, TR, BR) of the run's grid corners, clockwise on screen. Use the grid of the matrix's kind. `base_vertex` is added to
+    every index."""
+    corners = matrix.size + 1
+    indices = [base_vertex + i for i in (0, 1, 3, 3, 1, 2)]
+    # With 1 px modules at the origin, a run's quad is its columns and row
+    for run in _walk(matrix, Options(1, 0), Point(0, 0))[1:]:
+        top_left = base_vertex + 4 + (run.top * corners) + run.left
+        top_right = base_vertex + 4 + (run.top * corners) + run.right
+        indices += (top_left, top_right, top_left + corners, top_left + corners, top_right, top_right + corners)
+    return indices
 
 
 def _corners(quad: Quad) -> tuple[Vertex, Vertex, Vertex, Vertex]:

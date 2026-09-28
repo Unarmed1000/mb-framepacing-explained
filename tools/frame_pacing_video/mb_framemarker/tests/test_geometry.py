@@ -25,9 +25,13 @@ from .. import (
     StartMetadata,
     Vertex,
     generate_modules,
+    grid_vertex_count,
+    grid_vertices,
     marker_size_px,
     minimum_module_size_px,
     modules_to_bitmap,
+    modules_to_grid_indices,
+    modules_to_indexed,
     modules_to_quads,
     packed_module_byte_count,
     qr_module_count_for,
@@ -244,6 +248,22 @@ class BitmapTests(unittest.TestCase):
         self.assertTrue(all(value == 128 for value in pixels))
         modules_to_bitmap(matrix, Options(1, 4), Point(500, 500), pixels, 64, 64)
         self.assertTrue(all(value == 128 for value in pixels), "outside the buffer: nothing to draw")
+
+
+class GridTests(unittest.TestCase):
+    def test_vertex_counts_fit_16_bit_indices(self) -> None:
+        self.assertEqual((grid_vertex_count(MarkerKind.FRAME), grid_vertex_count(MarkerKind.SYNC)), (1768, 680))
+
+    def test_resolved_indices_equal_the_indexed_triangles(self) -> None:
+        base = 100
+        for payload in (Payload(1, 2, 3), Payload(7, 0, 0, MarkerKind.SYNC), Payload(5, 6, 7, MarkerKind.SEQUENCE_START)):
+            for options in (Options(1, 0), Options(3, 4)):
+                with self.subTest(payload=payload, options=options):
+                    matrix = generate_modules(payload)
+                    grid = grid_vertices(payload.kind, options, Point(17, 23))
+                    grid_indices = modules_to_grid_indices(matrix, base)
+                    vertices, indices = modules_to_indexed(matrix, options, Point(17, 23), base)
+                    self.assertEqual([grid[i - base] for i in grid_indices], [vertices[i - base] for i in indices])
 
 
 if __name__ == "__main__":

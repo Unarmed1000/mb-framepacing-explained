@@ -26,6 +26,7 @@ Standard library only, Python 3.11 or later.
 from .bitmap import modules_to_bitmap
 from .marker import (
     MAX_ENCODED_PAYLOAD_BYTE_COUNT,
+    MAX_GRID_VERTEX_COUNT,
     MAX_MODULE_SIZE_PX,
     MAX_PACKED_MODULE_BYTE_COUNT,
     MAX_QUAD_COUNT,
@@ -47,9 +48,12 @@ from .marker import (
     UNIX_EPOCH_DATE_TIME_TICKS,
     encode_payload,
     generate_modules,
+    grid_vertex_count,
+    grid_vertices,
     is_valid,
     marker_size_px,
     minimum_module_size_px,
+    modules_to_grid_indices,
     modules_to_indexed,
     modules_to_quads,
     modules_to_triangles,
@@ -79,6 +83,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "MAX_ENCODED_PAYLOAD_BYTE_COUNT",
+    "MAX_GRID_VERTEX_COUNT",
     "MAX_MODULE_SIZE_PX",
     "MAX_PACKED_MODULE_BYTE_COUNT",
     "MAX_QUAD_COUNT",
@@ -111,10 +116,13 @@ __all__ = [
     "Vertex",
     "encode_payload",
     "generate_modules",
+    "grid_vertex_count",
+    "grid_vertices",
     "is_valid",
     "marker_size_px",
     "minimum_module_size_px",
     "modules_to_bitmap",
+    "modules_to_grid_indices",
     "modules_to_indexed",
     "modules_to_quads",
     "modules_to_triangles",
