@@ -2,6 +2,7 @@
 
 import { cssSizeForDevicePixels, devicePixelBox, isOneToOne, snapOffset, type Size } from "../checks/scaling";
 import { watchDevicePixelRatio } from "../checks/viewing";
+import { onVideosPaused, setVideosPaused, videosPaused } from "./motion";
 
 export interface PlaybackHealth {
   /** Video frames the browser presented. */
@@ -25,6 +26,22 @@ export function classifyStep(presentedGap: number, displayDeltaMs: number, perio
   return "on-time";
 }
 
+/** Every video made on the page, for the switch that pauses and plays them all; dropped once taken off the page. */
+const players = new Set<PixelVideo>();
+
+onVideosPaused((paused) => {
+  for (const player of players) {
+    if (!player.element.isConnected) players.delete(player);
+    else if (paused) player.video.pause();
+    else player.resume();
+  }
+});
+
+/** Play the videos inside `root` again (a slide shown again) that were playing, unless the reader paused the videos. */
+export function resumeVideosIn(root: HTMLElement): void {
+  for (const player of players) if (root.contains(player.element)) player.resume();
+}
+
 /** Browsers without requestVideoFrameCallback (older ones) cannot report playback health. */
 function hasFrameCallback(video: HTMLVideoElement): boolean {
   return "requestVideoFrameCallback" in video;
@@ -44,6 +61,10 @@ export class PixelVideo {
   private lastPresented: number | null = null;
   private lastExpected: number | null = null;
   private lastMediaTime: number | null = null;
+  /** Whether the page wants it playing (it was played and not paused since); it plays only while the videos are not paused. */
+  private wanted = false;
+  /** Over the video while the reader has paused the videos: a button to play them again. */
+  private readonly pausedOverlay: HTMLButtonElement;
   /** Frames still to skip after a (re)start: while the decoder settles, the timing is irregular and says nothing. */
   private settling = 0;
 
@@ -73,8 +94,18 @@ export class PixelVideo {
     this.video.setAttribute("aria-label", options.label ?? "Two boxes moving; compare the top and the bottom");
     this.readout = document.createElement("p");
     this.readout.className = "pixel-readout";
-    this.frame.append(this.video);
+    this.pausedOverlay = document.createElement("button");
+    this.pausedOverlay.type = "button";
+    this.pausedOverlay.className = "video-paused";
+    this.pausedOverlay.innerHTML = `<span aria-hidden="true">▶</span> Play videos`;
+    this.pausedOverlay.title = "Play every video on the page (P)";
+    this.pausedOverlay.hidden = true;
+    this.pausedOverlay.addEventListener("click", () => setVideosPaused(false));
+    this.frame.append(this.video, this.pausedOverlay);
     this.element.append(this.frame);
+    players.add(this);
+    for (const event of ["play", "pause"]) this.video.addEventListener(event, () => this.updateOverlay());
+    onVideosPaused(() => this.updateOverlay());
     const layout = (): void => this.layout();
     window.addEventListener("resize", layout);
     // Any scrolling ancestor (the slides scroll inside their own area) moves the video: capture every scroll on the page
@@ -139,12 +170,32 @@ export class PixelVideo {
     for (const listener of this.frameListeners) listener(mediaTime);
   }
 
+  /** Play it, as the page does on its own: only while the reader has not paused the videos. */
   play(): void {
+    this.wanted = true;
+    this.resume();
+    this.updateOverlay();
+  }
+
+  /** Play it because the reader asked for this video (its own play button), even while the other videos are paused. */
+  playNow(): void {
+    this.wanted = true;
     void this.video.play();
   }
 
   pause(): void {
+    this.wanted = false;
     this.video.pause();
+    this.updateOverlay();
+  }
+
+  /** Play it again if the page wants it playing, the videos are not paused and it is on the slide shown. */
+  resume(): void {
+    if (this.wanted && !videosPaused() && this.element.closest("[hidden]") === null) void this.video.play();
+  }
+
+  private updateOverlay(): void {
+    this.pausedOverlay.hidden = !(this.wanted && videosPaused() && this.video.paused);
   }
 
   resetHealth(): void {

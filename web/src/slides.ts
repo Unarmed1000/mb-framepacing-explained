@@ -2,6 +2,8 @@
 // keyboard and swipe. After a jump (a link, not Next or Previous) the back button returns where the visitor came from, like the
 // browser's Back.
 
+import { resumeVideosIn } from "./video/pixel-video";
+
 export interface Slide {
   id: string;
   title: string;
@@ -21,6 +23,8 @@ export function startSlides(
   links: readonly { href: string; label: string }[] = [],
   /** Who made the page, after its name in the top bar (hidden on narrow screens). */
   credit = "",
+  /** Controls at the end of the top bar, after the slide counter. */
+  tools: readonly HTMLElement[] = [],
 ): void {
   root.innerHTML = `
     <header class="topbar">
@@ -43,6 +47,7 @@ export function startSlides(
   const title = root.querySelector<HTMLElement>(".slide-title")!;
   const previous = root.querySelector<HTMLButtonElement>('[data-go="-1"]')!;
   const next = root.querySelector<HTMLButtonElement>('[data-go="1"]')!;
+  root.querySelector(".topbar")!.append(...tools);
   for (const link of links)
     root
       .querySelector(".topbar-links")!
@@ -94,7 +99,7 @@ export function startSlides(
         rendered.set(slide.id, element);
         main.append(element);
       } else {
-        element.querySelectorAll("video").forEach((video) => void video.play());
+        resumeVideosIn(element);
       }
       bar.style.width = `${((index + 1) / slides.length) * 100}%`;
       progress.setAttribute("aria-valuemax", String(slides.length));

@@ -93,3 +93,7 @@ the browser family.
 - **Canvas instead of video** is worth trying later: drawing the boxes each refresh from the same timing data (`manifest.json`)
   avoids video decoding altogether and gives exact control of every refresh.
 - **Charts next to the videos**, synced to playback: see [charts](charts.md).
+- **Pausing every video.** Moving boxes next to the text distract some readers while they read. A switch in the top bar (and the
+  P key) pauses or plays every video on the page, remembered in the browser; a paused video shows a button to play them again. A
+  reader whose system asks for reduced motion starts paused. A video's own play button still plays that one while the rest stay
+  paused.

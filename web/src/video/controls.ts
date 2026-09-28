@@ -66,7 +66,7 @@ export function playbackControls(player: PixelVideo, fps: number, frames: number
     time.textContent = `${(frame / fps).toFixed(2)} s · frame ${frame + 1} of ${frames}`;
   };
   const seek = (frame: number): void => {
-    video.pause();
+    player.pause();
     const wrapped = ((frame % frames) + frames) % frames;
     video.currentTime = timeOf(wrapped, fps);
     show(wrapped);
@@ -79,7 +79,7 @@ export function playbackControls(player: PixelVideo, fps: number, frames: number
     toggle.title = paused ? "Play" : "Pause";
   };
 
-  toggle.addEventListener("click", () => (video.paused ? player.play() : player.pause()));
+  toggle.addEventListener("click", () => (video.paused ? player.playNow() : player.pause()));
   back.addEventListener("click", () => seek(current() - 1));
   forward.addEventListener("click", () => seek(current() + 1));
   slider.addEventListener("input", () => seek(Number(slider.value)));

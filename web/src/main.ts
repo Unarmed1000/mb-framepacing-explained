@@ -5,6 +5,7 @@ import { viewingCheckCard } from "./checks/viewing";
 import { EXPLANATION_SLIDES } from "./explain/slides";
 import { menuSlide } from "./menu";
 import { startSlides, type Slide } from "./slides";
+import { motionSwitch } from "./video/motion";
 
 /** Who made the page: on the welcome page and in the top bar. */
 const AUTHOR = "Rene Thrane";
@@ -100,4 +101,5 @@ startSlides(
   ],
   `by <a href="${AUTHOR_LINK}" target="_blank" rel="noopener">${AUTHOR}</a>, ` +
     `<a href="${ORGANISATION_LINK}" target="_blank" rel="noopener">${ORGANISATION}</a>`,
+  [motionSwitch()],
 );
