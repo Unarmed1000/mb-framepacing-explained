@@ -21,10 +21,12 @@ a 2D shape panning across the screen to "observe effect on animation error metri
 
 ## mb-framepacing
 
-The Analyze page of mb-framepacing charts measured captures: animation error per frame over time, with a band of ±1 capture
-period (the measurement resolution); the error distribution; the error by percentile (p95, p99, the same idea as an L-shape);
-the display time step distribution; display against animation time; and the drift. Headline tiles give the typical (p95) and worst
-error and the number of frames visibly off. See its [README](https://github.com/Unarmed1000/mb-framepacing#reading-the-results).
+The Analyze page of mb-framepacing charts measured captures. Its Timeline puts four charts on one time axis: the animation
+error per frame as signed bars, with a band for the error threshold (±1 ms); the display time step as held steps, red where a
+frame was held too long; the share of late frames in the last 2 s; and a refresh strip. The other tabs show the error
+distribution, the error by percentile (p95, p99, the same idea as an L-shape), the display time step distribution and the drift.
+Headline tiles give Gamers Nexus's error per frame and percent error, the typical (p95) and worst error, the frames visibly off
+and the late frames. See its [README](https://github.com/Unarmed1000/mb-framepacing#reading-the-results).
 
 The clips here are exact, so their charts need no resolution band, and they are short (8 s) and made to be read frame by frame
 next to the video, rather than summarised.
@@ -33,12 +35,12 @@ next to the video, rather than summarised.
 
 Every chart comes from the clip's `manifest.json`, which has four arrays per mode under `frames`:
 
-| Chart                                                                              | Data                                                                        | Shows                                                                                          | After                                      |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Animation error** per frame, signed bars around zero                             | `animationErrorMs`                                                          | Which frames are off, and which way                                                            | Gamers Nexus                               |
-| **Display time step and animation time step** per frame, two lines on one ms scale | display time step: `refresh` differences × the refresh period; step: `dtMs` | The two ways animation error happens: even display with an uneven step, or the other way round | mb-framepacing's display against animation |
-| **Refresh strip**: one cell per refresh, alternating colours per frame             | `refresh`                                                                   | The cadence at a glance: 1-1-1, 2-2-2, or an uneven mix                                        | FCAT overlay, TestUFO                      |
-| **Summary**: mean absolute error per frame                                         | `animationErrorMs`                                                          | One number to compare the top and bottom box                                                   | Gamers Nexus error per frame               |
+| Chart                                                                              | Data                                                                        | Shows                                                                                          | After                        |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Animation error** per frame, signed bars around zero                             | `animationErrorMs`                                                          | Which frames are off, and which way                                                            | Gamers Nexus                 |
+| **Display time step and animation time step** per frame, two lines on one ms scale | display time step: `refresh` differences × the refresh period; step: `dtMs` | The two ways animation error happens: even display with an uneven step, or the other way round | The two clocks               |
+| **Refresh strip**: one cell per refresh, alternating colours per frame             | `refresh`                                                                   | The cadence at a glance: 1-1-1, 2-2-2, or an uneven mix                                        | FCAT overlay, TestUFO        |
+| **Summary**: mean absolute error per frame                                         | `animationErrorMs`                                                          | One number to compare the top and bottom box                                                   | Gamers Nexus error per frame |
 
 A playhead that follows the looping video ties them together: the frame on screen is the bar under the playhead. Put the grid lines
 of the display time step chart at whole refreshes (16.7, 33.3, 50 ms at 60 Hz), because that is the grid a plain vsync display shows
@@ -68,14 +70,10 @@ Any mode can be charted: `python tools/timing_diagrams/generate_charts.py 30-nai
 
 ## Ideas for mb-framepacing
 
-mb-framepacing already has most of these charts for measured captures, and the mean, p95 and worst error. What it could add:
+mb-framepacing already has most of these charts for measured captures, including a refresh strip, and Gamers Nexus's error per
+frame and percent error. What it could add:
 
 - **Synced playback.** It records the video, so a click on a spike in a chart could open that captured frame, and a playhead
   could follow the recording. No other tool can do this, because none of them keeps the capture.
-- **Gamers Nexus's summaries by their names.** Its mean absolute animation error is Gamers Nexus's **error per frame**; showing
-  it under that name, next to **percent error** (sum of absolute errors / run length), makes its numbers comparable with Gamers
-  Nexus's reviews.
-- **A refresh strip**, in the spirit of the FCAT overlay: which frame is on screen at each captured refresh, so repeated, skipped
-  and torn frames stand out at a glance.
 - **A stutter share**, as in CapFrameX: the share of frames whose display time step is over 2.5 × the median.
 - **SVG export** of its charts (ScottPlot can save SVG), so reports and these docs can use the same charts, sharp at any size.

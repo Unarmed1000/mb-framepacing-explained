@@ -58,7 +58,7 @@ run from start to end, analyses it and writes the results as JSON and CSV, ready
 
 :::card How it works
 
-1. **Once: add the marker.** A small library (C++, C#, or a Unity package) draws a marker with the frame index and animation
+1. **Once: add the marker.** A small library (C++, C#, Python or a Unity package) draws a marker with the frame index and animation
    time as the last thing in every frame.
 2. **Record:** a capture card records the display signal with its own clock, at the display's refresh rate (or import a video
    from a high-speed camera).

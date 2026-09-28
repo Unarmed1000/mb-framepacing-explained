@@ -25,8 +25,8 @@ exactly one refresh, 16.7 ms. Yet the bottom box moves less smoothly.
 | **Display time step**  | 16.7 ms, every frame | 16.7 ms, every frame |
 | **Motion**             | Smooth               | Uneven               |
 
-Frame time, as an overlay shows it, is the time between two frames the game hands over; the display time step (PresentMon's
-`MsBetweenDisplayChange`, mb-framepacing's display time) is how long each one stays on screen. With every frame on time the
+Frame time, as an overlay shows it, is the time between two frames the game hands over; the display time step, as PresentMon
+(`MsBetweenDisplayChange`) and mb-framepacing measure it, is how long each one stays on screen. With every frame on time the
 two are the same. {.note}
 
 Each of these numbers counts frames or times them. None of them looks at what each frame shows, and that

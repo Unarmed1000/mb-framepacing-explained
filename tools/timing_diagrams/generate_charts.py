@@ -7,7 +7,7 @@ the frames of the video of that mode: the refresh each frame appears on and the 
 - summary tiles: frames, display time step, error per frame (the mean absolute animation error, Gamers Nexus's "error per frame"),
   the worst error, and how many frames are off by more than 1 ms;
 - animation error per frame, as signed bars around zero (after Gamers Nexus's scatter);
-- display time step and animation time step per frame, two lines on one scale (the two clocks; mb-framepacing's "display vs animation");
+- display time step and animation time step per frame, two lines on one scale (the two clocks);
 - a refresh strip of the first second: one cell per refresh, the colour changing with each new frame (after FCAT and TestUFO).
 
 The default run also draws comparisons of averages: modes with the same average frame rate, at the display's own rate, their
