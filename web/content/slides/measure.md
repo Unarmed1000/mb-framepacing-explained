@@ -71,7 +71,7 @@ It needs the application's source code: it cannot measure an application you can
 
 <figure class="screenshot">
   <a href="https://github.com/Unarmed1000/mb-framepacing#readme" target="_blank" rel="noopener">
-    <img src="https://raw.githubusercontent.com/Unarmed1000/mb-framepacing/master/doc/images/gui-analysis.png" alt="The Analyze page of mb-framepacing: every presented frame, its animation error and the headline numbers" loading="lazy" />
+    <img src="https://raw.githubusercontent.com/Unarmed1000/mb-framepacing/master/measure/doc/images/gui-analysis.png" alt="The Analyze page of mb-framepacing: every presented frame, its animation error and the headline numbers" loading="lazy" />
   </a>
   <figcaption>The Analyze page: every presented frame, its animation error and the headline numbers (from the
     mb-framepacing repository).</figcaption>
@@ -83,6 +83,6 @@ Next: what mb-framepacing reports for each of its test clips, known problems mea
 
 [PresentMon's columns](https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md#csv-columns)
 [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing#readme)
-[Integrating the marker](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/integrating.md)
+[Integrating the marker](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md)
 [Measured in real games](https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/measured-errors.md)
 {.more}

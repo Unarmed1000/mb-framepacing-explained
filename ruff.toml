@@ -13,7 +13,7 @@ extend-exclude = [
 
 # First-party import roots: the repository and each tool folder (the tests import their tool as a top-level module), and the
 # submodule's marker library
-src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams", "tools/web_export", "external/mb-framepacing/marker/python"]
+src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams", "tools/web_export", "external/mb-framepacing/sdk/marker/python"]
 
 line-length = 160
 

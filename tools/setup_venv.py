@@ -100,7 +100,7 @@ def main() -> int:
         )
         return 1
 
-    if not (SUBMODULE / "marker" / "python" / "mb_framemarker").is_dir():
+    if not (SUBMODULE / "sdk" / "marker" / "python" / "mb_framemarker").is_dir():
         run(["git", "-C", str(REPO_ROOT), "submodule", "update", "--init", SUBMODULE.relative_to(REPO_ROOT).as_posix()])
 
     create_venv()

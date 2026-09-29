@@ -241,7 +241,7 @@ import them and measure their animation error, and its numbers can be checked ag
 - **The library:** mb-framepacing's own Python marker library (`mb_framemarker`, its `marker/python`, BSD 3-Clause), from the
   submodule `external/mb-framepacing`, pinned to a commit of mb-framepacing (`marker_path.py` puts it on the import path). It
   draws the same pixels as mb-framepacing's C++ and C# libraries; its tests, with the golden images, are mb-framepacing's
-  (`python -m unittest discover -s external/mb-framepacing/marker/python`). CONTRIBUTING.md says how to move the pin.
+  (`python -m unittest discover -s external/mb-framepacing/sdk/marker/python`). CONTRIBUTING.md says how to move the pin.
 
 The page's scenarios as marked clips, then measured and compared, clip by clip:
 
@@ -259,7 +259,7 @@ python ../../../../tools/frame_pacing_video/check_marker_run.py manifest.json si
 (within 0.01 ms). Every one of the clips above agrees: the numbers behind the web page's charts are
 what mb-framepacing measures.
 
-`export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`), plus the
+`export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `measure/test-data/videos`), plus the
 perfect storm with dropped frames and with frames out of order: a folder per scenario, named after its mode, with `video.mp4` and
 its own `manifest.json`. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own

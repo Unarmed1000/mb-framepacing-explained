@@ -162,7 +162,7 @@ def measure(mode: str, tool: Path, ffmpeg: Path, output_dir: Path, png: bool) ->
 
 def test_clip_render(mode: str, png: bool) -> list[str]:
     """The render options of a test clip's card: mb-framepacing's default report card, titled with the clip's mode (its folder in
-    mb-framepacing's test-data/videos; a title with the mode's description would run under the card's display box), without
+    mb-framepacing's measure/test-data/videos; a title with the mode's description would run under the card's display box), without
     distribution cards."""
     return ["--cards", "none", "--title", mode, *(["--png"] if png else [])]
 

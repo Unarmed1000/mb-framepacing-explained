@@ -22,7 +22,7 @@ while the ui scroll speeds are in virtual pixels per second: on a coarser grid a
 The divider and the labels are drawn at native 1:1 video pixels.
 
 --single MODE [MODE ...] makes one video per mode instead of pairs: a single box (or row) in the middle of the frame, no divider.
-With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, its marker/python from the submodule), so
+With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, its sdk/marker/python from the submodule), so
 mb-framepacing can import them and measure their animation error: the frame index and the animation time of the frame on screen at
 every refresh, with a start marker before the clip and an end marker after it.
 

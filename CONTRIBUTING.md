@@ -80,5 +80,5 @@ git add external/mb-framepacing
 ```
 
 Run the tests, regenerate the measured charts (`generate_measured_charts.py`), commit the new pin, then export the test clips again
-(`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's `test-data/videos`; committing them there is mb-framepacing's
+(`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's `measure/test-data/videos`; committing them there is mb-framepacing's
 work.

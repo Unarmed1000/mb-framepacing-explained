@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
-"""Export the web page's scenarios as marked single-box clips for mb-framepacing's tests (its test-data/videos): one folder per
+"""Export the web page's scenarios as marked single-box clips for mb-framepacing's tests (its measure/test-data/videos): one folder per
 scenario, named after its mode, holding video.mp4 and its own manifest.json.
 
-  python tools/frame_pacing_video/export_test_clips.py --output-dir <mb-framepacing>/test-data/videos
+  python tools/frame_pacing_video/export_test_clips.py --output-dir <mb-framepacing>/measure/test-data/videos
 
 Each clip is generate_videos.py --single MODE --marker --speed fast: lossless, 1280 x 720, 8 s plus 3 refreshes of start marker
 before and 3 of end marker after. Its manifest is the generator's, for that one clip: per frame the refresh it is flipped on, its
@@ -58,7 +58,7 @@ SCENARIOS = (
 DEFAULT_SPEED = "fast"
 SCENARIO_SPEEDS = {"60-idle-1fps": "idle"}
 VIDEO_NAME = "video.mp4"
-# The license of the copies in mb-framepacing's test-data/videos, as its README says, so they can be copied there unchanged
+# The license of the copies in mb-framepacing's measure/test-data/videos, as its README says, so they can be copied there unchanged
 TEST_DATA_LICENSE = "PolyForm Perimeter License 1.0.1 (mb-framepacing LICENSE), (c) 2026 Mana Battery ApS; made by mb-framepacing-explained"
 
 

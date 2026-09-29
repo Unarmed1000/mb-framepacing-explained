@@ -30,7 +30,7 @@ jitter.
 
 ![mb-framepacing's report of the 60-naive-5ms clip](../../../doc/images/test-clip-60-naive-5ms.svg)
 
-[The test clips in mb-framepacing](https://github.com/Unarmed1000/mb-framepacing/tree/master/test-data/videos)
+[The test clips in mb-framepacing](https://github.com/Unarmed1000/mb-framepacing/tree/master/measure/test-data/videos)
 [How the clips are made](https://github.com/Unarmed1000/mb-framepacing-explained/tree/master/tools/frame_pacing_video#readme)
-[Filling the marker fields](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/marker-fields.md)
+[Filling the marker fields](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/marker-fields.md)
 {.more}

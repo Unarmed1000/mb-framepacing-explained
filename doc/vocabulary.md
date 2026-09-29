@@ -3,7 +3,7 @@
 This project uses the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
 [Gamers Nexus animation error methodology](https://gamersnexus.net/gpus-gn-extras-cpus/problem-gpu-benchmarks-reality-vs-numbers-animation-error-methodology-white).
 The same ideas go by other names in engines, platform libraries, Digital Foundry's videos and older GPU reviews; the table maps
-them, and to the video modes. [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/vocabulary.md) uses
+them, and to the video modes. [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/vocabulary.md) uses
 the same terms and lists where each appears in its CSV and charts. The sources are collected in [further reading](further-reading.md).
 
 ## Terms
