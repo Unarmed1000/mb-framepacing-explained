@@ -61,7 +61,6 @@ README.md next to this file describes the options, the FFmpeg setup and the outp
 # pyright: reportUninitializedInstanceVariable=false
 
 import argparse
-import bisect
 import contextlib
 import functools
 import itertools
@@ -81,10 +80,14 @@ from typing import IO, Protocol, cast
 
 from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
+import idle_behaviour as idle
+import presentation_faults as faults
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
 from mb_framemarker import (
+    ON_DEMAND_FRAME_TICKS,
     TICKS_PER_SECOND,
+    MarkerFlags,
     MarkerKind,
     Payload,
     PixelFormat,
@@ -141,14 +144,19 @@ def format_number(value: Fraction) -> str:
 class Speed:
     """A motion speed: how many round trips of the eased back and forth motion fit in a clip (more is faster), or, for an interface
     scroll, a constant speed in virtual pixels per second of a row scrolling right to left. travel (virtual pixels) or travel_share
-    (of the settings' travel) gives this speed its own path length, centred like the others (slow: a shorter path)."""
+    (of the settings' travel) gives this speed its own path length, centred like the others (slow: a shorter path), and settle its
+    own rest at each end (idle: long rests, for a game idling at 1 fps)."""
 
     name: str
     round_trips: int = 1
     scroll: Fraction | None = None
     travel: int | None = None
     travel_share: Fraction = Fraction(1)
+    settle: Fraction | None = None
 
+
+# The idle speed's rest at each end: long enough for a game idling at 1 fps to show a few idle frames (3 s rests, 1 s moves)
+IDLE_SETTLE = Fraction(3)
 
 # Interface scrolling: a row of items scrolling right to left at constant speed, in virtual pixels per second. With the default
 # layout at pixel size 2 (48 px boxes, 96 apart) that is 2, 3, 4 and 8 items per second, like dragging, holding a key or
@@ -331,7 +339,9 @@ class Settings:
 
     def settle_for(self, speed: Speed) -> Fraction:
         """Seconds the box rests at each end of its travel at this speed."""
-        return Fraction(0) if speed.scroll is not None else self.settle
+        if speed.scroll is not None:
+            return Fraction(0)
+        return self.settle if speed.settle is None else speed.settle
 
     def duration(self, speed: Speed) -> Fraction:
         """Clip length in seconds (the same at every speed)."""
@@ -583,23 +593,63 @@ def travel_position(settings: Settings, speed: Speed, time: Fraction) -> float:
 
 @dataclass(frozen=True)
 class FrameSchedule:
-    """The frames of one clip: the output refresh each first appears on, and the animation time it shows (seconds)."""
+    """The frames of one clip: the output refresh each first appears on (None: never shown) and the animation time it shows
+    (seconds); the frame on screen in each refresh of the clip; the frames a measurement counts as presented, in order (each
+    first appears then, with an index above every frame before it); and the mode's presentation fault events. Without a fault
+    every frame is shown on the refresh it is flipped on, and presented."""
 
-    shown: tuple[int, ...]
+    shown: tuple[int | None, ...]
     animation: tuple[Fraction, ...]
+    # The moment each frame shows, what is drawn: its animation time, except where a paused clock is behind it
+    scene: tuple[Fraction, ...]
+    screen: tuple[int, ...]
+    presented: tuple[int, ...]
+    events: tuple[faults.Block, ...] = ()
 
 
 @functools.cache
 def simulated_frames(settings: Settings, mode: FrameMode, speed: Speed) -> SimulatedFrames:
     """The frame loop over one clip (frame_timing.simulate): when each frame is flipped, when the loop read the clock, and the
     animation time each frame shows."""
-    return simulate(mode, settings.timing, settings.frame_count(speed))
+    rendered = idle_frames(settings, mode, speed)
+    return simulate(mode, settings.timing, settings.frame_count(speed)) if rendered is None else rendered.frames
 
 
+def at_rest(settings: Settings, speed: Speed, time: Fraction) -> bool:
+    """Whether the box stands exactly at a rest position at animation time `time`: nothing animates (a ui scroll never rests)."""
+    return speed.scroll is None and travel_position(settings, speed, time) in (0.0, 1.0)
+
+
+@functools.cache
+def idle_frames(settings: Settings, mode: FrameMode, speed: Speed) -> idle.IdleFrames | None:
+    """The mode's idle behaviour (idle_behaviour): the frames the game renders while the box rests, and which are static; None
+    without one."""
+    if mode.idle is None:
+        return None
+    frames = simulate(mode, settings.timing, settings.frame_count(speed))
+    return idle.apply(mode, frames, lambda time: at_rest(settings, speed, time), settings.fps)
+
+
+@functools.cache
 def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSchedule:
-    """The frames of one clip: the refresh each is flipped on and the animation time it shows."""
+    """The frames of one clip: the refresh each first appears on, the animation time it shows and the frame on screen in every
+    refresh; a presentation fault (presentation_faults) changes only what is on screen."""
     frames = simulated_frames(settings, mode, speed)
-    return FrameSchedule(frames.flips, frames.animation)
+    refreshes = settings.frame_count(speed)
+    events: tuple[faults.Block, ...] = ()
+    if mode.fault is None:
+        screen = faults.base_screen(frames.flips, refreshes)
+    else:
+        late = [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
+        events = tuple(faults.blocks(mode, frames.flips, late, frames.intervals, settings.fps, refreshes))
+        screen = faults.screen(frames.flips, refreshes, mode.fault, list(events))
+    first_seen: dict[int, int] = {}
+    for refresh, index in enumerate(screen):
+        _ = first_seen.setdefault(index, refresh)
+    shown = tuple(first_seen.get(index) for index in range(len(frames.flips)))
+    rendered = idle_frames(settings, mode, speed)
+    scene = frames.animation if rendered is None else rendered.scene
+    return FrameSchedule(shown, frames.animation, scene, screen, tuple(faults.presented(screen)), events)
 
 
 def frame_on_screen(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> tuple[int, int]:
@@ -607,36 +657,82 @@ def frame_on_screen(settings: Settings, mode: FrameMode, speed: Speed, frame: in
     previous loop's (-1), frames past it the next loop's."""
     schedule = frame_schedule(settings, mode, speed)
     loops, within = divmod(frame, settings.frame_count(speed))
-    return bisect.bisect_right(schedule.shown, within) - 1, loops
+    return schedule.screen[within], loops
 
 
 def content_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> Fraction:
-    """Animation time a box shows in output frame `frame`; frames past the clip continue the motion (the loop checks use this)."""
+    """The moment a box shows in output frame `frame`, where it is drawn; frames past the clip continue the motion (the loop checks
+    use this). It is the frame's animation time, except with a paused clock (animation_time)."""
+    index, loops = frame_on_screen(settings, mode, speed, frame)
+    return frame_schedule(settings, mode, speed).scene[index] + loops * settings.duration(speed)
+
+
+def animation_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> Fraction:
+    """The animation time of the frame on screen in output frame `frame`, as its clock says (the marker carries it): the moment it
+    shows, or behind it where the clock paused while nothing animated."""
     index, loops = frame_on_screen(settings, mode, speed, frame)
     return frame_schedule(settings, mode, speed).animation[index] + loops * settings.duration(speed)
 
 
-def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[Fraction]:
+@dataclass(frozen=True)
+class Pacing:
+    """What each frame's marker says about the game's pacing beyond its timing: the target and the preferred frame time in
+    refreshes (None: on demand, no interval to aim for) and whether nothing animates in it (static)."""
+
+    target: tuple[int | None, ...]
+    preferred: tuple[int | None, ...]
+    static: tuple[bool, ...]
+
+
+@functools.cache
+def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
+    """Each frame's target and preferred frame time and static flag. The game prefers the fastest rate it paces at (Swappy
+    lowered to 30 fps still prefers 60; a 30 fps lock prefers 30); idling at 1 fps it prefers the rate it idles at; on demand it
+    has neither. Only an idle behaviour marks frames static."""
+    frames = simulated_frames(settings, mode, speed)
+    rendered = idle_frames(settings, mode, speed)
+    count = len(frames.flips)
+    if rendered is not None and rendered.on_demand:
+        return Pacing((None,) * count, (None,) * count, rendered.static)
+    target: tuple[int | None, ...] = tuple(frames.intervals)
+    preferred: tuple[int | None, ...] = target if mode.idle == idle.IDLE_1FPS else (min(frames.intervals),) * count
+    return Pacing(target, preferred, (False,) * count if rendered is None else rendered.static)
+
+
+def _frame_ticks(settings: Settings, refreshes: int | None) -> int:
+    """A frame time in refreshes as the marker's ticks, or on demand."""
+    return ON_DEMAND_FRAME_TICKS if refreshes is None else round(refreshes * TICKS_PER_SECOND / settings.fps)
+
+
+def _first_shown(schedule: FrameSchedule, index: int) -> int:
+    shown = schedule.shown[index]
+    assert shown is not None, index
+    return shown
+
+
+def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[Fraction | None]:
     """Animation error of each frame of the clip, in seconds, as PresentMon computes it: how far the animation time advanced since
-    the previous frame, minus how long the previous frame was on screen. Positive: shown too soon; negative: shown too late. The
-    first frame follows the last one of the previous loop."""
+    the previous presented frame, minus how long that frame was on screen. Positive: shown too soon; negative: shown too late. The
+    first frame follows the last one of the previous loop. None for a frame that is not presented (a presentation fault)."""
     schedule = frame_schedule(settings, mode, speed)
     refresh = 1 / settings.fps
-    errors: list[Fraction] = []
-    for index, (shown, animation) in enumerate(zip(schedule.shown, schedule.animation, strict=True)):
-        if index == 0:
-            previous_shown, previous_animation = schedule.shown[-1] - settings.frame_count(speed), schedule.animation[-1] - settings.duration(speed)
-        else:
-            previous_shown, previous_animation = schedule.shown[index - 1], schedule.animation[index - 1]
-        errors.append((animation - previous_animation) - (shown - previous_shown) * refresh)
+    errors: list[Fraction | None] = [None] * len(schedule.animation)
+    for position, index in enumerate(schedule.presented):
+        previous = schedule.presented[position - 1]
+        # The first presented frame follows the previous loop's last one, one clip earlier
+        previous_shown = _first_shown(schedule, previous) - (settings.frame_count(speed) if position == 0 else 0)
+        previous_animation = schedule.animation[previous] - (settings.duration(speed) if position == 0 else 0)
+        errors[index] = (schedule.animation[index] - previous_animation) - (_first_shown(schedule, index) - previous_shown) * refresh
     return errors
 
 
-def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[int]:
-    """How many refreshes after the one it was rendered for each frame of the clip is flipped: 0 on time. A naive timer's frame is
+def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[int | None]:
+    """How many refreshes after the one it was rendered for each frame of the clip first appears: 0 on time, negative when early
+    (a frame shown out of order before the one rendered before it), None when it never appears (dropped). A naive timer's frame is
     on time however far off the moment it shows, unless it is also late (the perfect storm)."""
-    frames = simulated_frames(settings, mode, speed)
-    return [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
+    schedule = frame_schedule(settings, mode, speed)
+    targets = simulated_frames(settings, mode, speed).targets
+    return [None if shown is None else shown - target for shown, target in zip(schedule.shown, targets, strict=True)]
 
 
 def row_offset(settings: Settings, mode: FrameMode, speed: Speed, frame: int) -> float:
@@ -920,19 +1016,32 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     """What the marker carries in output frame `frame` (negative in the lead-in, past the clip in the lead-out): the index of the
     frame on screen, counted on across loops so it never repeats (the clip's first frame is the clip's frame count), the animation
     time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
-    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval); then its CPU start time (on the same
-    clock) and CPU busy (until it was presented; 0 when unknown), all in ticks. A held frame keeps its index, so mb-framepacing sees one presented frame. Start marker in
-    the lead-in, end marker in the lead-out: they carry the values of the frame they show."""
+    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval, or on demand); then its CPU start time (on
+    the same clock) and CPU busy (until it was presented; 0 when unknown), all in ticks, the frame time the game prefers, and the static
+    flag when nothing animates in it. A held frame keeps its index, so mb-framepacing sees one presented frame. Start marker in the
+    lead-in, end marker in the lead-out: they carry the values of the frame they show."""
     index, loops = frame_on_screen(settings, job.top, job.speed, frame)
     frames = simulated_frames(settings, job.top, job.speed)
-    ticks = round(content_time(settings, job.top, job.speed, frame) * TICKS_PER_SECOND)
+    pacing = frame_pacing(settings, job.top, job.speed)
+    ticks = round(animation_time(settings, job.top, job.speed, frame) * TICKS_PER_SECOND)
     refresh_ticks = TICKS_PER_SECOND / settings.fps
     intended = round((frames.targets[index] + loops * settings.frame_count(job.speed)) * refresh_ticks)
-    target = round(frames.intervals[index] * refresh_ticks)
+    target = _frame_ticks(settings, pacing.target[index])
     started = cpu_start_ticks(settings, job.top, job.speed, index, loops)
     busy = cpu_busy_ticks(settings, job.top, job.speed, index)
     kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
-    return Payload(((loops + 1) * len(frames.flips)) + index, ticks, MARKER_RUN_ID, kind, intended, target, started, busy)
+    return Payload(
+        ((loops + 1) * len(frames.flips)) + index,
+        ticks,
+        MARKER_RUN_ID,
+        kind,
+        intended,
+        target,
+        started,
+        busy,
+        preferred_frame_ticks=_frame_ticks(settings, pacing.preferred[index]),
+        flags=MarkerFlags.STATIC if pacing.static[index] else MarkerFlags.NONE,
+    )
 
 
 def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> bytes:
@@ -1166,14 +1275,43 @@ def _hex_color(color: Rgb) -> str:
     return f"#{color[0]:02X}{color[1]:02X}{color[2]:02X}"
 
 
-def _milliseconds(values: Sequence[Fraction], digits: int = 3) -> list[float]:
-    return [round(float(value * 1000), digits) for value in values]
+def _milliseconds(values: Sequence[Fraction | None], digits: int = 3) -> list[float | None]:
+    return [None if value is None else round(float(value * 1000), digits) for value in values]
+
+
+def _fault_entry(schedule: FrameSchedule, mode: FrameMode) -> dict[str, object]:
+    """A presentation fault's part of a mode's manifest entry: the frame on screen in every refresh of the clip, the frames a
+    measurement counts as presented, the fault events, and what a measurement should count."""
+    presented = {index: _first_shown(schedule, index) for index in schedule.presented}
+    return {
+        "screen": list(schedule.screen),
+        "presented": list(schedule.presented),
+        "fault": {
+            "kind": mode.fault,
+            "blocks": [{"first": block.first, "count": block.count, **({"order": list(block.order)} if block.order else {})} for block in schedule.events],
+        },
+        "expected": {
+            "skippedFrameIndices": faults.skipped_frame_indices(presented),
+            "outOfOrderRefreshes": faults.out_of_order_refreshes(schedule.screen),
+        },
+    }
+
+
+def _rates(settings: Settings, intervals: Sequence[int | None]) -> list[int | float | None]:
+    """Frame times in refreshes as rates (fps); None (on demand) stays None."""
+    return [None if interval is None else _json_number(settings.fps / interval) for interval in intervals]
 
 
 def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, object]:
     frames = simulated_frames(settings, mode, speed)
+    schedule = frame_schedule(settings, mode, speed)
     animation = list(frames.animation)
     duration = settings.duration(speed)
+    fault = {} if mode.fault is None else _fault_entry(schedule, mode)
+    pacing = frame_pacing(settings, mode, speed)
+    # An idle behaviour only: whether nothing animates in each frame (its marker is flagged static; mb-framepacing does not judge the
+    # animation error of a step from or to it)
+    static = {} if mode.idle is None else {"static": list(pacing.static)}
     return {
         "mode": mode.name,
         "rate": mode.rate,
@@ -1182,27 +1320,34 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         "noiseWindowMs": None if mode.window is None else _json_number(mode.window * 1000),
         "label": settings.label(mode),
         # The rate the game aims for: at full speed (Swappy's adaptive rule aims lower through its busy stretch, frames.targetFps)
-        "targetFps": _json_number(settings.fps / min(frames.intervals)),
-        # Every frame of the clip: the output refresh it is flipped on, when the naive loop read the clock (ms, the first frame is
-        # shown at 0), the animation time it shows (ms, the clip's first refresh is 0; the marker carries it in ticks), the dt its
-        # animation advanced by, its animation error (PresentMon's MsAnimationError) and how many refreshes
-        # after the one it was rendered for it is flipped (0: on time), and the rate the game aims for while showing it (the refresh
-        # rate divided by the swap interval it is paced at)
+        "targetFps": None if pacing.target[0] is None else _json_number(settings.fps / min(frames.intervals)),
+        # Every frame of the clip: the output refresh it first appears on (null: never, a dropped frame), when the naive loop read
+        # the clock (ms, the first frame is shown at 0), the animation time it shows (ms, the clip's first refresh is 0; the marker
+        # carries it in ticks), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError; null when it
+        # is not presented) and how many refreshes after the one it was rendered for it first appears (0: on time, negative: early;
+        # null: never), and the rate the game aims for while showing it (the refresh rate divided by the swap interval it is paced at)
         "frames": {
-            "refresh": list(frames.flips),
+            "refresh": list(schedule.shown),
             "sampleMs": _milliseconds(frames.samples),
             # To the 100 ns tick the marker uses, so ms x 10 000 is exactly the marker's animation ticks
             "animationMs": _milliseconds(animation, 4),
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
             "late": refreshes_late(settings, mode, speed),
-            "targetFps": [_json_number(settings.fps / interval) for interval in frames.intervals],
+            "targetFps": _rates(settings, pacing.target),
+            # The rate the game would aim for if nothing held it back (Swappy lowered to 30 fps still prefers 60; null: on demand)
+            "preferredFps": _rates(settings, pacing.preferred),
             # Its CPU start time, in the marker's 100 ns ticks on the clock of its intended display time (the clip's first refresh is
             # 0; the first frame starts before it), and its CPU busy (how long the CPU worked on it before presenting it; 0: unknown):
             # the marker carries exactly these in the clip's first loop
             "cpuStartTicks": [cpu_start_ticks(settings, mode, speed, index, 0) for index in range(len(frames.starts))],
             "cpuBusyTicks": [cpu_busy_ticks(settings, mode, speed, index) for index in range(len(frames.cpu))],
+            **static,
         },
+        # A presentation fault only: screen (the frame on screen in each refresh of the clip), presented (the frames a measurement
+        # counts: each first appears with an index above every frame before it), fault (its kind and events) and expected (frame
+        # indices never presented, and refreshes that show a frame below one shown before)
+        **fault,
     }
 
 
@@ -1445,7 +1590,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         default=["all"],
         metavar="SPEED",
-        help="which speeds to generate: normal, fast, slow (not in all), ui (every ui scroll speed), a single ui speed like ui-384, or all",
+        help="which speeds to generate: normal, fast, slow and idle (not in all), ui (every ui scroll speed), a single ui speed like ui-384, or all",
     )
     _ = add("--labels", action="store_true", help="write each half's pacing mode centred next to it")
     _ = add("--width", type=_positive_int, default=defaults.width, help="video width in pixels")
@@ -1579,6 +1724,8 @@ def select_speeds(args: Arguments) -> tuple[Speed, ...]:
     # slow: the normal timing on a shorter path (a quarter of the travel by default), so low frame rates move in smaller steps.
     # Not part of all, so the default run stays the same
     speeds["slow"] = Speed("slow", args.normal_round_trips, travel=args.slow_travel, travel_share=Fraction(1, 4))
+    # idle: one round trip with long rests, where a game idling at 1 fps (-idle-1fps) shows its idle frames. Not part of all either
+    speeds["idle"] = Speed("idle", 1, settle=IDLE_SETTLE)
     selected: list[Speed] = []
     for name in args.speed:
         if name in groups:

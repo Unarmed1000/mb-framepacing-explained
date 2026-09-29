@@ -43,7 +43,7 @@ any Python version, and the draws can be reproduced in any language.
 
 import functools
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from fractions import Fraction
 
@@ -127,6 +127,11 @@ class FrameMode:
     burst: int | None = None
     # A busy stretch (adaptive_rate): the policy, full-rate or swappy
     busy: str | None = None
+    # What the game does while nothing moves (idle_behaviour): static-rests, on-demand, on-demand-paused-clock or idle-1fps
+    idle: str | None = None
+    # A presentation fault (presentation_faults), only in what reaches the screen: dropped-frames (rendered frames never shown) or
+    # out-of-order (frames shown in another order than rendered)
+    fault: str | None = None
 
 
 MODE_PATTERN = re.compile(
@@ -134,6 +139,8 @@ MODE_PATTERN = re.compile(
     + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-busy-(?P<busy>full-rate|swappy))?"
+    + r"(?:-(?P<idle>static-rests|on-demand-paused-clock|on-demand|idle-1fps))?"
+    + r"(?:-(?P<fault>dropped-frames|out-of-order))?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
 
@@ -143,13 +150,24 @@ def parse_mode(name: str) -> FrameMode:
     bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
     60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
     frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
-    full rate or adapting like Swappy: 60-busy-full-rate, 60-busy-swappy)."""
+    full rate or adapting like Swappy: 60-busy-full-rate, 60-busy-swappy). Any of them may then say what the game does while the
+    box rests, -static-rests, -on-demand, -on-demand-paused-clock or -idle-1fps (60-on-demand), and end in a presentation fault,
+    -dropped-frames or -out-of-order (60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames)."""
+    mode = _parse_timing(name)
+    match = MODE_PATTERN.fullmatch(name)
+    assert match is not None, name
+    return replace(mode, idle=match["idle"], fault=match["fault"])
+
+
+def _parse_timing(name: str) -> FrameMode:
+    """The mode's timing, without its presentation fault (parse_mode sets that)."""
     match = MODE_PATTERN.fullmatch(name)
     if match is None or any(match[group] is not None and Fraction(match[group]) <= 0 for group in ("ms", "every", "burst_every", "storm_ms", "storm_every")):
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
             + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
-            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy)"
+            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy), each optionally followed by -static-rests, -on-demand, "
+            + "-on-demand-paused-clock or -idle-1fps and by -dropped-frames or -out-of-order"
         )
     rate = int(match["rate"])
     if match["storm_ms"] is not None:
@@ -479,8 +497,23 @@ def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
     return [animation[0] - (animation[-1] - duration)] + [b - a for a, b in zip(animation, animation[1:], strict=False)]
 
 
+IDLE_LABELS = {
+    "static-rests": "static at rest",
+    "on-demand": "on demand",
+    "on-demand-paused-clock": "on demand, clock paused at rest",
+    "idle-1fps": "1 fps at rest",
+}
+FAULT_LABELS = {"dropped-frames": "dropped frames", "out-of-order": "frames out of order"}
+
+
 def describe(mode: FrameMode, parameters: TimingParameters) -> str:
-    """The text written next to a box, for example "60 Hz naive timer, heavy load"."""
+    """The text written next to a box, for example "60 Hz naive timer, heavy load"; the idle behaviour and a presentation fault are
+    added at the end."""
+    extras = ([] if mode.idle is None else [IDLE_LABELS[mode.idle]]) + ([] if mode.fault is None else [FAULT_LABELS[mode.fault]])
+    return ", ".join([_describe_timing(mode, parameters), *extras])
+
+
+def _describe_timing(mode: FrameMode, parameters: TimingParameters) -> str:
     if mode.busy is not None:
         from adaptive_rate import title as busy_title  # noqa: PLC0415
 

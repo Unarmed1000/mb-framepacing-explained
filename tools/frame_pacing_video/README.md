@@ -82,6 +82,30 @@ How much sooner or later than usual the naive loop reads the clock:
 - **The perfect storm** (`RATE-naive-Nms-diagram-NAME…`, e.g. `60-naive-5ms-diagram-slow-frames-every-1s`): a replayed diagram
   and the naive timer's ±N ms window at once. The frames are flipped as the diagram shows them, late ones included, and every
   frame's animation time is off by its clock reading, as in a real measurement where both causes of stutter mix.
+- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, e.g.
+  `60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames`; `presentation_faults.py`): the game renders every frame as its mode
+  simulates it, but not every frame reaches the screen, or not in the order it was rendered. Two events a second, at 30 % and 70 %
+  of it (clear of a replayed diagram in the middle): dropped runs of 1, 2, 3, 4 frames (the frame before stays on screen, the one
+  after comes on time), or blocks shown out of order in the same refreshes (a swapped pair, 3, a pair, 4; the larger blocks in a
+  random order where no frame keeps its place). Only what is on screen changes: each marker carries the frame it shows, so the
+  frame index skips or goes back. A measurement counts a frame as presented when it first appears above every index before it
+  (mb-framepacing's rule), so dropped frames and frames shown after a later one are not presented. A fault that would land on a
+  late or held frame is rejected (e.g. with `-3x-every-1s`).
+- **Idle behaviours** (`…-static-rests`, `…-on-demand`, `…-on-demand-paused-clock`, `…-idle-1fps`, before a fault;
+  `idle_behaviour.py`): what the game does while the box rests (stands exactly at an end of its path, so nothing animates). Its
+  frames at rest are flagged **static** in the marker, so mb-framepacing does not judge a step from or to them.
+  - `-static-rests` renders every frame: `60-naive-5ms-static-rests` shows the jitter that cannot be seen while the box rests
+    going unjudged.
+  - `-on-demand` presents only when something changes: the first frame at rest, then nothing until the box moves. Its target and
+    preferred frame time are "on demand" (`0xFFFFFFFF`: no interval to aim for, so no wait is late). Its clock runs on, so the
+    first moving frame shows exactly the right moment.
+  - `-on-demand-paused-clock` does the same, but its animation clock stops while nothing animates and resumes with one frame's step.
+    The box is still drawn where it belongs, but the marker's animation time falls behind by each rest: the first moving frame is
+    100 ms off at the fast speed's rests, and only the static flag of the frame before keeps that from being judged.
+  - `-idle-1fps` saves power while idle: at rest the first frame, then one a second, with target and preferred frame time 1 s
+    (idling at the rate it wants: not late, not below its preferred rate). It needs rests of at least 1 s: `--speed idle`.
+
+  The game renders fewer frames, but their indices stay consecutive, and the clip's first frame is always rendered.
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
   really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also
@@ -119,12 +143,14 @@ mixed pattern, and for the realistic loads 4 s each of single longer reads and s
 | `normal` | box   | 2 round trips of 4 s: 4 box spacings in 1.9 s, eased, 0.1 s rest at each end | A slow pan: subtle effects are easiest to follow    |
 | `fast`   | box   | 4 round trips of 2 s: 4 box spacings in 0.9 s                                | A quicker pan: more pixel error for the same timing |
 | `slow`   | box   | As `normal` on a quarter of the path (1 box spacing), centred; not in `all`  | Small, slow movement, where 20 fps holds up best    |
+| `idle`   | box   | 1 round trip: 1 s moves, 3 s rests at each end; not in `all`                 | A device idling between moves (`-idle-1fps`)        |
 | `ui-192` | row   | Scrolls right to left at a constant 192 virtual px/s                         | A slow drag                                         |
 | `ui-288` | row   | 288 virtual px/s                                                             | Scrolling a list                                    |
 | `ui-384` | row   | 384 virtual px/s                                                             | Holding a key in a list                             |
 | `ui-768` | row   | 768 virtual px/s                                                             | A fast fling                                        |
 
 - **`slow`** is opt-in (`--speed slow`): the normal timing on a shorter path (`--slow-travel`), for low frame rates such as 20 fps.
+- **`idle`** is opt-in (`--speed idle`): long rests, so a game idling at 1 fps (`-idle-1fps`) shows several idle frames.
 - **`normal` and `fast`** fit whole round trips (there and back) in the clip (`--normal-round-trips`, `--fast-round-trips`), eased
   in and out (sine) at both ends. A clip starts and ends in the middle of the first rest, so it loops seamlessly.
 - **The ui speeds** show interface motion: the row never stops, so every timing error is visible for the whole clip, and there is
@@ -202,8 +228,10 @@ import them and measure their animation error, and its numbers can be checked ag
   rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 166 667 ticks at
   60 fps, 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
   long the CPU worked on it before presenting it); all in 100 ns ticks, 0 = unknown (the diagram modes' filler frames have no CPU
-  busy); run id 1. The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first frame, and its
-  `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
+  busy); run id 1. It also carries the frame time the game prefers (what it would aim for if nothing held it back: Swappy lowered
+  to 30 fps still prefers 60, a 30 fps lock and the half-rate diagrams prefer 30, on demand has none) and the static flag of an
+  idle behaviour's frames at rest. The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first
+  frame, and its `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
 - **Start and end:** 3 refreshes of start marker before the clip and 3 of end marker after it, showing the previous and next loop's
   frames. The start marker's sequence id is the mode's name when it fits 16 characters, else a UUID made from it (the manifest's
   `sequenceId`). The measured run is then exactly the clip, and the video 6
@@ -226,12 +254,14 @@ mb-framepacing import single_fast_60-naive-5ms.mp4 --analyze -o single_fast_60-n
 python ../../../../tools/frame_pacing_video/check_marker_run.py manifest.json single_fast_60-naive-5ms.mp4 single_fast_60-naive-5ms/analysis
 ```
 
-`check_marker_run.py` checks that every frame of the clip was presented and that mb-framepacing's animation error of each frame is
-the manifest's `animationErrorMs` (within 0.01 ms). Every one of the clips above agrees: the numbers behind the web page's charts are
+`check_marker_run.py` checks that every frame the clip presents was presented (with a presentation fault, the manifest's
+`presented`; the others must not be) and that mb-framepacing's animation error of each frame is the manifest's `animationErrorMs`
+(within 0.01 ms). Every one of the clips above agrees: the numbers behind the web page's charts are
 what mb-framepacing measures.
 
-`export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`): a folder per
-scenario, named after its mode, with `video.mp4` and its own `manifest.json`, 4 MB in all. These copies are licensed for
+`export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `test-data/videos`), plus the
+perfect storm with dropped frames and with frames out of order: a folder per scenario, named after its mode, with `video.mp4` and
+its own `manifest.json`. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
 
@@ -385,6 +415,16 @@ Settings that would break the loop or the pacing are rejected with an error; not
     the refresh rate divided by the swap interval it is paced at; `targetFps` of the mode at full speed, which Swappy's rule
     lowers through its busy stretch). The first frame follows the last one of the previous loop. A web page can draw the dt and
     error graphs next to the video from it.
+  - with a presentation fault, the frames are those the game rendered, in order: `frames.refresh` is the refresh a frame first
+    appears on (`null`: dropped), `frames.late` is negative for a frame shown early (out of order) and `null` for a dropped one,
+    and `frames.animationErrorMs` is between presented frames (`null` for the others). The mode also lists `screen` (the frame on
+    screen in each refresh of the clip), `presented` (the frames a measurement counts), `fault` (its `kind` and `blocks`: each
+    `first` frame and `count`, and out of order the `order` they are shown in) and `expected` (`skippedFrameIndices`: frame
+    indices never presented; `outOfOrderRefreshes`: refreshes that show a frame below one shown before).
+  - the rate the game prefers while showing each frame (`frames.preferredFps`); `frames.targetFps` and `frames.preferredFps` are
+    `null` for a game that presents on demand. With an idle behaviour, `frames.static` says which frames are at rest (their
+    markers are flagged static; `animationErrorMs` still gives the raw error of a step from or to them, which mb-framepacing leaves
+    unjudged).
   - the licence of the videos (`license`): this repository's, CC BY-NC-SA 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the

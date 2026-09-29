@@ -48,7 +48,39 @@ class ModeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "is not a mode"):
                 _ = ft.parse_mode(bad)
 
+    def test_a_presentation_fault_ends_any_mode(self) -> None:
+        storm = "60-naive-5ms-diagram-slow-frames-every-1s"
+        for fault in ("dropped-frames", "out-of-order"):
+            mode = ft.parse_mode(f"{storm}-{fault}")
+            self.assertEqual(
+                mode, ft.FrameMode(f"{storm}-{fault}", 60, ft.Timer.NAIVE, ft.Noise.WINDOW, 5 * MS, diagram="slow-frames", every=Fraction(1), fault=fault)
+            )
+            self.assertEqual(ft.parse_mode(f"60-{fault}"), ft.FrameMode(f"60-{fault}", 60, fault=fault))
+            self.assertEqual(ft.parse_mode(f"60-diagram-slow-frames-{fault}").diagram, "slow-frames")
+            self.assertEqual(ft.parse_mode(f"60-busy-swappy-{fault}").busy, "swappy")
+        self.assertIsNone(ft.parse_mode(storm).fault)
+        for bad in ("60-dropped", "60-out-of-order-dropped-frames", "60-dropped-frames-naive-1ms"):
+            with self.assertRaisesRegex(ValueError, "is not a mode"):
+                _ = ft.parse_mode(bad)
+
+    def test_an_idle_behaviour_comes_before_a_fault(self) -> None:
+        for idle in ("static-rests", "on-demand", "on-demand-paused-clock", "idle-1fps"):
+            self.assertEqual(ft.parse_mode(f"60-{idle}"), ft.FrameMode(f"60-{idle}", 60, idle=idle))
+        mode = ft.parse_mode("60-naive-5ms-static-rests-dropped-frames")
+        self.assertEqual((mode.noise, mode.window, mode.idle, mode.fault), (ft.Noise.WINDOW, 5 * MS, "static-rests", "dropped-frames"))
+        self.assertEqual(ft.parse_mode("60-diagram-slow-frames-on-demand").diagram, "slow-frames")
+        for bad in ("60-dropped-frames-on-demand", "60-idle", "60-on-demand-static-rests"):
+            with self.assertRaisesRegex(ValueError, "is not a mode"):
+                _ = ft.parse_mode(bad)
+        self.assertEqual(
+            ft.describe(ft.parse_mode("60-on-demand-paused-clock-out-of-order"), PARAMETERS),
+            "60 Hz ideal timer, on demand, clock paused at rest, frames out of order",
+        )
+        self.assertEqual(ft.describe(ft.parse_mode("60-idle-1fps"), PARAMETERS), "60 Hz ideal timer, 1 fps at rest")
+
     def test_labels(self) -> None:
+        self.assertEqual(ft.describe(ft.parse_mode("60-dropped-frames"), PARAMETERS), "60 Hz ideal timer, dropped frames")
+        self.assertEqual(ft.describe(ft.parse_mode("60-naive-4ms-out-of-order"), PARAMETERS), "60 Hz naive timer, ±4 ms mixed, frames out of order")
         self.assertEqual(ft.describe(ft.parse_mode("60"), PARAMETERS), "60 Hz ideal timer")
         self.assertEqual(ft.describe(ft.parse_mode("30-naive-typical"), PARAMETERS), "30 Hz naive timer, typical load")
         self.assertEqual(ft.describe(ft.parse_mode("60-naive-heavy-realistic"), PARAMETERS), "60 Hz naive timer, heavy load (realistic)")

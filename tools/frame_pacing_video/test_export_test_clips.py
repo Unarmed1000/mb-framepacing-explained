@@ -11,10 +11,14 @@ import generate_videos as gv
 
 class ClipManifestTests(unittest.TestCase):
     def test_every_scenario_is_a_marked_single_box_clip(self) -> None:
-        _, settings = gv.parse_arguments(["--single", *export.SCENARIOS, "--marker", "--speed", "fast"])
-        jobs = gv.plan_videos(settings)
-        self.assertEqual([job.top.name for job in jobs], list(export.SCENARIOS))
-        self.assertTrue(all(job.single and job.marker for job in jobs))
+        clips = export.planned()
+        self.assertEqual([job.top.name for _, job in clips], list(export.SCENARIOS))
+        self.assertTrue(all(job.single and job.marker for _, job in clips))
+        # Fast, except the device idling at 1 fps, which needs the idle speed's long rests
+        speeds = {job.top.name: job.speed.name for _, job in clips}
+        self.assertEqual({name for name, speed in speeds.items() if speed != "fast"}, {"60-idle-1fps"})
+        self.assertEqual(speeds["60-idle-1fps"], "idle")
+        self.assertEqual(len(clips), 15)
 
     def test_the_manifest_is_the_clips_own_named_after_the_folders_video(self) -> None:
         _, settings = gv.parse_arguments(["--single", "60-busy-swappy", "--marker", "--speed", "fast"])

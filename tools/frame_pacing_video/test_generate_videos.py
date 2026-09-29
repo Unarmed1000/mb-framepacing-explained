@@ -24,7 +24,18 @@ from PIL import Image
 
 import generate_videos as gv
 from frame_timing import parse_mode
-from mb_framemarker import MarkerKind, PixelFormat, Point, SequenceId, StartMetadata, generate_modules, modules_to_bitmap
+from mb_framemarker import (
+    ON_DEMAND_FRAME_TICKS,
+    MarkerFlags,
+    MarkerKind,
+    Payload,
+    PixelFormat,
+    Point,
+    SequenceId,
+    StartMetadata,
+    generate_modules,
+    modules_to_bitmap,
+)
 from mb_framemarker import Options as MarkerOptions
 
 SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
@@ -257,7 +268,7 @@ class TimingTests(unittest.TestCase):
 
     def test_heavy_load_makes_millisecond_spikes(self) -> None:
         errors = gv.animation_errors(settings_for(), MODE("60-naive-heavy"), SPEEDS["normal"])
-        self.assertGreater(max(abs(error) for error in errors), Fraction(3, 1000))
+        self.assertGreater(max(abs(error) for error in errors if error is not None), Fraction(3, 1000))
 
     def test_noise_options(self) -> None:
         settings = settings_for("--noise-ms", "0.2", "0.4", "--frame-cost", "0.25")
@@ -901,6 +912,138 @@ class SingleAndMarkerTests(unittest.TestCase):
             self.assertTrue(all(took > 0 for took in entry["cpuBusyTicks"]), mode)
         settings, jobs = self.marked("60")
         self.assertEqual(set(cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])["cpuBusyTicks"]), {50_000})  # pyright: ignore[reportPrivateUsage]
+
+    def fault_clip(self, fault: str) -> tuple[list[int], dict[str, object]]:
+        """The marker frame index of every refresh of the storm with a presentation fault (from the clip's first frame), and its manifest entry."""
+        settings, jobs = self.marked(f"60-naive-5ms-diagram-slow-frames-every-1s-{fault}")
+        job = jobs[0]
+        first = len(gv.simulated_frames(settings, job.top, job.speed).flips)
+        indices = [gv.marker_payload(settings, job, frame).frame_index - first for frame in range(settings.frame_count(job.speed))]
+        return indices, gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+
+    def test_dropped_frames_skip_1_to_4_frame_indices_and_never_go_back(self) -> None:
+        indices, entry = self.fault_clip("dropped-frames")
+        steps = [b - a for a, b in itertools.pairwise(dict.fromkeys(indices))]
+        self.assertTrue(all(step > 0 for step in steps))
+        self.assertEqual(sorted(step - 1 for step in steps if step > 1), sorted([1, 2, 3, 4] * 4))
+        self.assertEqual(indices, cast(list[int], entry["screen"]))
+        frames = cast(dict[str, list[object]], entry["frames"])
+        dropped = [index for index, refresh in enumerate(frames["refresh"]) if refresh is None]
+        self.assertEqual(len(dropped), 40)
+        self.assertEqual(sorted(set(range(len(frames["refresh"]))) - set(cast(list[int], entry["presented"]))), dropped)
+        self.assertTrue(all(frames["animationErrorMs"][index] is None and frames["late"][index] is None for index in dropped))
+        self.assertEqual(entry["expected"], {"skippedFrameIndices": 40, "outOfOrderRefreshes": 0})
+        self.assertTrue(cast(str, entry["label"]).endswith(", dropped frames"))
+
+    def test_frames_out_of_order_go_back_in_every_block(self) -> None:
+        indices, entry = self.fault_clip("out-of-order")
+        self.assertEqual(indices, cast(list[int], entry["screen"]))
+        backs = sum(1 for a, b in itertools.pairwise(indices) if b < a)
+        self.assertGreaterEqual(backs, 16)
+        # mb-framepacing's rule: a frame below one already shown is out of order, not presented
+        presented: list[int] = []
+        highest, out_of_order = -1, 0
+        for index in indices:
+            if index > highest:
+                presented.append(index)
+                highest = index
+            elif index < highest:
+                out_of_order += 1
+        self.assertEqual(entry["presented"], presented)
+        skipped = sum(b - a - 1 for a, b in itertools.pairwise(presented))
+        self.assertEqual(entry["expected"], {"skippedFrameIndices": skipped, "outOfOrderRefreshes": out_of_order})
+        self.assertEqual((skipped, out_of_order), (25, 25))
+        frames = cast(dict[str, list[int | None]], entry["frames"])
+        # Every frame is shown, some before the frame rendered before them (early), and only the presented ones have an error
+        self.assertNotIn(None, frames["refresh"])
+        self.assertLess(min(late for late in frames["late"] if late is not None), 0)
+        self.assertEqual([index for index, error in enumerate(frames["animationErrorMs"]) if error is not None], presented)
+
+    def test_a_fault_changes_only_what_is_on_screen(self) -> None:
+        storm = "60-naive-5ms-diagram-slow-frames-every-1s"
+        settings, jobs = self.marked(storm, f"{storm}-dropped-frames", f"{storm}-out-of-order")
+        entries = [gv._mode_entry(settings, job.top, job.speed) for job in jobs]  # pyright: ignore[reportPrivateUsage]
+        plain = cast(dict[str, object], entries[0]["frames"])
+        self.assertNotIn("screen", entries[0])
+        for entry in entries[1:]:
+            frames = cast(dict[str, object], entry["frames"])
+            for key in ("animationMs", "dtMs", "sampleMs", "targetFps", "cpuStartTicks", "cpuBusyTicks"):
+                self.assertEqual(frames[key], plain[key], key)
+        # And the sequence id is the full name's
+        self.assertEqual(len({str(gv.marker_sequence_id(job.top)) for job in jobs}), 3)
+
+    def payloads(self, mode: str, speed: str = "fast") -> tuple[gv.Settings, gv.VideoJob, list[Payload]]:
+        """The markers of every refresh of a marked clip, lead-in and lead-out included."""
+        settings = plain_settings("--single", mode, "--marker", "--speed", speed)
+        job = gv.plan_videos(settings)[0]
+        return settings, job, [gv.marker_payload(settings, job, frame) for frame in gv.video_refreshes(settings, job)]
+
+    def test_the_marker_carries_the_preferred_frame_time(self) -> None:
+        # Swappy lowered to 30 fps still prefers 60; a 30 fps lock and bad half rate prefer 30; nothing is static
+        for mode, preferred, targets in (
+            ("60", {166_667}, {166_667}),
+            ("30", {333_333}, {333_333}),
+            ("60-diagram-half-rate-bad-pacing", {333_333}, {333_333}),
+            ("60-busy-swappy", {166_667}, {166_667, 333_333}),
+        ):
+            with self.subTest(mode):
+                _, _, payloads = self.payloads(mode)
+                self.assertEqual({payload.preferred_frame_ticks for payload in payloads}, preferred)
+                self.assertEqual({payload.target_frame_ticks for payload in payloads}, targets)
+                self.assertEqual({payload.flags for payload in payloads}, {MarkerFlags.NONE})
+
+    def test_static_rests_flag_exactly_the_frames_at_rest(self) -> None:
+        settings, job, payloads = self.payloads("60-naive-5ms-static-rests")
+        lead = gv.MARKER_LEAD_REFRESHES
+        for frame, payload in zip(range(-lead, len(payloads) - lead), payloads, strict=True):
+            at_rest = gv.at_rest(settings, job.speed, gv.content_time(settings, job.top, job.speed, frame))
+            self.assertEqual(payload.flags == MarkerFlags.STATIC, at_rest, frame)
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        static = cast(dict[str, list[bool]], entry["frames"])["static"]
+        # 8 rests of 6 refreshes; every frame rendered
+        self.assertEqual((sum(static), len(static)), (48, 480))
+
+    def test_on_demand_renders_nothing_more_at_rest_and_has_no_frame_time(self) -> None:
+        for mode in ("60-on-demand", "60-on-demand-paused-clock"):
+            with self.subTest(mode):
+                settings, job, payloads = self.payloads(mode)
+                self.assertEqual({payload.target_frame_ticks for payload in payloads}, {ON_DEMAND_FRAME_TICKS})
+                self.assertEqual({payload.preferred_frame_ticks for payload in payloads}, {ON_DEMAND_FRAME_TICKS})
+                # Frame indices stay consecutive: the game renders fewer frames, none is lost
+                indices = list(dict.fromkeys(payload.frame_index for payload in payloads))
+                self.assertEqual([b - a for a, b in itertools.pairwise(indices)], [1] * (len(indices) - 1))
+                entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+                frames = cast(dict[str, list[object]], entry["frames"])
+                self.assertEqual((set(frames["targetFps"]), set(frames["preferredFps"]), entry["targetFps"]), ({None}, {None}, None))
+                # Only the first frame of each rest is rendered (and static), held until the box moves again
+                refreshes, static = cast(list[int], frames["refresh"]), cast(list[bool], frames["static"])
+                self.assertTrue(all(not (a and b) for a, b in itertools.pairwise(static)))
+                held = [b - a for a, b, still in zip(refreshes, refreshes[1:], static, strict=False) if still]
+                self.assertTrue(held and all(hold > 1 for hold in held))
+        # The same frames and pictures; the paused clock is behind in the markers only, by a frame less than each rest
+        plain, paused = self.payloads("60-on-demand")[2], self.payloads("60-on-demand-paused-clock")[2]
+        self.assertEqual([payload.frame_index for payload in plain], [payload.frame_index for payload in paused])
+        settings, job, _ = self.payloads("60-on-demand-paused-clock")
+        on_demand = gv.plan_videos(plain_settings("--single", "60-on-demand", "--marker", "--speed", "fast"))[0]
+        self.assertEqual(
+            [gv.content_time(settings, job.top, job.speed, frame) for frame in range(480)],
+            [gv.content_time(settings, on_demand.top, on_demand.speed, frame) for frame in range(480)],
+        )
+        errors = cast(list[float], cast(dict[str, object], gv._mode_entry(settings, job.top, job.speed)["frames"])["animationErrorMs"])  # pyright: ignore[reportPrivateUsage]
+        self.assertEqual(min(errors), -100.0)
+
+    def test_idling_at_1_fps_prefers_what_it_runs_at(self) -> None:
+        settings, job, payloads = self.payloads("60-idle-1fps", "idle")
+        self.assertEqual({(payload.target_frame_ticks, payload.preferred_frame_ticks) for payload in payloads}, {(166_667, 166_667), (10_000_000, 10_000_000)})
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        frames = cast(dict[str, list[object]], entry["frames"])
+        idle_refreshes = [refresh for refresh, rate in zip(frames["refresh"], frames["targetFps"], strict=True) if rate == 1]
+        self.assertEqual(idle_refreshes, [0, 60, 210, 270, 330, 450])
+        self.assertEqual(frames["targetFps"], frames["preferredFps"])
+        # The fast speed's rests are too short to idle a second
+        with contextlib.redirect_stderr(io.StringIO()) as error, self.assertRaises(SystemExit):
+            _ = gv.parse_arguments(["--single", "60-idle-1fps", "--marker", "--speed", "fast"])
+        self.assertIn("never rests 1 s", error.getvalue())
 
     def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
         settings, jobs = self.marked("60-busy-swappy")
