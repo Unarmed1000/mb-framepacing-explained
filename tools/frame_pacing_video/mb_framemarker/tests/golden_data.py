@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """Reads the golden data the C++ library writes with marker-render --golden (test-data/markers): the image manifest, the module
 digest and the PGM images. The folder is found above this file, or given by the MB_FRAMEMARKER_TEST_DATA environment variable.

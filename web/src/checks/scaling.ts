@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // Showing a video at 1:1 device pixels at any browser zoom or display scaling (devicePixelRatio).
 
 export interface Size {

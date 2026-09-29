@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // One switch for every video on the page: a reader who finds the motion distracting while reading pauses them all at once, from
 // the top bar or with P, and plays them again the same way. The choice is remembered in this browser; without one, a reader whose
 // system asks for reduced motion starts with the videos paused.

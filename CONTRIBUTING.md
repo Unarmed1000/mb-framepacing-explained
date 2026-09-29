@@ -55,3 +55,14 @@ The repository is licensed under [CC BY-NC-SA 4.0](LICENSE) by Mana Battery ApS.
 pull request or any other material), you confirm that you have the right to submit it, and you agree that it is published under
 the repository's license and that Mana Battery ApS may use, change and publish it as part of this project. Contributors are
 credited in the Git history.
+
+Every code file starts with the SPDX short form (after a shebang, `@echo off` or `<!doctype html>`, which must come first), in the
+file's own comment style:
+
+```
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
+```
+
+Third-party code keeps its own notices, and the vendored frame marker library (`tools/frame_pacing_video/mb_framemarker`) is an exact
+copy of mb-framepacing's, under its BSD 3-Clause licence.

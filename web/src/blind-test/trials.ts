@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The blind test's questions (trials.json), the clips that show them, a randomised run, and its scoring.
 
 import definitions from "./trials.json";

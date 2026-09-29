@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the example charts of doc/charts.md: SVG charts of one video mode's frames, in the style of the timing diagrams.
 
 The data comes from the frame pacing videos' own simulation (tools/frame_pacing_video/frame_timing.py), so each chart shows exactly

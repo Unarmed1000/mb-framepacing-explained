@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 # Create or update the .venv and local.toml (see tools/setup_venv.py). Arguments are passed on, for example:
 #   ./setup.sh --ffmpeg /opt/ffmpeg/bin
 set -e

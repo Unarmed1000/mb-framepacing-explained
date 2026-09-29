@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 import { describe, expect, it, vi } from "vitest";
 
 import type { ModeEntry, VideoEntry } from "../manifest";

@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """The payload wire format (doc/marker-format.md): layout, round trips and rejections, as the C# library's PayloadTests; and the
 sequence id."""

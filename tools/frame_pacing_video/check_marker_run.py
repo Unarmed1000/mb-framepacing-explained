@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Compare mb-framepacing's measurement of a marked clip (generate_videos.py --single ... --marker) with what the generator made.
 
 Import the clip with mb-framepacing first, as its manifest entry says ("measure"), for example:

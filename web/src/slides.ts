@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // Self-guided slides: next / previous, a progress bar, a deep link per slide (#/id, and #/id/more for a view inside a slide),
 // keyboard and swipe. After a jump (a link, not Next or Previous) the back button returns where the visitor came from, like the
 // browser's Back.

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The answer buttons and the reveal of a trial (verdict, what each box was, the animation error chart), shared by the warm-up
 // practice and the results list.
 

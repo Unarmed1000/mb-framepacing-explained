@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Simulate a game's frame loop on a plain vsync display: when each frame is shown, and which animation time it shows.
 
 Back to basics: the game only has vsync. It has no presentation timestamps and cannot ask when a frame was shown; it only blocks

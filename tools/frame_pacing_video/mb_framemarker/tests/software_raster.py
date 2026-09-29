@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """Software rasterizers for the tests, matching how marker-render draws the golden images: a 128 grey canvas, pixel-edge vertices,
 drawn in order. The triangle rasterizer is the C# tests' (SoftwareRaster.cs), so all three outputs are checked the same way.

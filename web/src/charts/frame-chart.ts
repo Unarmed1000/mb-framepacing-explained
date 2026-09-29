@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // How long each frame stays on screen (its display time step), one lane per half of the video, as steps: in green, or in red when it
 // stays longer than planned because the next frame came late, with a playhead that follows playback. The same card and scale conventions as the animation error chart.
 

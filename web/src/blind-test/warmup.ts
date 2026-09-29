@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The jitter test's warm-up pairs (a perfect 60 against a ±5 ms window, fast movement), and the message for missing clips.
 
 import type { ModeEntry, VideoEntry } from "../manifest";

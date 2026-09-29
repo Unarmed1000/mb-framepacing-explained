@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """Drawing the marker into a pixel buffer: a bytearray of grey, rgb24 or rgba32 pixels, PIL's Image.tobytes, a numpy array's memory. It
 draws exactly what the GPU draws from the geometry, and what marker-render draws for the golden images."""

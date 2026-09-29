@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Export the web page's scenarios as marked single-box clips for mb-framepacing's tests (its test-data/videos): one folder per
 scenario, named after its mode, holding video.mp4 and its own manifest.json.
 

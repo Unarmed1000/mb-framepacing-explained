@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // Playback controls under a video: play and pause, the speed (1x, 1/2x, 1/4x), stepping a frame back or forward, and a slider
 // to move back and forth through the clip. At a lower speed each video frame stays on screen longer, so the pacing it shows is
 // the same, only slower. Used where a slide asks for them (`controls` on its video line).

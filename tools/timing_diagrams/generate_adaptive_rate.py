@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the adaptive rate charts: how a Swappy-like rule decides the swap interval, frame by frame, from the simulation of
 tools/frame_pacing_video/adaptive_rate.py.
 - chart-adaptive-rate.svg: the busy stretch of the adapt the rate video at 60 Hz, half rate and back;

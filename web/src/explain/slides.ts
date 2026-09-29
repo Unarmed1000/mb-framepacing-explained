@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The explanation slides, after the blind test. Their text lives in web/content: a Markdown file per slide in content/slides,
 // turned into HTML when the page is built (build/slide-markdown.ts), and the topics in content/topics.json. This file puts the
 // slides in order, adds each one's topic line and draft notice, and fills in the live parts: the videos, the refresh strips and

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the temporal upscaler diagram (upscaler.svg): roughly how DLSS and FSR 2 and later build a frame at the display
 resolution. On the left the inputs, this frame's colour, depth and motion vectors at the render resolution and the last output at
 the display resolution; in the middle the upscaler's steps; on the right the output, which becomes the next frame's history. In

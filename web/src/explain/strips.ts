@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 /** A refresh strip of the first 1/6 s of `fps` on a `hz` display, one cell per refresh, the shade changing with each new frame
  * (after the average chart's strips), and how many refreshes each frame is held. A frame is shown at the first refresh at or after
  * the moment it is due, as with plain vsync; the rows share one time scale, so the strips line up (a refresh rate that 1/6 s does

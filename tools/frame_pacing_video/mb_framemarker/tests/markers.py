@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """Encode, then draw: what a caller does each frame (generate_modules, then a modules_to_... output), in one call for the geometry
 tests. A start payload is encoded with its metadata."""

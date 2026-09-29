@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the frame pacing comparison videos.
 
 Every 1280x720 video has two halves: at the normal and fast speeds a box moving side to side along the same eased (sine in-out)

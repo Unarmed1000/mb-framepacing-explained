@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // A looping video shown at 1:1 device pixels, with playback health from requestVideoFrameCallback.
 
 import { cssSizeForDevicePixels, devicePixelBox, isOneToOne, snapOffset, type Size } from "../checks/scaling";

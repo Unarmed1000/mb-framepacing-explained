@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // Animation error per frame as signed bars, one lane per half of the video, with a playhead that follows playback.
 // Same design as the SVG diagrams of tools/timing_diagrams (the dark grey card, the colours).
 

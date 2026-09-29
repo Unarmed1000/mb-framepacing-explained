@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The viewing check: measures the setup, reports each check with how to fix it, and re-runs when something changes.
 
 import { estimateRefresh, sixtyMultiple, type RefreshEstimate } from "./refresh";

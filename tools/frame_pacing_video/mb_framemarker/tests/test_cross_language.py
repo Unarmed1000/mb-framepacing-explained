@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """The Python library must draw exactly what the C++ library draws: the same module matrix for 512 pseudo random payloads
 (test-data/markers/modules.csv, 128 per marker kind) and byte identical golden images from quads, triangle lists, indexed triangle

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Tests of frame_timing.py, the simulated frame loop. Run from the repository root (in the .venv):
 python -m unittest discover -s tools/frame_pacing_video -v
 """

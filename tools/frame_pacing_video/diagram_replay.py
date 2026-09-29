@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Replay a timing diagram in the videos (modes like 60-diagram-slow-frames): the frames of one of tools/timing_diagrams' diagrams,
 when each is shown and which animation time it shows, with one diagram refresh per frame of the mode's rate, repeated to fill the
 clip. So a video shows exactly what its diagram shows: the same frames held or late, the same pattern of animation error, at real

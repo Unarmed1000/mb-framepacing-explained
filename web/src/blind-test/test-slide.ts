@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The blind test: an intro, the warm-up then the questions in random order, and the results, whose rows fold out to show each
 // trial's video again with its reveal; a saved result can be shown the same way.
 

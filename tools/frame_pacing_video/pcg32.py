@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """PCG32: the random number generator of the frame pacing videos.
 
 Our own generator, so the draws never change with the Python version (Python only keeps random.Random.random() stable, not randint or

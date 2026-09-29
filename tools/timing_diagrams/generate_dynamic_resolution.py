@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the dynamic resolution chart (chart-dynamic-resolution.svg): the GPU time of each frame at 60 Hz, at a fixed resolution
 and with dynamic resolution, as the load rises through a busy stretch and then jumps at a camera cut.
 

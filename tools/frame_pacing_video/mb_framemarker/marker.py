@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2026, Mana Battery ApS
 
 """The marker format and geometry: constants, sizing and placement, the payload wire format, encoding the marker (generate_modules) and
 drawing it from the modules as quads, triangles or indexed triangles. The same API as the C# library (MB.FrameMarker) and the C++ library

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Simulate a busy stretch in the videos (modes 60-busy-full-rate and 60-busy-swappy): a few seconds in which the frames take longer
 than a refresh about half the time, with calm stretches before and after, and a game that either stays at full rate or adapts its
 swap interval the way Android's Frame Pacing library (Swappy) does.
