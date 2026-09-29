@@ -1,0 +1,3 @@
+[submodule "external/mb-framepacing"]
+	path = external/mb-framepacing
+	url = https://github.com/Unarmed1000/mb-framepacing.git

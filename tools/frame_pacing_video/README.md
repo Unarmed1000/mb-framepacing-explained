@@ -238,10 +238,10 @@ import them and measure their animation error, and its numbers can be checked ag
   refreshes longer; it no longer loops seamlessly.
 - **Where:** mb-framepacing's recommended place, 32 px from the top-left corner, left of the box's path, in pure black and white,
   modules of `--marker-module-px` video pixels (3; 2 is enough lossless, `--web` needs 3).
-- **The library:** `mb_framemarker/`, a copy of mb-framepacing's Python marker library (`marker/python`, BSD 3-Clause, its
-  `LICENSE` inside). It draws the same pixels as mb-framepacing's C++ and C# libraries; its tests check that against
-  mb-framepacing's golden images when they are found (`MB_FRAMEMARKER_TEST_DATA`, or a `test-data/markers` folder above), and are
-  skipped otherwise. Update it by copying the folder from mb-framepacing.
+- **The library:** mb-framepacing's own Python marker library (`mb_framemarker`, its `marker/python`, BSD 3-Clause), from the
+  submodule `external/mb-framepacing`, pinned to a commit of mb-framepacing (`marker_path.py` puts it on the import path). It
+  draws the same pixels as mb-framepacing's C++ and C# libraries; its tests, with the golden images, are mb-framepacing's
+  (`python -m unittest discover -s external/mb-framepacing/marker/python`). CONTRIBUTING.md says how to move the pin.
 
 The page's scenarios as marked clips, then measured and compared, clip by clip:
 
@@ -274,12 +274,13 @@ setup.cmd --ffmpeg D:\path\to\ffmpeg          # Windows
 ./setup.sh --ffmpeg /path/to/ffmpeg           # Linux, macOS
 ```
 
-This creates `.venv` with Python 3.14, installs Pillow, Ruff and basedpyright, writes `local.toml` and checks FFmpeg. It is safe
-to run again; `--ffmpeg` is optional.
+This creates `.venv` with Python 3.14, installs Pillow, Ruff and basedpyright, writes `local.toml`, checks FFmpeg and fetches the
+mb-framepacing submodule (the marker library) when it is missing. It is safe to run again; `--ffmpeg` is optional.
 
 Manual equivalent, run from the repository root:
 
 ```powershell
+git submodule update --init external/mb-framepacing
 py -3.14 -m venv .venv
 .venv\Scripts\python -m pip install --upgrade pip
 .venv\Scripts\python -m pip install --group dev
@@ -471,5 +472,6 @@ at the moment. Windows and Linux (on a build server through Mesa's EGL) have bot
   into every frame, its name, the manifest and the validation.
 - `test_check_marker_run.py`: comparing mb-framepacing's measurement with the manifest.
 - `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
-- `mb_framemarker/tests`: the marker library: payload layout and round trips, sizes and placement, and the golden images of
-  mb-framepacing (module matrices of 512 payloads, 40 images through quads, triangles and indexed triangles).
+- `test_presentation_faults.py`: dropped frames and frames out of order: where the events go, drop runs of 1 to 4, swapped pairs
+  and derangements, the frame on screen, and what a measurement counts as presented.
+- `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps) and their pacing.

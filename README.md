@@ -31,7 +31,8 @@ timing diagram's frames exactly, so the difference can be seen rather than descr
 | [`tools/timing_diagrams`](tools/timing_diagrams)       | Generates the timing diagrams and example charts of the docs and the page (`doc/images/*.svg`; `--png` for bitmaps)                      |
 
 Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), optionally with `--ffmpeg <path>`. It creates the
-`.venv` and the machine-local `local.toml`.
+`.venv` and the machine-local `local.toml`, and fetches the mb-framepacing submodule (`external/mb-framepacing`, its frame marker
+library) when the clone did not (`git clone --recurse-submodules` fetches it right away).
 
 ## Frame pacing in one minute
 
@@ -156,7 +157,6 @@ non-commercial purposes, with credit; adapted versions must say what was changed
 Commercial use needs written permission from Mana Battery ApS.
 It is provided as is, without warranty or liability. Quotations from third-party articles and videos remain their owners'.
 The exceptions are AMD's FSR 1 headers in [`tools/frame_pacing_video/fsr1`](tools/frame_pacing_video/fsr1), under their own MIT
-licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)), and mb-framepacing's frame marker library in
-[`tools/frame_pacing_video/mb_framemarker`](tools/frame_pacing_video/mb_framemarker), a copy of its `marker/python`, under the BSD
-3-Clause licence ([text](tools/frame_pacing_video/mb_framemarker/LICENSE)); its QR encoder in `third_party/` is under the MIT licence
-([text](tools/frame_pacing_video/mb_framemarker/third_party/qrcodegen-LICENSE.txt)).
+licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)). The frame marker library comes from mb-framepacing itself, the
+submodule [`external/mb-framepacing`](https://github.com/Unarmed1000/mb-framepacing) (its `marker/python`, under the BSD 3-Clause
+licence; its QR encoder under the MIT licence), and is not part of this repository.

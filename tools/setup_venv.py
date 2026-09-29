@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Create or update the repository's .venv with one command: setup.cmd (Windows) or ./setup.sh (Linux, macOS) run this script.
 
-1. Checks that this is Python 3.14 or newer.
+1. Checks that this is Python 3.14 or newer, and fetches the mb-framepacing submodule (external/mb-framepacing: the frame marker
+   library) when the clone did not (git clone without --recurse-submodules).
 2. Creates .venv when it is missing (or was made by an older Python, or in another folder before the repository was moved).
 3. Upgrades pip in it and installs the dev dependency group of pyproject.toml (Pillow, ruff, basedpyright).
 4. Creates local.toml (the machine-local settings, git-ignored) from local.example.toml when it is missing; with --ffmpeg it
@@ -26,6 +27,8 @@ VENV_DIR = REPO_ROOT / ".venv"
 LOCAL_CONFIG = REPO_ROOT / "local.toml"
 LOCAL_EXAMPLE = REPO_ROOT / "local.example.toml"
 GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_videos.py"
+# The mb-framepacing submodule, at the commit this repository pins; the tools use its marker library
+SUBMODULE = REPO_ROOT / "external" / "mb-framepacing"
 MIN_PYTHON = (3, 14)
 
 # The [ffmpeg] path line of local.toml, also when it is still commented out as in local.example.toml
@@ -96,6 +99,9 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+
+    if not (SUBMODULE / "marker" / "python" / "mb_framemarker").is_dir():
+        run(["git", "-C", str(REPO_ROOT), "submodule", "update", "--init", SUBMODULE.relative_to(REPO_ROOT).as_posix()])
 
     create_venv()
     python = str(venv_python())

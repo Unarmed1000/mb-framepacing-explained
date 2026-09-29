@@ -64,5 +64,19 @@ file's own comment style:
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 ```
 
-Third-party code keeps its own notices, and the vendored frame marker library (`tools/frame_pacing_video/mb_framemarker`) is an exact
-copy of mb-framepacing's, under its BSD 3-Clause licence.
+Third-party code keeps its own notices. The frame marker library is not copied here: it comes from the mb-framepacing submodule
+(`external/mb-framepacing`, its `marker/python`, BSD 3-Clause), pinned to a commit of mb-framepacing.
+
+## The mb-framepacing submodule
+
+`external/mb-framepacing` is pinned to the mb-framepacing commit whose frame marker the clips carry. To move it, when mb-framepacing
+changes its marker (a pushed commit):
+
+```
+git -C external/mb-framepacing fetch
+git -C external/mb-framepacing checkout <commit>
+git add external/mb-framepacing
+```
+
+Run the tests, commit the new pin, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for
+mb-framepacing's `test-data/videos`; committing them there is mb-framepacing's work.

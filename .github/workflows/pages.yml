@@ -18,7 +18,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # With the mb-framepacing submodule (external/mb-framepacing): the frame marker library of the marked clips
       - uses: actions/checkout@v5
+        with:
+          submodules: true
 
       - uses: actions/setup-python@v6
         with:
@@ -32,6 +35,9 @@ jobs:
           sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
           python -m pip install "Pillow>=12" "moderngl>=5.12"
           python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
+
+      - name: Test the video tools
+        run: python -m unittest discover -s tools/frame_pacing_video
 
       - name: Test the clip export
         run: python -m unittest discover -s tools/web_export

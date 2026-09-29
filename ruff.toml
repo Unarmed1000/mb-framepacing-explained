@@ -7,10 +7,13 @@
 # Ruff's default excludes (.git, build, dist, node_modules, .venv, ...) stay in place; out/ holds generated output
 extend-exclude = [
     "out",
+    # The mb-framepacing submodule: its own repository, linted there
+    "external",
 ]
 
-# First-party import roots: the repository and each tool folder (the tests import their tool as a top-level module)
-src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams", "tools/web_export"]
+# First-party import roots: the repository and each tool folder (the tests import their tool as a top-level module), and the
+# submodule's marker library
+src = [".", "tools", "tools/frame_pacing_video", "tools/timing_diagrams", "tools/web_export", "external/mb-framepacing/marker/python"]
 
 line-length = 160
 

@@ -22,7 +22,7 @@ while the ui scroll speeds are in virtual pixels per second: on a coarser grid a
 The divider and the labels are drawn at native 1:1 video pixels.
 
 --single MODE [MODE ...] makes one video per mode instead of pairs: a single box (or row) in the middle of the frame, no divider.
-With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, a copy of mb-framepacing's marker/python), so
+With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, its marker/python from the submodule), so
 mb-framepacing can import them and measure their animation error: the frame index and the animation time of the frame on screen at
 every refresh, with a start marker before the clip and an end marker after it.
 
@@ -81,6 +81,7 @@ from typing import IO, Protocol, cast
 from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
 import idle_behaviour as idle
+import marker_path  # noqa: F401  # pyright: ignore[reportUnusedImport]  (mb_framemarker from the submodule)
 import presentation_faults as faults
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing

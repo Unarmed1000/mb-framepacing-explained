@@ -1,24 +1,25 @@
 {
   "$schema": "https://raw.githubusercontent.com/DetachHead/basedpyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
   "include": ["tools"],
-  "exclude": ["**/__pycache__", "**/.venv", "out"],
+  "exclude": ["**/__pycache__", "**/.venv", "out", "external"],
   "pythonVersion": "3.14",
   "venvPath": ".",
   "venv": ".venv",
   "executionEnvironments": [
     {
       "root": "tools/frame_pacing_video",
-      "extraPaths": ["tools/timing_diagrams"]
+      "extraPaths": ["tools/timing_diagrams", "external/mb-framepacing/marker/python"]
     },
     {
       "root": "tools/timing_diagrams",
-      "extraPaths": ["tools/frame_pacing_video"]
+      "extraPaths": ["tools/frame_pacing_video", "external/mb-framepacing/marker/python"]
     },
     {
       "root": "tools/web_export"
     },
     {
-      "root": "tools"
+      "root": "tools",
+      "extraPaths": ["external/mb-framepacing/marker/python"]
     }
   ],
   "typeCheckingMode": "recommended"
