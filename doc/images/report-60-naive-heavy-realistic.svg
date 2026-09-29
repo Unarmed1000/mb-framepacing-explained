@@ -76,7 +76,6 @@
   .key-violet-a { fill: #a371f7; fill-opacity: 0.55; }
   .key-violet-b { fill: #a371f7; fill-opacity: 0.85; }
   .key-grey { fill: #3d444d; }
-  .key-mark { fill: #e6edf3; }
   .held-fill { fill: #2ea043; }
   .held-fill-late { fill: #e5534b; }
   .held-range { fill: #2ea043; fill-opacity: 0.3; }
@@ -91,12 +90,19 @@
   .frametime-fill { fill: #58a6ff; }
   .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
   .strip-late { fill: #e5534b; }
-  .strip-mark { fill: #e6edf3; }
   .hist-bar { fill: #58a6ff; }
   .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
   .clip-mark { fill: #e5534b; }
   .clip-text { font-size: 11px; fill: #e6edf3; }
   .warn { fill: #d29922; }
+  .event-track { fill: #ffffff; fill-opacity: 0.05; }
+  .event-dropped { fill: #f0883e; }
+  .event-older { fill: #db61a2; }
+  .event-torn { fill: #39c5cf; }
+  .event-gap { fill: #768390; }
+  .event-undecoded { fill: #545d68; }
+  .key-cyan { fill: #39c5cf; }
+  .key-undecoded { fill: #545d68; }
 </style>
 <rect class="card" x="0.5" y="0.5" width="1179" height="745" rx="14"/>
 <text x="20.0" y="30.0" text-anchor="start" class="title">60-naive-heavy-realistic: 60 Hz naive timer, heavy load (realistic)</text>
