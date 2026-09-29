@@ -69,8 +69,9 @@ Third-party code keeps its own notices. The frame marker library is not copied h
 
 ## The mb-framepacing submodule
 
-`external/mb-framepacing` is pinned to the mb-framepacing commit whose frame marker the clips carry. To move it, when mb-framepacing
-changes its marker (a pushed commit):
+`external/mb-framepacing` is pinned to the mb-framepacing commit whose frame marker the clips carry, and whose report cards the
+charts page shows (`tools/timing_diagrams/generate_measured_charts.py` builds it there). To move it, when mb-framepacing changes its
+marker or its report card (a pushed commit):
 
 ```
 git -C external/mb-framepacing fetch
@@ -78,5 +79,6 @@ git -C external/mb-framepacing checkout <commit>
 git add external/mb-framepacing
 ```
 
-Run the tests, commit the new pin, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for
-mb-framepacing's `test-data/videos`; committing them there is mb-framepacing's work.
+Run the tests, regenerate the measured charts (`generate_measured_charts.py`), commit the new pin, then export the test clips again
+(`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's `test-data/videos`; committing them there is mb-framepacing's
+work.

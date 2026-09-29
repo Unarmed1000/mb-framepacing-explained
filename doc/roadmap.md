@@ -87,7 +87,9 @@ Ideas for the sister project, from [charts](charts.md#ideas-for-mb-framepacing).
 - [ ] Synced playback: a click on a chart spike opens that captured frame, and a playhead follows the recording.
 - [x] Gamers Nexus's summaries by their names: error per frame, percent error.
 - [x] A refresh strip (FCAT-style).
-- [ ] A stutter share (CapFrameX-style), SVG export of its charts.
+- [ ] A stutter share (CapFrameX-style).
+- [x] SVG export of its charts: its report cards are SVG, and the charts page's examples are its cards of our clips, measured
+      (`generate_measured_charts.py`), with the animation time step over the display time step and a strip of the first second.
 - [ ] The same classification as the web page's, on measured captures: from the animation error, how much of a run has stutter and
       the other categories (jitter, hitches, ...), which can overlap; as shares in the report and marked stretches on its charts.
       Build it once and share the rules, so both projects label a sequence the same way.
