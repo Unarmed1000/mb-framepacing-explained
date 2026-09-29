@@ -106,5 +106,5 @@ is late. Only the wait before the first moving frame counts as longer than the g
 
 [The test clips in mb-framepacing](https://github.com/Unarmed1000/mb-framepacing/tree/master/test-data/videos)
 [How the clips are made](https://github.com/Unarmed1000/mb-framepacing-explained/tree/master/tools/frame_pacing_video#readme)
-[What the marker can carry](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/marker-format.md#payload)
+[Filling the marker fields](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/marker-fields.md)
 {.more}
