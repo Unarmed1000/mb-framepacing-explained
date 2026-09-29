@@ -15,6 +15,7 @@ from typing import cast
 
 from .structures import (
     SEQUENCE_ID_BYTE_COUNT,
+    MarkerFlags,
     MarkerKind,
     ModuleMatrix,
     Options,
@@ -42,12 +43,15 @@ index u64."""
 SYNC_QR_MODULE_COUNT = (4 * SYNC_QR_VERSION) + 17
 SYNC_PAYLOAD_BYTE_COUNT = 12
 
-PAYLOAD_BYTE_COUNT = 48
+PAYLOAD_BYTE_COUNT = 53
 """Payload header, shared by every marker kind (little endian): magic "MF" | format version | kind | frame index u64 | animation
-ticks i64 | run id u32 | intended display ticks i64 | target frame ticks u32 | CPU start ticks i64 | CPU busy ticks u32. Start and end
-markers carry the values of the frame that shows them."""
+ticks i64 | run id u32 | intended display ticks i64 | target frame ticks u32 | CPU start ticks i64 | CPU busy ticks u32 | preferred frame
+ticks u32 | flags u8. Start and end markers carry the values of the frame that shows them."""
 PAYLOAD_MAGIC = b"MF"
 PAYLOAD_FORMAT_VERSION = 1
+
+ON_DEMAND_FRAME_TICKS = 0xFFFF_FFFF
+"""The target and preferred frame time of a renderer that presents only when something changes: there is no interval to aim for."""
 
 START_PAYLOAD_BYTE_COUNT = PAYLOAD_BYTE_COUNT + 8 + SEQUENCE_ID_BYTE_COUNT
 """Start marker payload: header | start time UTC i64 | sequence id (16 bytes)."""
@@ -76,7 +80,7 @@ MAX_PACKED_MODULE_BYTE_COUNT = packed_module_byte_count(QR_MODULE_COUNT)
 MAX_GRID_VERTEX_COUNT = 4 + ((QR_MODULE_COUNT + 1) ** 2)
 """Vertices of the main marker's static grid (grid_vertices): 1768; the sync marker's is 680. Both fit 16-bit indices."""
 
-_HEADER = struct.Struct("<2sBBQqIqIqI")
+_HEADER = struct.Struct("<2sBBQqIqIqIIB")
 _SYNC = struct.Struct("<2sBBQ")
 _START_FIELDS = struct.Struct(f"<q{SEQUENCE_ID_BYTE_COUNT}s")
 _DATE_TIME_EPOCH = datetime(1, 1, 1, tzinfo=UTC)
@@ -149,6 +153,8 @@ def encode_payload(payload: Payload, metadata: StartMetadata | None = None) -> b
             payload.target_frame_ticks,
             payload.cpu_start_ticks,
             payload.cpu_busy_ticks,
+            payload.preferred_frame_ticks,
+            payload.flags,
         )
     except struct.error as error:
         raise ValueError(f"payload out of range: {payload}") from error
@@ -174,9 +180,8 @@ def try_decode_payload(data: bytes) -> tuple[Payload, StartMetadata | None] | No
         return (Payload(frame_index, 0, 0, MarkerKind.SYNC), None) if len(data) == SYNC_PAYLOAD_BYTE_COUNT else None
     if len(data) < PAYLOAD_BYTE_COUNT:
         return None
-    _, _, _, _, animation_ticks, run_id, intended_display_ticks, target_frame_ticks, cpu_start_ticks, cpu_busy_ticks = cast(
-        tuple[bytes, int, int, int, int, int, int, int, int, int], _HEADER.unpack_from(data)
-    )
+    fields = cast(tuple[bytes, int, int, int, int, int, int, int, int, int, int, int], _HEADER.unpack_from(data))
+    _, _, _, _, animation_ticks, run_id, intended_display_ticks, target_frame_ticks, cpu_start_ticks, cpu_busy_ticks, preferred, flags = fields
     payload = Payload(
         frame_index,
         animation_ticks,
@@ -186,6 +191,9 @@ def try_decode_payload(data: bytes) -> tuple[Payload, StartMetadata | None] | No
         target_frame_ticks,
         cpu_start_ticks,
         cpu_busy_ticks,
+        preferred,
+        # Every value is accepted: bits without a name are reserved and kept
+        MarkerFlags(flags),
     )
     if payload.kind != MarkerKind.SEQUENCE_START:
         return (payload, None) if len(data) == PAYLOAD_BYTE_COUNT else None

@@ -32,6 +32,7 @@ from .marker import (
     MAX_QUAD_COUNT,
     MAX_QUIET_ZONE_MODULES,
     MIN_MODULE_SIZE_PX,
+    ON_DEMAND_FRAME_TICKS,
     PAYLOAD_BYTE_COUNT,
     PAYLOAD_FORMAT_VERSION,
     PAYLOAD_MAGIC,
@@ -66,6 +67,7 @@ from .marker import (
 )
 from .structures import (
     SEQUENCE_ID_BYTE_COUNT,
+    MarkerFlags,
     MarkerKind,
     ModuleMatrix,
     Options,
@@ -89,6 +91,7 @@ __all__ = [
     "MAX_QUAD_COUNT",
     "MAX_QUIET_ZONE_MODULES",
     "MIN_MODULE_SIZE_PX",
+    "ON_DEMAND_FRAME_TICKS",
     "PAYLOAD_BYTE_COUNT",
     "PAYLOAD_FORMAT_VERSION",
     "PAYLOAD_MAGIC",
@@ -104,6 +107,7 @@ __all__ = [
     "SYNC_QR_VERSION",
     "TICKS_PER_SECOND",
     "UNIX_EPOCH_DATE_TIME_TICKS",
+    "MarkerFlags",
     "MarkerKind",
     "ModuleMatrix",
     "Options",

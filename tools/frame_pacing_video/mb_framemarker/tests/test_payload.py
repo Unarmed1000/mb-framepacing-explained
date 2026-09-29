@@ -10,10 +10,12 @@ from datetime import UTC, datetime, timedelta
 
 from .. import (
     MAX_ENCODED_PAYLOAD_BYTE_COUNT,
+    ON_DEMAND_FRAME_TICKS,
     PAYLOAD_BYTE_COUNT,
     SEQUENCE_ID_BYTE_COUNT,
     START_PAYLOAD_BYTE_COUNT,
     SYNC_PAYLOAD_BYTE_COUNT,
+    MarkerFlags,
     MarkerKind,
     Payload,
     SequenceId,
@@ -32,9 +34,10 @@ U32_MAX = 0xFFFF_FFFF
 
 class PayloadTests(unittest.TestCase):
     def test_sizes(self) -> None:
-        self.assertEqual(PAYLOAD_BYTE_COUNT, 48)
+        self.assertEqual(PAYLOAD_BYTE_COUNT, 53)
         self.assertEqual(SEQUENCE_ID_BYTE_COUNT, 16)
-        self.assertEqual(START_PAYLOAD_BYTE_COUNT, 72)
+        self.assertEqual(START_PAYLOAD_BYTE_COUNT, 77)
+        self.assertEqual(ON_DEMAND_FRAME_TICKS, U32_MAX)
         self.assertEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, START_PAYLOAD_BYTE_COUNT)
         self.assertEqual(SYNC_PAYLOAD_BYTE_COUNT, 12)
 
@@ -48,6 +51,8 @@ class PayloadTests(unittest.TestCase):
             0x41424344,
             0x5152535455565758,
             0x61626364,
+            0x71727374,
+            MarkerFlags.STATIC,
         )
         data = encode_payload(payload)
         expected = (
@@ -59,24 +64,28 @@ class PayloadTests(unittest.TestCase):
             + bytes([0x44, 0x43, 0x42, 0x41])
             + bytes([0x58, 0x57, 0x56, 0x55, 0x54, 0x53, 0x52, 0x51])
             + bytes([0x64, 0x63, 0x62, 0x61])
+            + bytes([0x74, 0x73, 0x72, 0x71])
+            + bytes([0x01])
         )
         self.assertEqual(data, expected)
         self.assertEqual(len(data), PAYLOAD_BYTE_COUNT)
 
     def test_start_marker_layout(self) -> None:
-        payload = Payload(1, 2, 3, MarkerKind.SEQUENCE_START, 4, 5, 6, 7)
+        payload = Payload(1, 2, 3, MarkerKind.SEQUENCE_START, 4, 5, 6, 7, 9, MarkerFlags.STATIC)
         sequence_id = SequenceId(bytes(range(0xA0, 0xB0)))
         data = encode_payload(payload, StartMetadata(0x0102030405060708, sequence_id))
         self.assertEqual(len(data), START_PAYLOAD_BYTE_COUNT)
-        # The same 48 byte header as the other kinds, then the start time and the sequence id
+        # The same 53 byte header as the other kinds, then the start time and the sequence id
         end_header = encode_payload(payload.with_kind(MarkerKind.SEQUENCE_END))
         self.assertEqual(data[:3] + data[4:PAYLOAD_BYTE_COUNT], end_header[:3] + end_header[4:])
         self.assertEqual(data[3], MarkerKind.SEQUENCE_START)
         self.assertEqual(data[36:44], bytes([6, 0, 0, 0, 0, 0, 0, 0]))
         self.assertEqual(data[44:48], bytes([7, 0, 0, 0]))
-        self.assertEqual(data[48:56], bytes([8, 7, 6, 5, 4, 3, 2, 1]))
+        self.assertEqual(data[48:52], bytes([9, 0, 0, 0]))
+        self.assertEqual(data[52], 1)
+        self.assertEqual(data[53:61], bytes([8, 7, 6, 5, 4, 3, 2, 1]))
         # The sequence id is stored as its bytes, in order
-        self.assertEqual(data[56:72], bytes(range(0xA0, 0xB0)))
+        self.assertEqual(data[61:77], bytes(range(0xA0, 0xB0)))
 
     def test_negative_ticks_are_stored_as_twos_complement(self) -> None:
         self.assertEqual(encode_payload(Payload(0, -1))[12:20], b"\xff" * 8)
@@ -86,10 +95,17 @@ class PayloadTests(unittest.TestCase):
     def test_the_optional_fields_default_to_unknown(self) -> None:
         payload = Payload(1, 2, 3, MarkerKind.SEQUENCE_END)
         self.assertEqual(
-            (payload.intended_display_ticks, payload.target_frame_ticks, payload.cpu_start_ticks, payload.cpu_busy_ticks),
-            (0, 0, 0, 0),
+            (
+                payload.intended_display_ticks,
+                payload.target_frame_ticks,
+                payload.cpu_start_ticks,
+                payload.cpu_busy_ticks,
+                payload.preferred_frame_ticks,
+                payload.flags,
+            ),
+            (0, 0, 0, 0, 0, MarkerFlags.NONE),
         )
-        self.assertEqual(encode_payload(payload)[24:], bytes(24))
+        self.assertEqual(encode_payload(payload)[24:], bytes(29))
         self.assertEqual(StartMetadata(), StartMetadata(0, SequenceId(bytes(16))))
 
     def test_round_trips(self) -> None:
@@ -177,17 +193,18 @@ class PayloadTests(unittest.TestCase):
             Payload(0, 0, 0, MarkerKind.SEQUENCE_START, cpu_busy_ticks=U32_MAX + 1),
             Payload(0, 0, 0, MarkerKind.SEQUENCE_END, cpu_busy_ticks=-1),
             Payload(0, 0, 0, MarkerKind.SEQUENCE_END, cpu_start_ticks=I64_MAX + 1),
+            Payload(0, 0, 0, MarkerKind.FRAME, preferred_frame_ticks=U32_MAX + 1),
+            Payload(0, 0, 0, MarkerKind.FRAME, flags=MarkerFlags(0x100)),
         ):
             with self.subTest(payload), self.assertRaises(ValueError):
                 _ = encode_payload(payload)
 
     def test_try_decode_rejects_bad_input(self) -> None:
         data = bytearray(encode_payload(Payload(1, 2)))
-        self.assertIsNone(try_decode_payload(bytes(data[:-1])), "short: 47 bytes")
-        self.assertIsNone(try_decode_payload(bytes(data[:36])), "an older 36 byte header")
+        self.assertIsNone(try_decode_payload(bytes(data[:-1])), "short: 52 bytes")
         self.assertIsNone(try_decode_payload(bytes(data[:44])), "an older 44 byte header")
-        self.assertIsNone(try_decode_payload(bytes(data) + b"\x00"), "long: 49 bytes")
-        self.assertIsNone(try_decode_payload(bytes(data) + bytes(4)), "the older 52 byte header")
+        self.assertIsNone(try_decode_payload(bytes(data[:48])), "an older 48 byte header")
+        self.assertIsNone(try_decode_payload(bytes(data) + b"\x00"), "long: 54 bytes")
         data[0] = ord("X")
         self.assertIsNone(try_decode_payload(bytes(data)), "magic")
         data[0] = ord("M")
@@ -201,16 +218,31 @@ class PayloadTests(unittest.TestCase):
         data[3] = 0
         self.assertIsNotNone(try_decode_payload(bytes(data)))
 
-        # A start marker must be exactly 72 bytes: without its metadata, truncated or longer is rejected
+        # A start marker must be exactly 77 bytes: without its metadata, truncated or longer is rejected
         start = encode_payload(Payload(1, 2, 3, MarkerKind.SEQUENCE_START), StartMetadata(5, SequenceId.from_text("run")))
-        self.assertEqual(len(start), 72)
+        self.assertEqual(len(start), 77)
         self.assertIsNotNone(try_decode_payload(start))
         for length in (PAYLOAD_BYTE_COUNT, PAYLOAD_BYTE_COUNT + 9, START_PAYLOAD_BYTE_COUNT - 1):
             with self.subTest(length):
                 self.assertIsNone(try_decode_payload(start[:length]))
-        self.assertIsNone(try_decode_payload(start + b"\x00"), "long: 73 bytes")
-        older = start[:PAYLOAD_BYTE_COUNT] + bytes(4) + start[PAYLOAD_BYTE_COUNT:]
-        self.assertIsNone(try_decode_payload(older), "the older 76 byte start marker")
+        self.assertIsNone(try_decode_payload(start + b"\x00"), "long: 78 bytes")
+        older = start[:48] + start[PAYLOAD_BYTE_COUNT:]
+        self.assertIsNone(try_decode_payload(older), "the older 72 byte start marker")
+
+    def test_preferred_frame_time_and_flags_round_trip(self) -> None:
+        for payload in (
+            Payload(1, 2, 3, MarkerKind.FRAME, 4, 333_333, 6, 7, 166_667),
+            Payload(1, 2, 3, MarkerKind.FRAME, 0, ON_DEMAND_FRAME_TICKS, 0, 0, ON_DEMAND_FRAME_TICKS, MarkerFlags.STATIC),
+            Payload(1, 2, 3, MarkerKind.SEQUENCE_END, 4, 5, 6, 7, 10_000_000, MarkerFlags.STATIC),
+            # A reserved bit survives the round trip
+            Payload(1, 2, 3, MarkerKind.FRAME, flags=MarkerFlags(0x81)),
+        ):
+            with self.subTest(payload):
+                decoded = try_decode_payload(encode_payload(payload))
+                self.assertIsNotNone(decoded)
+                assert decoded is not None
+                self.assertEqual(decoded[0], payload)
+                self.assertEqual(int(decoded[0].flags), int(payload.flags))
 
     def test_ticks_match_date_time_and_time_span(self) -> None:
         time = datetime(2026, 1, 1, tzinfo=UTC)

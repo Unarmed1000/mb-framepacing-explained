@@ -11,7 +11,7 @@ import unittest
 from dataclasses import dataclass
 from pathlib import Path
 
-from .. import MarkerKind, Options, Payload, Point, SequenceId, StartMetadata
+from .. import MarkerFlags, MarkerKind, Options, Payload, Point, SequenceId, StartMetadata
 
 ENVIRONMENT_VARIABLE = "MB_FRAMEMARKER_TEST_DATA"
 
@@ -72,6 +72,8 @@ def _payload(row: dict[str, str]) -> Payload:
         int(row["targetFrameTicks"]),
         int(row["cpuStartTicks"]),
         int(row["cpuBusyTicks"]),
+        int(row["preferredFrameTicks"]),
+        MarkerFlags(int(row["flags"])),
     )
 
 

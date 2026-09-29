@@ -8,7 +8,7 @@ integer pixel edge.
 """
 
 from dataclasses import dataclass, field, replace
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 from typing import Self
 from uuid import UUID
 
@@ -26,12 +26,23 @@ class MarkerKind(IntEnum):
     SYNC = 3
 
 
+class MarkerFlags(IntFlag):
+    """The payload's flags byte (doc/marker-format.md "Flags"). Bits 1 to 7 are reserved: write 0; a decoded payload keeps whatever it
+    carried."""
+
+    NONE = 0
+    STATIC = 1
+    """Nothing animates in this frame (an idle screen, a paused menu with nothing moving): the analysis does not judge the animation
+    error of a step from or to it."""
+
+
 @dataclass(frozen=True, slots=True)
 class Payload:
     """What a marker carries: the frame index (u64), the animation time in TimeSpan ticks (100 ns, i64), the run id (u32), the kind
     and, when the application paces its frames, the intended display time (i64 ticks on the frame pacer's steady clock, any epoch, the
     same clock for the whole run) and the target frame time (u32 ticks, 166_667 for 60 fps), then the CPU start time (i64 ticks on the
-    same steady clock) and CPU busy (u32 ticks); 0 = unknown for all four. A sync marker only carries the frame index."""
+    same steady clock) and CPU busy (u32 ticks), the preferred frame time (u32 ticks) and the flags; 0 = unknown for the numbers. A sync
+    marker only carries the frame index."""
 
     frame_index: int
     animation_ticks: int
@@ -46,6 +57,13 @@ class Payload:
     """CPU busy: how long the CPU worked on this frame before presenting it (PresentMon's MsCPUBusy), from the CPU start time until
     Present is called, in ticks (100 ns, u32). The marker is drawn last, so the application measures it as it draws the marker. It does
     not include the GPU's work. May span several refreshes. 0 = unknown."""
+    preferred_frame_ticks: int = 0
+    """The interval the application wants to run at, in ticks (100 ns, u32): what it would aim for if nothing held it back. It differs
+    from target_frame_ticks only while the pacer runs slower than it wants (Swappy lowered to 30 fps: preferred 166_667, target 333_333). A
+    30 fps lock or a device idle at 1 fps prefers what it runs at. 0 = unknown, ON_DEMAND_FRAME_TICKS = frames only when something
+    changes (also allowed in target_frame_ticks)."""
+    flags: MarkerFlags = MarkerFlags.NONE
+    """MarkerFlags.STATIC when nothing animates in this frame; the other bits are reserved (0)."""
 
     def with_kind(self, kind: MarkerKind) -> Self:
         return replace(self, kind=kind)

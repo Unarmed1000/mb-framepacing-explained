@@ -50,7 +50,7 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual(SYNC_QR_VERSION, 2)
         self.assertEqual(SYNC_QR_MODULE_COUNT, 25)
         self.assertEqual(MAX_QUAD_COUNT, 862)
-        self.assertEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, 72)
+        self.assertEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, 77)
         self.assertLessEqual(MAX_ENCODED_PAYLOAD_BYTE_COUNT, QR_CAPACITY_BYTES)
 
     def test_marker_size(self) -> None:
