@@ -53,7 +53,30 @@
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
-  .key { }
+  .held-older { stroke: #db61a2; stroke-width: 2.5; fill: none; }
+  .held-dropped { stroke: #f0883e; stroke-width: 2.5; fill: none; }
+  .held-unknown { stroke: #768390; stroke-width: 2.5; stroke-dasharray: 4 3; fill: none; }
+  .held-range-older { fill: #db61a2; fill-opacity: 0.3; }
+  .held-range-dropped { fill: #f0883e; fill-opacity: 0.3; }
+  .held-range-unknown { fill: #768390; fill-opacity: 0.3; }
+  .held-fill-older { fill: #db61a2; }
+  .held-fill-dropped { fill: #f0883e; }
+  .held-fill-unknown { fill: #768390; }
+  .strip-older { fill: #db61a2; }
+  .strip-dropped { fill: #f0883e; }
+  .key-pink { fill: #db61a2; }
+  .key-orange { fill: #f0883e; }
+  .key-unknown { fill: #768390; }
+  .key-faint { fill: #ffffff; fill-opacity: 0.3; }
+  .key-amber { fill: #d29922; }
+  .key-green { fill: #2ea043; }
+  .key-red { fill: #e5534b; }
+  .key-blue { fill: #58a6ff; }
+  .key-blue-faint { fill: #58a6ff; fill-opacity: 0.45; }
+  .key-violet-a { fill: #a371f7; fill-opacity: 0.55; }
+  .key-violet-b { fill: #a371f7; fill-opacity: 0.85; }
+  .key-grey { fill: #3d444d; }
+  .key-mark { fill: #e6edf3; }
   .held-fill { fill: #2ea043; }
   .held-fill-late { fill: #e5534b; }
   .held-range { fill: #2ea043; fill-opacity: 0.3; }
