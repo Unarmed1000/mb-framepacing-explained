@@ -1413,7 +1413,7 @@ def _marker_settings(settings: Settings) -> dict[str, object] | None:
     if not settings.marker:
         return None
     return {
-        "format": "mb-framepacing frame marker (doc/marker-format.md)",
+        "format": "mb-framepacing frame marker (sdk/doc/marker-format.md)",
         "moduleSizePx": settings.marker_module_px,
         "quietZoneModules": settings.marker_options.quiet_zone_modules,
         "origin": list(settings.marker_origin),
