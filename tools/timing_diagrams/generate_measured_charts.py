@@ -17,7 +17,7 @@ time step (in the looping video it follows the clip's last frame), so a clip of 
 
 With --test-clips it measures mb-framepacing's test clips instead (export_test_clips.py, each at its speed; default all of them) and
 keeps mb-framepacing's default report card, as the app draws it for a capture, titled with the clip's mode:
-doc/images/test-clip-<mode>.svg, for the web page's "test clips, measured" slide.
+doc/images/test-clip-<mode>.svg, for the web page's "test clips, measured" slides.
 
 mb-framepacing comes from the submodule external/mb-framepacing (the commit this repository pins): the script builds it there with
 dotnet build -c Release (incremental; its bin/ and obj/ are ignored by the submodule's git). --mb-framepacing, the MB_FRAMEPACING
