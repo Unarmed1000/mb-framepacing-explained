@@ -103,6 +103,9 @@
   .event-undecoded { fill: #545d68; }
   .key-cyan { fill: #39c5cf; }
   .key-undecoded { fill: #545d68; }
+  .ref-target { stroke: #adbac7; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .ref-preferred { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .key-light { fill: #adbac7; }
 </style>
 <rect class="card" x="0.5" y="0.5" width="1179" height="745" rx="14"/>
 <text x="20.0" y="30.0" text-anchor="start" class="title">60-naive-light: 60 Hz naive timer, light load</text>
