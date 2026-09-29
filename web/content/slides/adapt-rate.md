@@ -13,8 +13,8 @@ full rate while the frames fit, half rate through a busy stretch, and back up wh
 :::video pair fast 60-busy-full-rate 60-busy-swappy chart frames
 
 A 4 s busy stretch in which frames take 12 to 24 ms, around the 16.7 ms refresh, with calm frames before and after it. Top: kept
-at full rate, frames take one refresh or two, unevenly, for the whole stretch. Bottom: the rate adapts like Swappy's rule: more
-than 10 % of the last 2 s missed, so it drops to a steady half rate, and goes back up once no frame of the last 2 s missed and
+at full rate, frames take one refresh or two, unevenly, for the whole stretch. Bottom: the rate adapts like the rule of
+[Swappy, Android's frame pacer](https://developer.android.com/games/sdk/frame-pacing): more than 10 % of the last 2 s missed, so it drops to a steady half rate, and goes back up once no frame of the last 2 s missed and
 their average fits a refresh with room to spare.
 
 :::

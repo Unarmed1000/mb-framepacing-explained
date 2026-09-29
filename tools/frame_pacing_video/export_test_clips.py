@@ -34,7 +34,7 @@ from typing import cast
 import generate_videos as gv
 
 # The web page's scenarios: the perfect timer at full and half rate, delta time jitter, late frames, half rate evenly and badly
-# paced, a busy stretch at full rate and adapting like Swappy, and the perfect storm (jitter and late frames at once); then the
+# paced, a busy stretch at full rate and adapting like the Swappy frame pacer, and the perfect storm (jitter and late frames at once); then the
 # perfect storm with dropped frames and with frames out of order, for mb-framepacing's skipped and out of order frames; and what a
 # game does while nothing moves, for the marker's static flag and preferred frame time
 SCENARIOS = (

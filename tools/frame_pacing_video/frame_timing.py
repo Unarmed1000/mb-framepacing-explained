@@ -150,7 +150,7 @@ def parse_mode(name: str) -> FrameMode:
     bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
     60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
     frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
-    full rate or adapting like Swappy: 60-busy-full-rate, 60-busy-swappy). Any of them may then say what the game does while the
+    full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-swappy). Any of them may then say what the game does while the
     box rests, -static-rests, -on-demand, -on-demand-paused-clock or -idle-1fps (60-on-demand), and end in a presentation fault,
     -dropped-frames or -out-of-order (60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames)."""
     mode = _parse_timing(name)

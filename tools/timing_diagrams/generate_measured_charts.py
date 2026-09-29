@@ -15,6 +15,10 @@ with what the charts page shows:
 The 60-naive-heavy card also gets its animation error histogram. The numbers are a measurement: the clip's first frame has no display
 time step (in the looping video it follows the clip's last frame), so a clip of 480 frames has 479 steps.
 
+With --test-clips it measures mb-framepacing's test clips instead (export_test_clips.py, each at its speed; default all of them) and
+keeps mb-framepacing's default report card, as the app draws it for a capture, titled with the clip's mode:
+doc/images/test-clip-<mode>.svg, for the web page's "test clips, measured" slide.
+
 mb-framepacing comes from the submodule external/mb-framepacing (the commit this repository pins): the script builds it there with
 dotnet build -c Release (incremental; its bin/ and obj/ are ignored by the submodule's git). --mb-framepacing, the MB_FRAMEPACING
 environment variable or local.toml ([mb-framepacing] path) name another build instead. The clips and the captures stay in
@@ -22,6 +26,7 @@ out/measured_charts.
 
 Run from the repository's .venv:
   python tools/timing_diagrams/generate_measured_charts.py [--output-dir DIR] [--png] [MODE ...]
+  python tools/timing_diagrams/generate_measured_charts.py --test-clips [MODE ...]
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
@@ -35,6 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "frame_pacing_video"))
 
+import export_test_clips  # noqa: E402
 import generate_videos as gv  # noqa: E402
 from frame_timing import TimingParameters, describe, parse_mode  # noqa: E402
 from generate_diagrams import DEFAULT_OUTPUT_DIR  # noqa: E402
@@ -74,6 +80,7 @@ class Arguments(argparse.Namespace):
     modes: list[str]
     output_dir: Path
     png: bool
+    test_clips: bool
     mb_framepacing: str | None
     ffmpeg: str | None
     config: Path | None
@@ -84,12 +91,11 @@ def title(mode: str) -> str:
     return f"{mode}: {describe(parse_mode(mode), TimingParameters())}"
 
 
-def render_command(tool: Path, capture: Path, output: Path, mode: str, png: bool) -> list[str]:
-    """mb-framepacing render of a capture: the report card, and the error histogram for the histogram modes."""
+def render_options(mode: str, png: bool) -> list[str]:
+    """mb-framepacing render's options for a charts page card: the report card, and the error histogram for the histogram modes."""
     cards = "error-histogram" if mode in HISTOGRAM_MODES else "none"
-    command = [str(tool), "render", str(capture), "-o", str(output), "--cards", cards, "--only", ",".join(REPORT_ITEMS), *REPORT_LAYOUT]
-    command += ["--title", title(mode)]
-    return [*command, "--png"] if png else command
+    options = ["--cards", cards, "--only", ",".join(REPORT_ITEMS), *REPORT_LAYOUT, "--title", title(mode)]
+    return [*options, "--png"] if png else options
 
 
 def outputs(mode: str, png: bool) -> list[tuple[str, str]]:
@@ -125,25 +131,60 @@ def find_mb_framepacing(explicit: str | None, config: Path | None) -> Path:
     return configured.path if configured is not None else submodule_tool()
 
 
-def measure(mode: str, tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
-    """Render mode's marked clip, measure it with mb-framepacing and copy its cards to output_dir."""
-    work = WORK_DIR / mode
+def measure_clip(settings: gv.Settings, job: gv.VideoJob, tool: Path, ffmpeg: Path, render: list[str]) -> Path:
+    """Render a marked clip, have mb-framepacing import and analyse it, and draw it with the render options `render`; returns the
+    folder render wrote to (out/measured_charts/<mode>/render)."""
+    work = WORK_DIR / job.top.name
     if work.exists():
         shutil.rmtree(work)
     work.mkdir(parents=True)
-    _, settings = gv.parse_arguments(["--single", mode, "--marker", "--speed", "fast"])
-    (job,) = gv.plan_videos(settings)
     video = work / "video.mp4"
     gv.encode_video(ffmpeg, settings, job, video)
     capture = work / "capture"
     run([str(tool), "import", str(video), "-o", str(capture), "--analyze"])
     rendered = work / "render"
-    run(render_command(tool, capture, rendered, mode, png))
+    run([str(tool), "render", str(capture), "-o", str(rendered), *render])
+    return rendered
+
+
+def measure(mode: str, tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
+    """Render mode's marked clip, measure it with mb-framepacing and copy its cards to output_dir."""
+    _, settings = gv.parse_arguments(["--single", mode, "--marker", "--speed", "fast"])
+    (job,) = gv.plan_videos(settings)
+    rendered = measure_clip(settings, job, tool, ffmpeg, render_options(mode, png))
     written: list[Path] = []
     for source, target in outputs(mode, png):
         path = output_dir / target
         _ = shutil.copyfile(rendered / source, path)
         written.append(path)
+    return written
+
+
+def test_clip_render(mode: str, png: bool) -> list[str]:
+    """The render options of a test clip's card: mb-framepacing's default report card, titled with the clip's mode (its folder in
+    mb-framepacing's test-data/videos; a title with the mode's description would run under the card's display box), without
+    distribution cards."""
+    return ["--cards", "none", "--title", mode, *(["--png"] if png else [])]
+
+
+def test_clip_name(mode: str) -> str:
+    return f"test-clip-{mode}"
+
+
+def measure_test_clips(modes: list[str], tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
+    """Measure the test clips named (default: all of export_test_clips.SCENARIOS, each at its speed) and copy their report cards to
+    output_dir as test-clip-<mode>.svg."""
+    clips = [(settings, job) for settings, job in export_test_clips.planned() if not modes or job.top.name in modes]
+    written: list[Path] = []
+    for index, (settings, job) in enumerate(clips, start=1):
+        mode = job.top.name
+        print(f"[{index}/{len(clips)}] {mode}", flush=True)
+        rendered = measure_clip(settings, job, tool, ffmpeg, test_clip_render(mode, png))
+        for suffix in (".svg", ".png") if png else (".svg",):
+            path = output_dir / (test_clip_name(mode) + suffix)
+            _ = shutil.copyfile(rendered / ("run-1-report" + suffix), path)
+            print(path)
+            written.append(path)
     return written
 
 
@@ -153,12 +194,18 @@ def main(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="where the cards go (default: doc/images)")
     _ = parser.add_argument("--png", action="store_true", help="also save a PNG at 2x of each, through a headless Edge or Chrome")
     _ = parser.add_argument(
+        "--test-clips", action="store_true", help="measure the test clips (MODE: some of them; default all) as test-clip-<mode>.svg, the default report card"
+    )
+    _ = parser.add_argument(
         "--mb-framepacing", metavar="PATH", help="mb-framepacing executable or its folder (default: MB_FRAMEPACING, local.toml, then the submodule's, built)"
     )
     _ = parser.add_argument("--ffmpeg", metavar="PATH", help="FFmpeg executable or its folder (default: MB_FFMPEG, local.toml, then PATH)")
     _ = parser.add_argument("--config", type=Path, metavar="FILE", help="machine-local settings file (default: local.toml in the repository root)")
     args = parser.parse_args(argv, namespace=Arguments())
-    modes = args.modes or list(DEFAULT_MODES)
+    modes = args.modes if args.test_clips else args.modes or list(DEFAULT_MODES)
+    unknown = [mode for mode in modes if mode not in export_test_clips.SCENARIOS] if args.test_clips else []
+    if unknown:
+        parser.error(f"not a test clip: {', '.join(unknown)} (the test clips are export_test_clips.SCENARIOS)")
     for mode in modes:
         try:
             _ = parse_mode(mode)
@@ -169,6 +216,9 @@ def main(argv: list[str] | None = None) -> int:
         ffmpeg = gv.find_ffmpeg(args.ffmpeg, args.config).path
         gv.require_lossless_encoder(gv.list_encoders(ffmpeg), ffmpeg)
         args.output_dir.mkdir(parents=True, exist_ok=True)
+        if args.test_clips:
+            _ = measure_test_clips(modes, tool, ffmpeg, args.output_dir, args.png)
+            return 0
         for index, mode in enumerate(modes, start=1):
             print(f"[{index}/{len(modes)}] {mode}", flush=True)
             for path in measure(mode, tool, ffmpeg, args.output_dir, args.png):

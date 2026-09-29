@@ -16,9 +16,9 @@
       "slides": ["slow-frames", "missed-frames", "adapt-rate", "other-rates", "lower-target", "half-rate"]
     },
     {
-      "name": "Go further",
-      "about": "How to measure animation error on a real display.",
-      "slides": ["measure"]
+      "name": "Measure it yourself",
+      "about": "How to measure animation error on a real display, and what mb-framepacing reports for known problems.",
+      "slides": ["measure", "test-clips"]
     },
     {
       "name": "Staying within the frame budget",

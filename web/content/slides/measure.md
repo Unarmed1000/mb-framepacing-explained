@@ -79,6 +79,8 @@ It needs the application's source code: it cannot measure an application you can
 
 :::
 
+Next: what mb-framepacing reports for each of its test clips, known problems measured from their videos.
+
 [PresentMon's columns](https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md#csv-columns)
 [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing#readme)
 [Integrating the marker](https://github.com/Unarmed1000/mb-framepacing/blob/master/doc/integrating.md)

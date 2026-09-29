@@ -71,7 +71,7 @@ def _intervals_needed(frame_ms: float, refresh_ms: float) -> int:
 
 
 def title(policy: str) -> str:
-    return "a busy stretch at full rate" if policy == "full-rate" else "a busy stretch, adapting like Swappy"
+    return "a busy stretch at full rate" if policy == "full-rate" else "a busy stretch, adapting like the Swappy frame pacer"
 
 
 @dataclass(frozen=True)
@@ -92,7 +92,7 @@ class Record:
 
 def records(policy: str, refreshes: int, fps: Fraction, stages: tuple[Stage, ...] = STAGES, calm: tuple[float, float] = CALM_MS) -> list[Record]:
     """The frames of a clip of `refreshes` refreshes through the load's `stages` (`calm` outside them), for a game at full rate
-    or adapting like Swappy."""
+    or adapting like the Swappy frame pacer."""
     return [frame for frame in with_lead(policy, refreshes, fps, stages, calm) if frame.shown >= 0]
 
 

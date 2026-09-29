@@ -1,0 +1,741 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1196" viewBox="0 0 1180 1196" role="img" aria-label="60-idle-1fps">
+<title>60-idle-1fps</title>
+<style>
+  text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+         font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
+  .card { fill: #1f242b; fill-opacity: 0.94; stroke: #8b949e; stroke-opacity: 0.25; stroke-width: 1; }
+  .title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { fill: #8b949e; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
+  .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
+  .axis { font-size: 12px; fill: #c9d1d9; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.34; stroke-width: 1; stroke-dasharray: 3 4; }
+  .vsync-skip { stroke: #ffffff; stroke-opacity: 0.09; stroke-width: 1; stroke-dasharray: 2 6; }
+  .vsync-target { font-size: 11px; font-weight: 600; fill: #c9d1d9; letter-spacing: 0.04em; }
+  .vsync-n-skip { font-size: 11px; fill: #545b64; letter-spacing: 0.04em; }
+  .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
+  .frame { font-size: 14px; font-weight: 700; }
+  .box-time { fill: #b1bac4; font-size: 12px; }
+  .arrow { stroke: #8b949e; stroke-width: 1.2; }
+  .arrowhead { fill: #8b949e; }
+  .ok { fill: #2ea043; }
+  .hold { fill: #2ea043; fill-opacity: 0.45; }
+  .again { fill: #d29922; }
+  .off { fill: #e5534b; }
+  .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
+  .dark-text { fill: #1c1f24; }
+  .zero { fill: #6e7681; }
+  .err { fill: #ff7b72; font-weight: 600; }
+  .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .neutral { fill: #3d444d; }
+  .lane { font-size: 15px; font-weight: 600; }
+  .same { fill: #7ee787; font-weight: 600; }
+
+  .tile { fill: #ffffff; fill-opacity: 0.05; stroke: #ffffff; stroke-opacity: 0.12; stroke-width: 1; }
+  .tile-value { font-size: 20px; font-weight: 600; }
+  .grid { stroke: #ffffff; stroke-opacity: 0.1; stroke-width: 1; }
+  .zero-line { stroke: #ffffff; stroke-opacity: 0.45; stroke-width: 1; }
+  .bar { fill: #e5534b; }
+  .display-line { stroke: #2ea043; stroke-width: 2; fill: none; }
+  .step-line { stroke: #58a6ff; stroke-width: 1.2; fill: none; stroke-linejoin: round; }
+  .strip-a { fill: #6e7681; }
+  .strip-b { fill: #adbac7; }
+  .average-line { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .average-text { fill: #d29922; font-size: 12px; }
+
+  .band { fill: #ffffff; fill-opacity: 0.06; }
+  .error-refresh { stroke: #d29922; stroke-opacity: 0.8; stroke-width: 1; stroke-dasharray: 3 4; }
+  .error-refresh-text { font-size: 11px; fill: #d29922; letter-spacing: 0.04em; }
+  .held { stroke: #2ea043; stroke-width: 2.5; fill: none; }
+  .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
+  .bar-range { fill: #e5534b; fill-opacity: 0.3; }
+  .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
+  .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
+  .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
+  .held-older { stroke: #db61a2; stroke-width: 2.5; fill: none; }
+  .held-dropped { stroke: #f0883e; stroke-width: 2.5; fill: none; }
+  .held-unknown { stroke: #768390; stroke-width: 2.5; stroke-dasharray: 4 3; fill: none; }
+  .held-range-older { fill: #db61a2; fill-opacity: 0.3; }
+  .held-range-dropped { fill: #f0883e; fill-opacity: 0.3; }
+  .held-range-unknown { fill: #768390; fill-opacity: 0.3; }
+  .held-fill-older { fill: #db61a2; }
+  .held-fill-dropped { fill: #f0883e; }
+  .held-fill-unknown { fill: #768390; }
+  .strip-older { fill: #db61a2; }
+  .strip-dropped { fill: #f0883e; }
+  .key-pink { fill: #db61a2; }
+  .key-orange { fill: #f0883e; }
+  .key-unknown { fill: #768390; }
+  .key-faint { fill: #ffffff; fill-opacity: 0.3; }
+  .key-amber { fill: #d29922; }
+  .key-green { fill: #2ea043; }
+  .key-red { fill: #e5534b; }
+  .key-blue { fill: #58a6ff; }
+  .key-blue-faint { fill: #58a6ff; fill-opacity: 0.45; }
+  .key-violet-a { fill: #a371f7; fill-opacity: 0.55; }
+  .key-violet-b { fill: #a371f7; fill-opacity: 0.85; }
+  .key-grey { fill: #3d444d; }
+  .key-mark { fill: #e6edf3; }
+  .held-fill { fill: #2ea043; }
+  .held-fill-late { fill: #e5534b; }
+  .held-range { fill: #2ea043; fill-opacity: 0.3; }
+  .held-range-late { fill: #e5534b; fill-opacity: 0.3; }
+  .riser { stroke: #ffffff; stroke-opacity: 0.3; stroke-width: 1; fill: none; }
+  .late-line { stroke: #e5534b; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .late-line-adapted { stroke: #d29922; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .late-line-none { stroke: #2ea043; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .frametime { stroke: #58a6ff; stroke-width: 2.5; fill: none; }
+  .frametime-range { fill: #58a6ff; fill-opacity: 0.3; }
+  .step-range { fill: #58a6ff; fill-opacity: 0.25; }
+  .frametime-fill { fill: #58a6ff; }
+  .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
+  .strip-late { fill: #e5534b; }
+  .strip-mark { fill: #e6edf3; }
+  .hist-bar { fill: #58a6ff; }
+  .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
+  .clip-mark { fill: #e5534b; }
+  .clip-text { font-size: 11px; fill: #e6edf3; }
+  .warn { fill: #d29922; }
+</style>
+<rect class="card" x="0.5" y="0.5" width="1179" height="1195" rx="14"/>
+<text x="20.0" y="30.0" text-anchor="start" class="title">60-idle-1fps</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">The whole run: 8.0 s, 126 presented frames on a 60 Hz display, measured against a 16.7 ms target.</text>
+<text x="20.0" y="73.0" text-anchor="start" class="sub">Resolution 16.7 ms (one capture period); error threshold 1 ms.</text>
+<text x="20.0" y="92.0" text-anchor="start" class="sub">Every frame is drawn.</text>
+<text x="20.0" y="111.0" text-anchor="start" class="sub">Frame rates and display time steps excluding 7 static frames: nothing animates in them.</text>
+<rect class="tile" x="860.0" y="14" width="300" height="84" rx="10"/>
+<text x="874.0" y="33.0" text-anchor="start" class="label">DISPLAY</text>
+<text x="874.0" y="56.0" text-anchor="start"><tspan class="tile-value">60 Hz</tspan><tspan class="vsync-n">  fixed refresh (vsync)</tspan></text>
+<text x="874.0" y="74.0" text-anchor="start" class="vsync-n">16.7 ms per refresh, target 1–60 refreshes</text>
+<text x="874.0" y="90.0" text-anchor="start" class="vsync-n">preferred 1–60 fps</text>
+<rect class="tile" x="20.0" y="142" width="276.0" height="64" rx="10"/>
+<text x="34.0" y="162.0" text-anchor="start" class="label">AVERAGE FPS</text>
+<text x="34.0" y="186.0" text-anchor="start"><tspan class="tile-value">60.0</tspan><tspan class="vsync-n">  16.67 ms · 7 static excluded</tspan></text>
+<rect class="tile" x="308.0" y="142" width="276.0" height="64" rx="10"/>
+<text x="322.0" y="162.0" text-anchor="start" class="label">1 % LOW</text>
+<text x="322.0" y="186.0" text-anchor="start"><tspan class="tile-value">60.0</tspan><tspan class="vsync-n">  16.7 ms</tspan></text>
+<rect class="tile" x="596.0" y="142" width="276.0" height="64" rx="10"/>
+<text x="610.0" y="162.0" text-anchor="start" class="label">0.1 % LOW</text>
+<text x="610.0" y="186.0" text-anchor="start"><tspan class="tile-value">-</tspan><tspan class="vsync-n">  needs 1,000 frames</tspan></text>
+<rect class="tile" x="884.0" y="142" width="276.0" height="64" rx="10"/>
+<text x="898.0" y="162.0" text-anchor="start" class="label">FRAMES VISIBLY OFF</text>
+<text x="898.0" y="186.0" text-anchor="start"><tspan class="tile-value">0</tspan><tspan class="vsync-n">  0.0 %</tspan></text>
+<rect class="tile" x="20.0" y="218" width="276.0" height="64" rx="10"/>
+<text x="34.0" y="238.0" text-anchor="start" class="label">ERROR P99</text>
+<text x="34.0" y="262.0" text-anchor="start"><tspan class="tile-value">0.0 ms</tspan></text>
+<rect class="tile" x="308.0" y="218" width="276.0" height="64" rx="10"/>
+<text x="322.0" y="238.0" text-anchor="start" class="label">ERROR P99.9</text>
+<text x="322.0" y="262.0" text-anchor="start"><tspan class="tile-value">-</tspan><tspan class="vsync-n">  needs 1,000 frames</tspan></text>
+<rect class="tile" x="596.0" y="218" width="276.0" height="64" rx="10"/>
+<text x="610.0" y="238.0" text-anchor="start" class="label">WORST ERROR</text>
+<text x="610.0" y="262.0" text-anchor="start"><tspan class="tile-value">0.0 ms</tspan></text>
+<rect class="tile" x="884.0" y="218" width="276.0" height="64" rx="10"/>
+<text x="898.0" y="238.0" text-anchor="start" class="label">LATE FRAMES</text>
+<text x="898.0" y="262.0" text-anchor="start"><tspan class="tile-value">0</tspan><tspan class="vsync-n">  0.0 %</tspan></text>
+<text x="20.0" y="318.0" text-anchor="start" class="label">ANIMATION ERROR PER FRAME: + SHOWN TOO SOON, − SHOWN TOO LATE</text>
+<rect class="band" x="110.0" y="371.5" width="1030.0" height="75.0"/>
+<line class="grid" x1="110" y1="371.5" x2="1140" y2="371.5"/>
+<text x="100.0" y="375.5" text-anchor="end" class="vsync-n">+1 ms</text>
+<line class="grid" x1="110" y1="446.5" x2="1140" y2="446.5"/>
+<text x="100.0" y="450.5" text-anchor="end" class="vsync-n">−1 ms</text>
+<rect class="static-band" x="110.0" y="334.0" width="195.3" height="150.0"/>
+<text x="116.0" y="347.0" text-anchor="start" class="static-text">static: nothing animates</text>
+<rect class="static-band" x="431.9" y="334.0" width="388.4" height="150.0"/>
+<text x="437.9" y="347.0" text-anchor="start" class="static-text">static: nothing animates</text>
+<rect class="static-band" x="946.9" y="334.0" width="193.1" height="150.0"/>
+<text x="952.9" y="347.0" text-anchor="start" class="static-text">static: nothing animates</text>
+<text x="1140.0" y="318.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
+<line class="zero-line" x1="110" y1="409" x2="1140" y2="409"/>
+<text x="100.0" y="413.0" text-anchor="end" class="vsync-n">0</text>
+<text x="110.0" y="502.0" text-anchor="middle" class="vsync-n">0 s</text>
+<text x="238.8" y="502.0" text-anchor="middle" class="vsync-n">1 s</text>
+<text x="367.5" y="502.0" text-anchor="middle" class="vsync-n">2 s</text>
+<text x="496.2" y="502.0" text-anchor="middle" class="vsync-n">3 s</text>
+<text x="625.0" y="502.0" text-anchor="middle" class="vsync-n">4 s</text>
+<text x="753.8" y="502.0" text-anchor="middle" class="vsync-n">5 s</text>
+<text x="882.5" y="502.0" text-anchor="middle" class="vsync-n">6 s</text>
+<text x="1011.2" y="502.0" text-anchor="middle" class="vsync-n">7 s</text>
+<text x="1140.0" y="502.0" text-anchor="middle" class="vsync-n">8 s</text>
+<text x="20.0" y="538.0" text-anchor="start" class="label">DISPLAY TIME STEP: HOW LONG EACH FRAME STAYED ON SCREEN</text>
+<line class="grid" x1="110" y1="632.0" x2="1140" y2="632.0"/>
+<text x="100.0" y="636.0" text-anchor="end" class="vsync-n">16.7 ms</text>
+<line class="grid" x1="110" y1="580.0" x2="1140" y2="580.0"/>
+<text x="100.0" y="584.0" text-anchor="end" class="vsync-n">33.3 ms</text>
+<line class="grid" x1="110" y1="684.0" x2="1140" y2="684.0"/>
+<text x="100.0" y="688.0" text-anchor="end" class="vsync-n">0</text>
+<rect class="static-band" x="110.0" y="554.0" width="195.3" height="130.0"/>
+<rect class="static-band" x="431.9" y="554.0" width="388.4" height="130.0"/>
+<rect class="static-band" x="946.9" y="554.0" width="193.1" height="130.0"/>
+<text x="1140.0" y="538.0" text-anchor="end" class="vsync-n"><tspan class="key-green">━</tspan> as planned  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
+<path class="riser" d="M238.8 554.0V554.0M305.3 554.0V632.0M307.4 632.0V632.0M311.7 632.0V632.0M313.9 632.0V632.0M318.1 632.0V632.0M320.3 632.0V632.0M324.6 632.0V632.0M326.7 632.0V632.0M331.0 632.0V632.0M333.2 632.0V632.0M337.5 632.0V632.0M339.6 632.0V632.0M343.9 632.0V632.0M346.0 632.0V632.0M350.3 632.0V632.0M352.5 632.0V632.0M356.8 632.0V632.0M358.9 632.0V632.0M363.2 632.0V632.0M365.4 632.0V632.0M369.6 632.0V632.0M371.8 632.0V632.0M376.1 632.0V632.0M378.2 632.0V632.0M382.5 632.0V632.0M384.7 632.0V632.0M389.0 632.0V632.0M391.1 632.0V632.0M395.4 632.0V632.0M397.5 632.0V632.0M401.8 632.0V632.0M404.0 632.0V632.0M408.3 632.0V632.0M410.4 632.0V632.0M414.7 632.0V632.0M416.9 632.0V632.0M421.1 632.0V632.0M423.3 632.0V632.0M427.6 632.0V632.0M429.7 632.0V632.0M431.9 632.0V554.0M818.1 554.0V632.0M820.3 632.0V632.0M822.4 632.0V632.0M826.7 632.0V632.0M828.9 632.0V632.0M833.1 632.0V632.0M835.3 632.0V632.0M839.6 632.0V632.0M841.7 632.0V632.0M846.0 632.0V632.0M848.2 632.0V632.0M852.5 632.0V632.0M854.6 632.0V632.0M858.9 632.0V632.0M861.0 632.0V632.0M865.3 632.0V632.0M867.5 632.0V632.0M871.8 632.0V632.0M873.9 632.0V632.0M878.2 632.0V632.0M880.4 632.0V632.0M884.6 632.0V632.0M886.8 632.0V632.0M891.1 632.0V632.0M893.2 632.0V632.0M897.5 632.0V632.0M899.7 632.0V632.0M904.0 632.0V632.0M906.1 632.0V632.0M910.4 632.0V632.0M912.5 632.0V632.0M916.8 632.0V632.0M919.0 632.0V632.0M923.3 632.0V632.0M925.4 632.0V632.0M929.7 632.0V632.0M931.9 632.0V632.0M936.1 632.0V632.0M938.3 632.0V632.0M942.6 632.0V632.0M944.7 632.0V632.0M946.9 632.0V554.0"/>
+<path class="held" d="M110.0 554.0H238.8M238.8 554.0H305.3M305.3 632.0H307.4M307.4 632.0H309.6M309.6 632.0H311.7M311.7 632.0H313.9M313.9 632.0H316.0M316.0 632.0H318.1M318.1 632.0H320.3M320.3 632.0H322.4M322.4 632.0H324.6M324.6 632.0H326.7M326.7 632.0H328.9M328.9 632.0H331.0M331.0 632.0H333.2M333.2 632.0H335.3M335.3 632.0H337.5M337.5 632.0H339.6M339.6 632.0H341.8M341.8 632.0H343.9M343.9 632.0H346.0M346.0 632.0H348.2M348.2 632.0H350.3M350.3 632.0H352.5M352.5 632.0H354.6M354.6 632.0H356.8M356.8 632.0H358.9M358.9 632.0H361.1M361.1 632.0H363.2M363.2 632.0H365.4M365.4 632.0H367.5M367.5 632.0H369.6M369.6 632.0H371.8M371.8 632.0H373.9M373.9 632.0H376.1M376.1 632.0H378.2M378.2 632.0H380.4M380.4 632.0H382.5M382.5 632.0H384.7M384.7 632.0H386.8M386.8 632.0H389.0M389.0 632.0H391.1M391.1 632.0H393.2M393.2 632.0H395.4M395.4 632.0H397.5M397.5 632.0H399.7M399.7 632.0H401.8M401.8 632.0H404.0M404.0 632.0H406.1M406.1 632.0H408.3M408.3 632.0H410.4M410.4 632.0H412.6M412.6 632.0H414.7M414.7 632.0H416.9M416.9 632.0H419.0M419.0 632.0H421.1M421.1 632.0H423.3M423.3 632.0H425.4M425.4 632.0H427.6M427.6 632.0H429.7M429.7 632.0H431.9M431.9 554.0H560.6M560.6 554.0H689.4M689.4 554.0H818.1M818.1 632.0H820.3M820.3 632.0H822.4M822.4 632.0H824.6M824.6 632.0H826.7M826.7 632.0H828.9M828.9 632.0H831.0M831.0 632.0H833.1M833.1 632.0H835.3M835.3 632.0H837.4M837.4 632.0H839.6M839.6 632.0H841.7M841.7 632.0H843.9M843.9 632.0H846.0M846.0 632.0H848.2M848.2 632.0H850.3M850.3 632.0H852.5M852.5 632.0H854.6M854.6 632.0H856.8M856.8 632.0H858.9M858.9 632.0H861.0M861.0 632.0H863.2M863.2 632.0H865.3M865.3 632.0H867.5M867.5 632.0H869.6M869.6 632.0H871.8M871.8 632.0H873.9M873.9 632.0H876.1M876.1 632.0H878.2M878.2 632.0H880.4M880.4 632.0H882.5M882.5 632.0H884.6M884.6 632.0H886.8M886.8 632.0H888.9M888.9 632.0H891.1M891.1 632.0H893.2M893.2 632.0H895.4M895.4 632.0H897.5M897.5 632.0H899.7M899.7 632.0H901.8M901.8 632.0H904.0M904.0 632.0H906.1M906.1 632.0H908.2M908.2 632.0H910.4M910.4 632.0H912.5M912.5 632.0H914.7M914.7 632.0H916.8M916.8 632.0H919.0M919.0 632.0H921.1M921.1 632.0H923.3M923.3 632.0H925.4M925.4 632.0H927.6M927.6 632.0H929.7M929.7 632.0H931.9M931.9 632.0H934.0M934.0 632.0H936.1M936.1 632.0H938.3M938.3 632.0H940.4M940.4 632.0H942.6M942.6 632.0H944.7M944.7 632.0H946.9M946.9 554.0H1075.6"/>
+<path class="clip-mark" d="M174.4 554.0L170.4 560.0H178.4Z"/>
+<text x="180.4" y="571.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M496.2 554.0L492.2 560.0H500.2Z"/>
+<text x="502.2" y="571.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M625.0 554.0L621.0 560.0H629.0Z"/>
+<text x="631.0" y="571.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M753.8 554.0L749.8 560.0H757.8Z"/>
+<text x="759.8" y="571.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M1011.2 554.0L1007.2 560.0H1015.2Z"/>
+<text x="1017.2" y="571.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M272.0 554.0L268.0 560.0H276.0Z"/>
+<text x="278.0" y="571.0" text-anchor="start" class="clip-text">516.7 ms</text>
+<text x="110.0" y="702.0" text-anchor="middle" class="vsync-n">0 s</text>
+<text x="238.8" y="702.0" text-anchor="middle" class="vsync-n">1 s</text>
+<text x="367.5" y="702.0" text-anchor="middle" class="vsync-n">2 s</text>
+<text x="496.2" y="702.0" text-anchor="middle" class="vsync-n">3 s</text>
+<text x="625.0" y="702.0" text-anchor="middle" class="vsync-n">4 s</text>
+<text x="753.8" y="702.0" text-anchor="middle" class="vsync-n">5 s</text>
+<text x="882.5" y="702.0" text-anchor="middle" class="vsync-n">6 s</text>
+<text x="1011.2" y="702.0" text-anchor="middle" class="vsync-n">7 s</text>
+<text x="1140.0" y="702.0" text-anchor="middle" class="vsync-n">8 s</text>
+<text x="20.0" y="738.0" text-anchor="start" class="label">FRAMETIME AND CPU BUSY: THE APPLICATION SIDE, FROM THE MARKERS</text>
+<line class="grid" x1="110" y1="832.0" x2="1140" y2="832.0"/>
+<text x="100.0" y="836.0" text-anchor="end" class="vsync-n">16.7 ms</text>
+<line class="grid" x1="110" y1="780.0" x2="1140" y2="780.0"/>
+<text x="100.0" y="784.0" text-anchor="end" class="vsync-n">33.3 ms</text>
+<line class="grid" x1="110" y1="884.0" x2="1140" y2="884.0"/>
+<text x="100.0" y="888.0" text-anchor="end" class="vsync-n">0</text>
+<rect class="static-band" x="110.0" y="754.0" width="195.3" height="130.0"/>
+<rect class="static-band" x="431.9" y="754.0" width="388.4" height="130.0"/>
+<rect class="static-band" x="946.9" y="754.0" width="193.1" height="130.0"/>
+<text x="1140.0" y="738.0" text-anchor="end" class="vsync-n"><tspan class="key-blue">━</tspan> frametime: CPU start to the next  <tspan class="key-blue-faint">■</tspan> CPU busy: until presented  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
+<path class="cpu-busy" d="M110.0 868.4H238.8V884.0H110.0ZM238.8 868.4H305.3V884.0H238.8ZM305.3 868.4H307.4V884.0H305.3ZM307.4 868.4H309.6V884.0H307.4ZM309.6 868.4H311.7V884.0H309.6ZM311.7 868.4H313.9V884.0H311.7ZM313.9 868.4H316.0V884.0H313.9ZM316.0 868.4H318.1V884.0H316.0ZM318.1 868.4H320.3V884.0H318.1ZM320.3 868.4H322.4V884.0H320.3ZM322.4 868.4H324.6V884.0H322.4ZM324.6 868.4H326.7V884.0H324.6ZM326.7 868.4H328.9V884.0H326.7ZM328.9 868.4H331.0V884.0H328.9ZM331.0 868.4H333.2V884.0H331.0ZM333.2 868.4H335.3V884.0H333.2ZM335.3 868.4H337.5V884.0H335.3ZM337.5 868.4H339.6V884.0H337.5ZM339.6 868.4H341.8V884.0H339.6ZM341.8 868.4H343.9V884.0H341.8ZM343.9 868.4H346.0V884.0H343.9ZM346.0 868.4H348.2V884.0H346.0ZM348.2 868.4H350.3V884.0H348.2ZM350.3 868.4H352.5V884.0H350.3ZM352.5 868.4H354.6V884.0H352.5ZM354.6 868.4H356.8V884.0H354.6ZM356.8 868.4H358.9V884.0H356.8ZM358.9 868.4H361.1V884.0H358.9ZM361.1 868.4H363.2V884.0H361.1ZM363.2 868.4H365.4V884.0H363.2ZM365.4 868.4H367.5V884.0H365.4ZM367.5 868.4H369.6V884.0H367.5ZM369.6 868.4H371.8V884.0H369.6ZM371.8 868.4H373.9V884.0H371.8ZM373.9 868.4H376.1V884.0H373.9ZM376.1 868.4H378.2V884.0H376.1ZM378.2 868.4H380.4V884.0H378.2ZM380.4 868.4H382.5V884.0H380.4ZM382.5 868.4H384.7V884.0H382.5ZM384.7 868.4H386.8V884.0H384.7ZM386.8 868.4H389.0V884.0H386.8ZM389.0 868.4H391.1V884.0H389.0ZM391.1 868.4H393.2V884.0H391.1ZM393.2 868.4H395.4V884.0H393.2ZM395.4 868.4H397.5V884.0H395.4ZM397.5 868.4H399.7V884.0H397.5ZM399.7 868.4H401.8V884.0H399.7ZM401.8 868.4H404.0V884.0H401.8ZM404.0 868.4H406.1V884.0H404.0ZM406.1 868.4H408.3V884.0H406.1ZM408.3 868.4H410.4V884.0H408.3ZM410.4 868.4H412.6V884.0H410.4ZM412.6 868.4H414.7V884.0H412.6ZM414.7 868.4H416.9V884.0H414.7ZM416.9 868.4H419.0V884.0H416.9ZM419.0 868.4H421.1V884.0H419.0ZM421.1 868.4H423.3V884.0H421.1ZM423.3 868.4H425.4V884.0H423.3ZM425.4 868.4H427.6V884.0H425.4ZM427.6 868.4H429.7V884.0H427.6ZM429.7 868.4H431.9V884.0H429.7ZM431.9 868.4H560.6V884.0H431.9ZM560.6 868.4H689.4V884.0H560.6ZM689.4 868.4H818.1V884.0H689.4ZM818.1 868.4H820.3V884.0H818.1ZM820.3 868.4H822.4V884.0H820.3ZM822.4 868.4H824.6V884.0H822.4ZM824.6 868.4H826.7V884.0H824.6ZM826.7 868.4H828.9V884.0H826.7ZM828.9 868.4H831.0V884.0H828.9ZM831.0 868.4H833.1V884.0H831.0ZM833.1 868.4H835.3V884.0H833.1ZM835.3 868.4H837.4V884.0H835.3ZM837.4 868.4H839.6V884.0H837.4ZM839.6 868.4H841.7V884.0H839.6ZM841.7 868.4H843.9V884.0H841.7ZM843.9 868.4H846.0V884.0H843.9ZM846.0 868.4H848.2V884.0H846.0ZM848.2 868.4H850.3V884.0H848.2ZM850.3 868.4H852.5V884.0H850.3ZM852.5 868.4H854.6V884.0H852.5ZM854.6 868.4H856.8V884.0H854.6ZM856.8 868.4H858.9V884.0H856.8ZM858.9 868.4H861.0V884.0H858.9ZM861.0 868.4H863.2V884.0H861.0ZM863.2 868.4H865.3V884.0H863.2ZM865.3 868.4H867.5V884.0H865.3ZM867.5 868.4H869.6V884.0H867.5ZM869.6 868.4H871.8V884.0H869.6ZM871.8 868.4H873.9V884.0H871.8ZM873.9 868.4H876.1V884.0H873.9ZM876.1 868.4H878.2V884.0H876.1ZM878.2 868.4H880.4V884.0H878.2ZM880.4 868.4H882.5V884.0H880.4ZM882.5 868.4H884.6V884.0H882.5ZM884.6 868.4H886.8V884.0H884.6ZM886.8 868.4H888.9V884.0H886.8ZM888.9 868.4H891.1V884.0H888.9ZM891.1 868.4H893.2V884.0H891.1ZM893.2 868.4H895.4V884.0H893.2ZM895.4 868.4H897.5V884.0H895.4ZM897.5 868.4H899.7V884.0H897.5ZM899.7 868.4H901.8V884.0H899.7ZM901.8 868.4H904.0V884.0H901.8ZM904.0 868.4H906.1V884.0H904.0ZM906.1 868.4H908.2V884.0H906.1ZM908.2 868.4H910.4V884.0H908.2ZM910.4 868.4H912.5V884.0H910.4ZM912.5 868.4H914.7V884.0H912.5ZM914.7 868.4H916.8V884.0H914.7ZM916.8 868.4H919.0V884.0H916.8ZM919.0 868.4H921.1V884.0H919.0ZM921.1 868.4H923.3V884.0H921.1ZM923.3 868.4H925.4V884.0H923.3ZM925.4 868.4H927.6V884.0H925.4ZM927.6 868.4H929.7V884.0H927.6ZM929.7 868.4H931.9V884.0H929.7ZM931.9 868.4H934.0V884.0H931.9ZM934.0 868.4H936.1V884.0H934.0ZM936.1 868.4H938.3V884.0H936.1ZM938.3 868.4H940.4V884.0H938.3ZM940.4 868.4H942.6V884.0H940.4ZM942.6 868.4H944.7V884.0H942.6ZM944.7 868.4H946.9V884.0H944.7ZM946.9 868.4H1075.6V884.0H946.9ZM1075.6 868.4H1140.0V884.0H1075.6Z"/>
+<path class="frametime" d="M110.0 754.0H238.8M238.8 754.0H305.3M305.3 832.0H307.4M307.4 832.0H309.6M309.6 832.0H311.7M311.7 832.0H313.9M313.9 832.0H316.0M316.0 832.0H318.1M318.1 832.0H320.3M320.3 832.0H322.4M322.4 832.0H324.6M324.6 832.0H326.7M326.7 832.0H328.9M328.9 832.0H331.0M331.0 832.0H333.2M333.2 832.0H335.3M335.3 832.0H337.5M337.5 832.0H339.6M339.6 832.0H341.8M341.8 832.0H343.9M343.9 832.0H346.0M346.0 832.0H348.2M348.2 832.0H350.3M350.3 832.0H352.5M352.5 832.0H354.6M354.6 832.0H356.8M356.8 832.0H358.9M358.9 832.0H361.1M361.1 832.0H363.2M363.2 832.0H365.4M365.4 832.0H367.5M367.5 832.0H369.6M369.6 832.0H371.8M371.8 832.0H373.9M373.9 832.0H376.1M376.1 832.0H378.2M378.2 832.0H380.4M380.4 832.0H382.5M382.5 832.0H384.7M384.7 832.0H386.8M386.8 832.0H389.0M389.0 832.0H391.1M391.1 832.0H393.2M393.2 832.0H395.4M395.4 832.0H397.5M397.5 832.0H399.7M399.7 832.0H401.8M401.8 832.0H404.0M404.0 832.0H406.1M406.1 832.0H408.3M408.3 832.0H410.4M410.4 832.0H412.6M412.6 832.0H414.7M414.7 832.0H416.9M416.9 832.0H419.0M419.0 832.0H421.1M421.1 832.0H423.3M423.3 832.0H425.4M425.4 832.0H427.6M427.6 832.0H429.7M429.7 832.0H431.9M431.9 754.0H560.6M560.6 754.0H689.4M689.4 754.0H818.1M818.1 832.0H820.3M820.3 832.0H822.4M822.4 832.0H824.6M824.6 832.0H826.7M826.7 832.0H828.9M828.9 832.0H831.0M831.0 832.0H833.1M833.1 832.0H835.3M835.3 832.0H837.4M837.4 832.0H839.6M839.6 832.0H841.7M841.7 832.0H843.9M843.9 832.0H846.0M846.0 832.0H848.2M848.2 832.0H850.3M850.3 832.0H852.5M852.5 832.0H854.6M854.6 832.0H856.8M856.8 832.0H858.9M858.9 832.0H861.0M861.0 832.0H863.2M863.2 832.0H865.3M865.3 832.0H867.5M867.5 832.0H869.6M869.6 832.0H871.8M871.8 832.0H873.9M873.9 832.0H876.1M876.1 832.0H878.2M878.2 832.0H880.4M880.4 832.0H882.5M882.5 832.0H884.6M884.6 832.0H886.8M886.8 832.0H888.9M888.9 832.0H891.1M891.1 832.0H893.2M893.2 832.0H895.4M895.4 832.0H897.5M897.5 832.0H899.7M899.7 832.0H901.8M901.8 832.0H904.0M904.0 832.0H906.1M906.1 832.0H908.2M908.2 832.0H910.4M910.4 832.0H912.5M912.5 832.0H914.7M914.7 832.0H916.8M916.8 832.0H919.0M919.0 832.0H921.1M921.1 832.0H923.3M923.3 832.0H925.4M925.4 832.0H927.6M927.6 832.0H929.7M929.7 832.0H931.9M931.9 832.0H934.0M934.0 832.0H936.1M936.1 832.0H938.3M938.3 832.0H940.4M940.4 832.0H942.6M942.6 832.0H944.7M944.7 832.0H946.9M946.9 754.0H1075.6"/>
+<path class="clip-mark" d="M174.4 754.0L170.4 760.0H178.4Z"/>
+<text x="180.4" y="771.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M496.2 754.0L492.2 760.0H500.2Z"/>
+<text x="502.2" y="771.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M625.0 754.0L621.0 760.0H629.0Z"/>
+<text x="631.0" y="771.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M753.8 754.0L749.8 760.0H757.8Z"/>
+<text x="759.8" y="771.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M1011.2 754.0L1007.2 760.0H1015.2Z"/>
+<text x="1017.2" y="771.0" text-anchor="start" class="clip-text">1000 ms</text>
+<path class="clip-mark" d="M272.0 754.0L268.0 760.0H276.0Z"/>
+<text x="278.0" y="771.0" text-anchor="start" class="clip-text">516.7 ms</text>
+<text x="110.0" y="902.0" text-anchor="middle" class="vsync-n">0 s</text>
+<text x="238.8" y="902.0" text-anchor="middle" class="vsync-n">1 s</text>
+<text x="367.5" y="902.0" text-anchor="middle" class="vsync-n">2 s</text>
+<text x="496.2" y="902.0" text-anchor="middle" class="vsync-n">3 s</text>
+<text x="625.0" y="902.0" text-anchor="middle" class="vsync-n">4 s</text>
+<text x="753.8" y="902.0" text-anchor="middle" class="vsync-n">5 s</text>
+<text x="882.5" y="902.0" text-anchor="middle" class="vsync-n">6 s</text>
+<text x="1011.2" y="902.0" text-anchor="middle" class="vsync-n">7 s</text>
+<text x="1140.0" y="902.0" text-anchor="middle" class="vsync-n">8 s</text>
+<text x="20.0" y="938.0" text-anchor="start" class="label">SHARE OF LATE FRAMES IN THE LAST 2 S (WHOLE RUN 0.0 %)</text>
+<line class="grid" x1="110" y1="1034.0" x2="1140" y2="1034.0"/>
+<text x="100.0" y="1038.0" text-anchor="end" class="vsync-n">0</text>
+<line class="grid" x1="110" y1="994.0" x2="1140" y2="994.0"/>
+<text x="100.0" y="998.0" text-anchor="end" class="vsync-n">50 %</text>
+<line class="grid" x1="110" y1="954.0" x2="1140" y2="954.0"/>
+<text x="100.0" y="958.0" text-anchor="end" class="vsync-n">100 %</text>
+<rect class="static-band" x="110.0" y="954.0" width="195.3" height="80.0"/>
+<rect class="static-band" x="431.9" y="954.0" width="388.4" height="80.0"/>
+<rect class="static-band" x="946.9" y="954.0" width="193.1" height="80.0"/>
+<path class="late-line-none" d="M110.0 1034.0L238.8 1034.0M560.6 1032.7L689.4 1034.0L818.1 1034.0L820.3 1034.0L822.4 1034.0L824.6 1034.0L826.7 1034.0L828.9 1034.0L831.0 1034.0L833.1 1034.0L835.3 1034.0L837.4 1034.0L839.6 1034.0L841.7 1034.0L843.9 1034.0L846.0 1034.0L848.2 1034.0L850.3 1034.0L852.5 1034.0L854.6 1034.0L856.8 1034.0L858.9 1034.0L861.0 1034.0L863.2 1034.0L865.3 1034.0L867.5 1034.0L869.6 1034.0L871.8 1034.0L873.9 1034.0L876.1 1034.0L878.2 1034.0L880.4 1034.0L882.5 1034.0L884.6 1034.0L886.8 1034.0L888.9 1034.0L891.1 1034.0L893.2 1034.0L895.4 1034.0L897.5 1034.0L899.7 1034.0L901.8 1034.0L904.0 1034.0L906.1 1034.0L908.2 1034.0L910.4 1034.0L912.5 1034.0L914.7 1034.0L916.8 1034.0L919.0 1034.0L921.1 1034.0L923.3 1034.0L925.4 1034.0L927.6 1034.0L929.7 1034.0L931.9 1034.0L934.0 1034.0L936.1 1034.0L938.3 1034.0L940.4 1034.0L942.6 1034.0L944.7 1034.0L946.9 1034.0L1075.6 1034.0"/>
+<path class="late-line-adapted" d="M238.8 1034.0L305.3 994.0L307.4 1007.3L309.6 1014.0L311.7 1018.0L313.9 1020.7L316.0 1022.6L318.1 1024.0L320.3 1025.1L322.4 1026.0L324.6 1026.7L326.7 1027.3L328.9 1027.8L331.0 1028.3L333.2 1028.7L335.3 1029.0L337.5 1029.3L339.6 1029.6L341.8 1029.8L343.9 1030.0L346.0 1030.2L348.2 1030.4L350.3 1030.5L352.5 1030.7L354.6 1030.8L356.8 1030.9L358.9 1031.0L361.1 1031.1L363.2 1031.2L365.4 1031.3L367.5 1031.4L369.6 1031.5L371.8 1031.6L373.9 1031.6L376.1 1031.7L378.2 1031.8L380.4 1031.8L382.5 1031.9L384.7 1031.9L386.8 1032.0L389.0 1032.0L391.1 1032.1L393.2 1032.1L395.4 1032.2L397.5 1032.2L399.7 1032.3L401.8 1032.3L404.0 1032.3L406.1 1032.4L408.3 1032.4L410.4 1032.4L412.6 1032.5L414.7 1032.5L416.9 1032.5L419.0 1032.5L421.1 1032.6L423.3 1032.6L425.4 1032.6L427.6 1032.6L429.7 1032.7L431.9 1032.7L560.6 1032.7"/>
+<text x="1140.0" y="938.0" text-anchor="end" class="vsync-n"><tspan class="key-green">━</tspan> none late  <tspan class="key-amber">━</tspan> longer than the application prefers, as the pacer intended  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
+<text x="110.0" y="1052.0" text-anchor="middle" class="vsync-n">0 s</text>
+<text x="238.8" y="1052.0" text-anchor="middle" class="vsync-n">1 s</text>
+<text x="367.5" y="1052.0" text-anchor="middle" class="vsync-n">2 s</text>
+<text x="496.2" y="1052.0" text-anchor="middle" class="vsync-n">3 s</text>
+<text x="625.0" y="1052.0" text-anchor="middle" class="vsync-n">4 s</text>
+<text x="753.8" y="1052.0" text-anchor="middle" class="vsync-n">5 s</text>
+<text x="882.5" y="1052.0" text-anchor="middle" class="vsync-n">6 s</text>
+<text x="1011.2" y="1052.0" text-anchor="middle" class="vsync-n">7 s</text>
+<text x="1140.0" y="1052.0" text-anchor="middle" class="vsync-n">8 s</text>
+<text x="20.0" y="1088.0" text-anchor="start" class="label">REFRESH STRIP: ONE CELL PER REFRESH, A NEW SHADE PER FRAME</text>
+<text x="1140.0" y="1088.0" text-anchor="end" class="vsync-n"><tspan class="key-violet-a">▐</tspan><tspan class="key-violet-b">▌</tspan> static</text>
+<rect class="strip-static-a" x="110.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="112.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="114.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="116.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="119.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="121.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="123.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="125.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="127.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="129.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="132.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="134.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="136.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="138.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="140.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="142.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="144.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="147.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="149.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="151.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="153.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="155.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="157.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="159.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="162.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="164.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="166.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="168.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="170.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="172.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="174.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="177.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="179.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="181.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="183.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="185.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="187.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="189.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="192.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="194.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="196.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="198.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="200.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="202.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="204.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="207.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="209.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="211.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="213.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="215.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="217.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="219.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="222.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="224.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="226.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="228.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="230.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="232.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="235.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="237.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="239.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="241.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="243.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="245.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="247.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="250.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="252.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="254.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="256.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="258.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="260.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="262.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="265.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="267.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="269.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="271.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="273.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="275.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="277.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="280.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="282.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="284.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="286.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="288.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="290.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="292.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="295.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="297.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="299.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="301.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="303.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="305.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="307.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="310.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="312.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="314.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="316.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="318.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="320.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="322.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="325.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="327.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="329.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="331.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="333.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="335.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="338.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="340.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="342.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="344.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="346.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="348.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="350.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="353.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="355.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="357.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="359.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="361.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="363.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="365.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="368.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="370.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="372.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="374.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="376.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="378.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="380.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="383.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="385.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="387.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="389.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="391.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="393.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="395.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="398.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="400.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="402.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="404.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="406.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="408.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="410.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="413.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="415.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="417.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="419.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="421.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="423.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="425.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="428.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="430.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="432.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="434.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="436.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="438.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="441.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="443.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="445.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="447.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="449.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="451.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="453.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="456.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="458.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="460.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="462.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="464.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="466.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="468.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="471.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="473.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="475.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="477.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="479.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="481.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="483.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="486.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="488.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="490.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="492.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="494.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="496.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="498.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="501.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="503.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="505.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="507.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="509.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="511.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="513.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="516.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="518.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="520.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="522.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="524.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="526.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="528.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="531.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="533.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="535.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="537.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="539.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="541.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="544.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="546.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="548.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="550.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="552.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="554.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="556.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="559.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="561.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="563.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="565.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="567.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="569.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="571.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="574.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="576.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="578.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="580.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="582.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="584.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="586.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="589.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="591.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="593.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="595.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="597.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="599.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="601.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="604.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="606.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="608.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="610.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="612.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="614.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="616.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="619.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="621.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="623.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="625.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="627.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="629.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="631.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="634.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="636.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="638.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="640.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="642.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="644.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="647.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="649.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="651.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="653.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="655.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="657.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="659.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="662.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="664.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="666.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="668.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="670.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="672.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="674.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="677.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="679.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="681.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="683.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="685.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="687.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="689.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="692.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="694.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="696.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="698.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="700.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="702.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="704.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="707.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="709.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="711.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="713.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="715.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="717.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="719.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="722.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="724.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="726.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="728.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="730.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="732.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="734.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="737.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="739.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="741.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="743.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="745.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="747.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="750.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="752.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="754.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="756.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="758.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="760.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="762.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="765.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="767.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="769.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="771.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="773.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="775.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="777.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="780.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="782.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="784.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="786.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="788.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="790.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="792.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="795.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="797.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="799.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="801.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="803.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="805.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="807.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="810.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="812.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="814.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="816.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="818.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="820.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="822.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="825.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="827.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="829.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="831.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="833.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="835.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="837.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="840.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="842.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="844.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="846.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="848.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="850.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="853.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="855.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="857.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="859.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="861.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="863.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="865.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="868.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="870.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="872.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="874.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="876.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="878.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="880.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="883.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="885.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="887.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="889.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="891.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="893.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="895.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="898.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="900.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="902.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="904.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="906.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="908.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="910.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="913.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="915.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="917.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="919.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="921.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="923.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="925.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="928.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="930.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="932.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="934.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="936.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="938.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="940.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-a" x="943.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-b" x="945.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="947.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="949.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="951.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="953.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="956.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="958.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="960.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="962.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="964.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="966.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="968.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="971.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="973.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="975.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="977.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="979.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="981.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="983.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="986.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="988.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="990.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="992.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="994.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="996.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="998.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1001.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1003.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1005.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1007.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1009.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1011.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1013.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1016.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1018.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1020.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1022.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1024.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1026.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1028.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1031.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1033.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1035.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1037.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1039.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1041.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1043.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1046.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1048.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1050.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1052.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1054.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1056.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1059.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1061.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1063.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1065.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1067.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1069.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1071.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-a" x="1074.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1076.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1078.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1080.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1082.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1084.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1086.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1089.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1091.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1093.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1095.4" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1097.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1099.7" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1101.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1104.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1106.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1108.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1110.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1112.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1114.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1116.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1119.0" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1121.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1123.3" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1125.5" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1127.6" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1129.8" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1131.9" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1134.1" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1136.2" y="1104" width="1.1" height="28" rx="2"/>
+<rect class="strip-static-b" x="1138.4" y="1104" width="1.1" height="28" rx="2"/>
+<text x="110.0" y="1150.0" text-anchor="middle" class="vsync-n">0 s</text>
+<text x="238.8" y="1150.0" text-anchor="middle" class="vsync-n">1 s</text>
+<text x="367.5" y="1150.0" text-anchor="middle" class="vsync-n">2 s</text>
+<text x="496.2" y="1150.0" text-anchor="middle" class="vsync-n">3 s</text>
+<text x="625.0" y="1150.0" text-anchor="middle" class="vsync-n">4 s</text>
+<text x="753.8" y="1150.0" text-anchor="middle" class="vsync-n">5 s</text>
+<text x="882.5" y="1150.0" text-anchor="middle" class="vsync-n">6 s</text>
+<text x="1011.2" y="1150.0" text-anchor="middle" class="vsync-n">7 s</text>
+<text x="1140.0" y="1150.0" text-anchor="middle" class="vsync-n">8 s</text>
+</svg>
