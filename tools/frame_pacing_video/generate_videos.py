@@ -1081,15 +1081,35 @@ def clip_frames(settings: Settings, job: VideoJob) -> Iterator[bytes]:
 # FFmpeg
 
 
-class FfmpegError(Exception):
+class ToolError(Exception):
+    """A tool is missing, or a location given for it is not the tool."""
+
+
+class FfmpegError(ToolError):
     """FFmpeg is missing, cannot encode lossless H.264, or failed."""
 
 
 @dataclass(frozen=True)
-class FfmpegLocation:
+class ToolLocation:
     path: Path
     # Where the path came from, for messages
     source: str
+
+
+@dataclass(frozen=True)
+class Tool:
+    """An external tool and where it may be given: a command line option, an environment variable, a local.toml section ([name] path)."""
+
+    name: str
+    # For messages ("FFmpeg")
+    label: str
+    option: str
+    environment_variable: str
+    install_hint: str
+    error: type[ToolError] = ToolError
+
+
+FFMPEG = Tool("ffmpeg", "FFmpeg", "--ffmpeg", FFMPEG_ENVIRONMENT_VARIABLE, "Install it (Windows: winget install Gyan.FFmpeg)", FfmpegError)
 
 
 def _executable(tool: str) -> str:
@@ -1107,31 +1127,80 @@ def resolve_tool(location: Path, tool: str = "ffmpeg") -> Path | None:
     return None
 
 
-def read_config_ffmpeg(config: Path) -> Path | None:
-    """The [ffmpeg] path of a local.toml; a relative path is relative to the file's folder."""
+def read_config_path(config: Path, tool: Tool = FFMPEG) -> Path | None:
+    """The [<tool>] path of a local.toml; a relative path is relative to the file's folder."""
     try:
         with config.open("rb") as file:
             data: dict[str, object] = tomllib.load(file)
     except tomllib.TOMLDecodeError as error:
-        raise FfmpegError(f"{config}: {error}") from error
-    section = data.get("ffmpeg")
+        raise tool.error(f"{config}: {error}") from error
+    section = data.get(tool.name)
     if section is None:
         return None
     if not isinstance(section, dict):
-        raise FfmpegError(f"{config}: 'ffmpeg' must be a table ([ffmpeg])")
+        raise tool.error(f"{config}: '{tool.name}' must be a table ([{tool.name}])")
     value = cast(dict[str, object], section).get("path")
     if value is None:
         return None
     if not isinstance(value, str) or not value:
-        raise FfmpegError(f"{config}: [ffmpeg] path must be a non-empty string")
+        raise tool.error(f"{config}: [{tool.name}] path must be a non-empty string")
     return config.parent / Path(value).expanduser()
 
 
-def _require(location: Path, source: str) -> FfmpegLocation:
-    resolved = resolve_tool(location)
+def _require(location: Path, source: str, tool: Tool) -> ToolLocation:
+    resolved = resolve_tool(location, tool.name)
     if resolved is None:
-        raise FfmpegError(f"{source}: '{location}' is not ffmpeg or a folder that holds it")
-    return FfmpegLocation(resolved.resolve(), source)
+        raise tool.error(f"{source}: '{location}' is not {tool.label} or a folder that holds it")
+    return ToolLocation(resolved.resolve(), source)
+
+
+def configured_tool(
+    tool: Tool,
+    explicit: str | None = None,
+    config: Path | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    default_config: Path = DEFAULT_CONFIG,
+) -> ToolLocation | None:
+    """Where the tool was given, if anywhere: its option, then its environment variable, then the config file ([name] path).
+
+    A source that is set but does not point to the tool is an error rather than skipped, so a typo is not hidden by another copy.
+    """
+    environ = os.environ if environ is None else environ
+    if explicit:
+        return _require(Path(explicit).expanduser(), tool.option, tool)
+    from_environment = environ.get(tool.environment_variable)
+    if from_environment:
+        return _require(Path(from_environment).expanduser(), tool.environment_variable, tool)
+    if config is not None and not config.is_file():
+        raise tool.error(f"--config: '{config}' does not exist")
+    config_file = config if config is not None else default_config
+    if config_file.is_file():
+        configured = read_config_path(config_file, tool)
+        if configured is not None:
+            return _require(configured, str(config_file), tool)
+    return None
+
+
+def find_tool(
+    tool: Tool,
+    explicit: str | None = None,
+    config: Path | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    default_config: Path = DEFAULT_CONFIG,
+) -> ToolLocation:
+    """Find a tool: where it was given (configured_tool), else on PATH (the order mb-framepacing uses)."""
+    configured = configured_tool(tool, explicit, config, environ=environ, default_config=default_config)
+    if configured is not None:
+        return configured
+    on_path = shutil.which(tool.name)
+    if on_path:
+        return ToolLocation(Path(on_path), "PATH")
+    raise tool.error(
+        f"{tool.label} was not found. {tool.install_hint} or point to it with local.toml ([{tool.name}] path), "
+        + f"the {tool.environment_variable} environment variable or {tool.option}."
+    )
 
 
 def find_ffmpeg(
@@ -1140,31 +1209,9 @@ def find_ffmpeg(
     *,
     environ: Mapping[str, str] | None = None,
     default_config: Path = DEFAULT_CONFIG,
-) -> FfmpegLocation:
-    """Find FFmpeg: --ffmpeg, then MB_FFMPEG, then the config file ([ffmpeg] path), then PATH (the order mb-framepacing uses).
-
-    A source that is set but does not point to FFmpeg is an error rather than skipped, so a typo is not hidden by another FFmpeg.
-    """
-    environ = os.environ if environ is None else environ
-    if explicit:
-        return _require(Path(explicit).expanduser(), "--ffmpeg")
-    from_environment = environ.get(FFMPEG_ENVIRONMENT_VARIABLE)
-    if from_environment:
-        return _require(Path(from_environment).expanduser(), FFMPEG_ENVIRONMENT_VARIABLE)
-    if config is not None and not config.is_file():
-        raise FfmpegError(f"--config: '{config}' does not exist")
-    config_file = config if config is not None else default_config
-    if config_file.is_file():
-        configured = read_config_ffmpeg(config_file)
-        if configured is not None:
-            return _require(configured, str(config_file))
-    on_path = shutil.which("ffmpeg")
-    if on_path:
-        return FfmpegLocation(Path(on_path), "PATH")
-    raise FfmpegError(
-        "FFmpeg was not found. Install it (Windows: winget install Gyan.FFmpeg) or point to it with local.toml ([ffmpeg] path), "
-        + f"the {FFMPEG_ENVIRONMENT_VARIABLE} environment variable or --ffmpeg."
-    )
+) -> ToolLocation:
+    """Find FFmpeg: --ffmpeg, then MB_FFMPEG, then the config file ([ffmpeg] path), then PATH."""
+    return find_tool(FFMPEG, explicit, config, environ=environ, default_config=default_config)
 
 
 def find_ffprobe(ffmpeg: Path) -> Path | None:

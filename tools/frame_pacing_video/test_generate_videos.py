@@ -1097,7 +1097,7 @@ class FfmpegLookupTests(unittest.TestCase):
         _ = path.write_bytes(b"")
         return path
 
-    def find(self, explicit: str | None = None, config: Path | None = None, environ: dict[str, str] | None = None) -> gv.FfmpegLocation:
+    def find(self, explicit: str | None = None, config: Path | None = None, environ: dict[str, str] | None = None) -> gv.ToolLocation:
         return gv.find_ffmpeg(explicit, config, environ=environ or {}, default_config=self.missing_config)
 
     def test_explicit_file_or_folder(self) -> None:

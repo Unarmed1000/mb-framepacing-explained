@@ -6,3 +6,9 @@
 # ffprobe is expected next to it. Remove the line to use the MB_FFMPEG environment variable or PATH instead.
 # Use single quotes so backslashes are kept as they are.
 # path = 'C:\ffmpeg\bin\ffmpeg.exe'
+
+[mb-framepacing]
+# tools/timing_diagrams/generate_measured_charts.py builds and uses the submodule's mb-framepacing (external/mb-framepacing).
+# To use another build instead: its full path (mb-framepacing.exe on Windows), or the folder that holds it. The MB_FRAMEPACING
+# environment variable does the same.
+# path = 'C:\mb-framepacing\measure\app\FramePacing\bin\Release\net10.0'
