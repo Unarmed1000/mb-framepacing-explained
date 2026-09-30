@@ -5,12 +5,13 @@
 
 The questions live in web/src/blind-test/trials.json, the one place both the page and this script read. For every motion (a
 speed of the single-box scene; never the rows) it collects the top/bottom pairs: identical pairs once, every other pair in both
-orders (the page asks each pair once with each mode on top), plus the warm-up pairs for the warm-up's motions. Then it runs the video
-tool once per motion, so each motion's folder (videos/box/<motion>) gets all its clips and one complete manifest.json. Last, it
-renders the slides' rendered videos (clips.json's "rendered", e.g. the dynamic resolution example) into videos/rendered.
+orders (the page asks each pair once with each mode on top), plus the warm-up pairs for the warm-up's motions. It runs the video
+tool once per motion, so each motion's folder (videos/box/<motion>) gets all its clips and one complete manifest.json, and renders
+the slides' rendered videos (clips.json's "rendered", e.g. the dynamic resolution example) into videos/rendered. Every command
+writes its own files, so they run side by side (--jobs, default one per CPU core); each one's output is printed when it ends.
 
 Run from the repository's .venv:
-  python tools/web_export/build_blind_test.py [--output-dir DIR] [--ffmpeg PATH]
+  python tools/web_export/build_blind_test.py [--output-dir DIR] [--ffmpeg PATH] [--jobs N]
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
@@ -18,8 +19,13 @@ Run from the repository's .venv:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import time
+from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
@@ -87,34 +93,79 @@ def rendered_commands(clips: dict[str, object], output_dir: Path, ffmpeg: str | 
     return commands
 
 
+@dataclass(frozen=True)
+class Step:
+    """One command of the build, and what to call it."""
+
+    name: str
+    command: list[str]
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """How a step ended: its exit code, its output (stdout and stderr) and how long it took, in seconds."""
+
+    step: Step
+    returncode: int
+    output: str
+    seconds: float
+
+
+def run_step(step: Step) -> Outcome:
+    """Run a step to its end, keeping its output (so steps running side by side do not mix theirs)."""
+    start = time.monotonic()
+    result = subprocess.run(step.command, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    return Outcome(step, result.returncode, result.stdout + result.stderr, time.monotonic() - start)
+
+
+def run_steps(steps: Sequence[Step], jobs: int) -> list[Outcome]:
+    """Run the steps, `jobs` at a time, started in the order listed (the longest first), printing each one as it ends (a failed
+    one with its output). Every step runs, whether others failed or not; the outcomes come back in the order listed."""
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        futures = [pool.submit(run_step, step) for step in steps]
+        for future in as_completed(futures):
+            outcome = future.result()
+            status = "done" if outcome.returncode == 0 else f"FAILED (exit code {outcome.returncode})"
+            print(f"{outcome.step.name}: {status} in {outcome.seconds:.0f} s", flush=True)
+            if outcome.returncode != 0:
+                print(outcome.output.rstrip(), flush=True)
+    return [future.result() for future in futures]
+
+
 class Arguments(argparse.Namespace):
     output_dir: Path
     ffmpeg: str | None
+    jobs: int
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate the blind test's clips (web-encoded) for the web page.")
     _ = parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="where the clips go (default: web/public/videos)")
     _ = parser.add_argument("--ffmpeg", default=None, help="FFmpeg executable or its folder (default: as the video tool finds it)")
+    _ = parser.add_argument(
+        "--jobs", type=int, default=os.process_cpu_count() or 1, help="how many commands run side by side (default: one per CPU core; 1: one after another)"
+    )
     args = parser.parse_args(argv, namespace=Arguments())
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
     definitions = cast(dict[str, object], json.loads(TRIALS.read_text(encoding="utf-8")))
     clip_arguments = cast(list[str], cast(dict[str, object], definitions["clip"])["arguments"])
     clips = cast(dict[str, object], json.loads(EXPLANATION_CLIPS.read_text(encoding="utf-8")))
+    steps: list[Step] = []
     for motion, pairs in with_explanation_clips(required_pairs(definitions), clips).items():
         if motion.startswith("ui"):
             parser.error(f"{TRIALS.name} asks for {motion}: the blind test never uses the rows (ui scroll)")
         bad_pairs = [f"{top}:{bottom}" for top, bottom in pairs if "naive" in top and "naive" in bottom]
         if bad_pairs:
             parser.error(f"{TRIALS.name} compares two bad timers ({', '.join(bad_pairs)}): the blind test never does")
-        print(f"{motion}: {len(pairs)} clips", flush=True)
-        result = subprocess.run(generator_command(motion, pairs, clip_arguments, args.output_dir, args.ffmpeg), check=False)
-        if result.returncode != 0:
-            return result.returncode
+        steps.append(Step(f"{motion}: {len(pairs)} clips", generator_command(motion, pairs, clip_arguments, args.output_dir, args.ffmpeg)))
     for command in rendered_commands(clips, args.output_dir, args.ffmpeg):
-        print(f"rendered: {Path(command[command.index('--output') + 1]).name}", flush=True)
-        result = subprocess.run(command, check=False)
-        if result.returncode != 0:
-            return result.returncode
+        steps.append(Step(f"rendered: {Path(command[command.index('--output') + 1]).name}", command))
+    print(f"{len(steps)} commands, {args.jobs} at a time", flush=True)
+    failed = [outcome for outcome in run_steps(steps, args.jobs) if outcome.returncode != 0]
+    if failed:
+        print(f"error: {len(failed)} of {len(steps)} commands failed: {', '.join(outcome.step.name for outcome in failed)}", file=sys.stderr)
+        return failed[0].returncode
     return 0
 
 

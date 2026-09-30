@@ -50,7 +50,9 @@ npm test           # vitest; npm run format:check for Prettier
 ```
 
 `build_blind_test.py` generates exactly the clips `trials.json` asks for (the single box, never the rows, never two bad timers),
-one folder per movement with its `manifest.json`. Regenerating replaces the clips of an open page: reload it afterwards.
+one folder per movement with its `manifest.json`. Its commands (one video tool run per movement, one per rendered video) run side by
+side, one per CPU core (`--jobs N`; `--jobs 1` runs them one after another); the clips come out the same either way. Regenerating
+replaces the clips of an open page: reload it afterwards.
 
 The [pages workflow](../.github/workflows/pages.yml) does the same on every push to `master` and publishes `web/dist` on GitHub
 Pages. It needs Pages enabled with **GitHub Actions** as the source (Settings > Pages).

@@ -23,9 +23,12 @@ jobs:
         with:
           submodules: true
 
+      # pip's cache keeps the wheels it downloads and builds (glcontext's, below), keyed on pyproject.toml's dependencies
       - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl). moderngl's
       # glcontext has no wheel for this Python yet, so pip builds it: it needs the X11 and EGL headers

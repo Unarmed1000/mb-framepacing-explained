@@ -2,7 +2,10 @@
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Tests of the blind test's clip export: the pairs it asks the video tool for."""
 
+import contextlib
+import io
 import json
+import sys
 import unittest
 from pathlib import Path
 from typing import cast
@@ -57,6 +60,25 @@ class PairTests(unittest.TestCase):
         self.assertEqual(export.rendered_commands({}, Path("out"), None), [])
         other: dict[str, object] = {"rendered": [{"name": "ghost", "generator": "other.py", "arguments": []}]}
         self.assertEqual(export.rendered_commands(other, Path("out"), None)[0][1], str(export.RENDER_GENERATOR.parent / "other.py"))
+
+    def test_steps_run_side_by_side_and_every_one_runs(self) -> None:
+        def python(code: str) -> list[str]:
+            return [sys.executable, "-c", code]
+
+        steps = [
+            export.Step("slow", python("import time; time.sleep(0.5); print('slow')")),
+            export.Step("fails", python("import sys; print('broken'); sys.exit(3)")),
+            export.Step("quick", python("print('quick')")),
+        ]
+        with contextlib.redirect_stdout(io.StringIO()) as printed:
+            outcomes = export.run_steps(steps, 3)
+        # Back in the order listed, each with its own output; printed as they end (the slow one last), a failure with its output
+        self.assertEqual([(outcome.step.name, outcome.returncode) for outcome in outcomes], [("slow", 0), ("fails", 3), ("quick", 0)])
+        self.assertEqual(outcomes[0].output.strip(), "slow")
+        lines = printed.getvalue().splitlines()
+        self.assertTrue(lines[-1].startswith("slow: done in"))
+        self.assertIn("fails: FAILED (exit code 3) in", printed.getvalue())
+        self.assertIn("broken", printed.getvalue())
 
     def test_generator_command(self) -> None:
         command = export.generator_command("fast", [("60", "30"), ("30", "60")], ["--web"], Path("out"), None)
