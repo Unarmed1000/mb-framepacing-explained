@@ -638,8 +638,14 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     frames = simulated_frames(settings, mode, speed)
     refreshes = settings.frame_count(speed)
     events: tuple[faults.Block, ...] = ()
+    rendered = idle_frames(settings, mode, speed)
     if mode.fault is None:
         screen = faults.base_screen(frames.flips, refreshes)
+    elif mode.fault == faults.DROPPED_BEFORE_WAKE:
+        if rendered is None or not rendered.on_demand:
+            raise ValueError(f"{mode.name}: -{faults.DROPPED_BEFORE_WAKE} needs a game that presents on demand (-on-demand...)")
+        events = (faults.before_wake(mode, rendered.resting),)
+        screen = faults.screen(frames.flips, refreshes, mode.fault, list(events))
     else:
         late = [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
         events = tuple(faults.blocks(mode, frames.flips, late, frames.intervals, settings.fps, refreshes))
@@ -648,7 +654,6 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     for refresh, index in enumerate(screen):
         _ = first_seen.setdefault(index, refresh)
     shown = tuple(first_seen.get(index) for index in range(len(frames.flips)))
-    rendered = idle_frames(settings, mode, speed)
     scene = frames.animation if rendered is None else rendered.scene
     return FrameSchedule(shown, frames.animation, scene, screen, tuple(faults.presented(screen)), events)
 
@@ -678,26 +683,29 @@ def animation_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int
 @dataclass(frozen=True)
 class Pacing:
     """What each frame's marker says about the game's pacing beyond its timing: the target and the preferred frame time in
-    refreshes (None: on demand, no interval to aim for) and whether nothing animates in it (static)."""
+    refreshes (None: on demand, no interval to aim for) and its static flags (static after: nothing animates while it is on screen;
+    static before: nothing animated while the frame before it was)."""
 
     target: tuple[int | None, ...]
     preferred: tuple[int | None, ...]
-    static: tuple[bool, ...]
+    static_after: tuple[bool, ...]
+    static_before: tuple[bool, ...]
 
 
 @functools.cache
 def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
-    """Each frame's target and preferred frame time and static flag. The game prefers the fastest rate it paces at (Swappy
+    """Each frame's target and preferred frame time and static flags. The game prefers the fastest rate it paces at (Swappy
     lowered to 30 fps still prefers 60; a 30 fps lock prefers 30); idling at 1 fps it prefers the rate it idles at; on demand it
     has neither. Only an idle behaviour marks frames static."""
     frames = simulated_frames(settings, mode, speed)
     rendered = idle_frames(settings, mode, speed)
     count = len(frames.flips)
+    after, before = ((False,) * count,) * 2 if rendered is None else (rendered.static_after, rendered.static_before)
     if rendered is not None and rendered.on_demand:
-        return Pacing((None,) * count, (None,) * count, rendered.static)
+        return Pacing((None,) * count, (None,) * count, after, before)
     target: tuple[int | None, ...] = tuple(frames.intervals)
     preferred: tuple[int | None, ...] = target if mode.idle == idle.IDLE_1FPS else (min(frames.intervals),) * count
-    return Pacing(target, preferred, (False,) * count if rendered is None else rendered.static)
+    return Pacing(target, preferred, after, before)
 
 
 def _frame_ticks(settings: Settings, refreshes: int | None) -> int:
@@ -1019,7 +1027,8 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
     0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval, or on demand); then its CPU start time (on
     the same clock) and CPU busy (until it was presented; 0 when unknown), all in ticks, the frame time the game prefers, and the static
-    flag when nothing animates in it. A held frame keeps its index, so mb-framepacing sees one presented frame. Start marker in the
+    flags (static after: nothing animates while it is on screen; static before: nothing animated while the frame before it was). A held
+    frame keeps its index, so mb-framepacing sees one presented frame. Start marker in the
     lead-in, end marker in the lead-out: they carry the values of the frame they show."""
     index, loops = frame_on_screen(settings, job.top, job.speed, frame)
     frames = simulated_frames(settings, job.top, job.speed)
@@ -1031,17 +1040,22 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     started = cpu_start_ticks(settings, job.top, job.speed, index, loops)
     busy = cpu_busy_ticks(settings, job.top, job.speed, index)
     kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
+    flags = MarkerFlags.NONE
+    if pacing.static_after[index]:
+        flags |= MarkerFlags.STATIC_AFTER
+    if pacing.static_before[index]:
+        flags |= MarkerFlags.STATIC_BEFORE
     return Payload(
-        ((loops + 1) * len(frames.flips)) + index,
-        ticks,
-        MARKER_RUN_ID,
-        kind,
-        intended,
-        target,
-        started,
-        busy,
+        kind=kind,
+        run_id=MARKER_RUN_ID,
+        frame_index=((loops + 1) * len(frames.flips)) + index,
+        flags=flags,
+        animation_ticks=ticks,
         preferred_frame_ticks=_frame_ticks(settings, pacing.preferred[index]),
-        flags=MarkerFlags.STATIC if pacing.static[index] else MarkerFlags.NONE,
+        target_frame_ticks=target,
+        intended_display_ticks=intended,
+        cpu_start_ticks=started,
+        cpu_busy_ticks=busy,
     )
 
 
@@ -1357,9 +1371,10 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
     duration = settings.duration(speed)
     fault = {} if mode.fault is None else _fault_entry(schedule, mode)
     pacing = frame_pacing(settings, mode, speed)
-    # An idle behaviour only: whether nothing animates in each frame (its marker is flagged static; mb-framepacing does not judge the
-    # animation error of a step from or to it)
-    static = {} if mode.idle is None else {"static": list(pacing.static)}
+    # An idle behaviour only: each frame's static flags, as its marker carries them. Static after: nothing animates while it is on
+    # screen; static before: nothing animated while the frame before it (frame index - 1) was, marking nothing when that frame was
+    # never shown. mb-framepacing does not judge the animation error of the step from a static frame to the next
+    static = {} if mode.idle is None else {"staticAfter": list(pacing.static_after), "staticBefore": list(pacing.static_before)}
     return {
         "mode": mode.name,
         "rate": mode.rate,

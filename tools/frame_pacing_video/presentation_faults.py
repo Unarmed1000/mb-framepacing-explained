@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
-"""Presentation faults (modes ending in -dropped-frames or -out-of-order, e.g.
+"""Presentation faults (modes ending in -dropped-frames, -out-of-order or -dropped-before-wake, e.g.
 60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames): the game renders every frame as its mode simulates it, but not every
 frame reaches the screen, or not in the order it was rendered. Only what is on screen in each refresh changes; every frame keeps
 its animation time, the pacer's plan for it and its CPU times, and a marker carries the values of the frame it shows.
@@ -12,6 +12,11 @@ middle of the second are clear of them), each a block of frames starting with th
 - out-of-order: blocks of ORDER_BLOCKS frames (a pair, 3, a pair, 4) shown in another order in the same refreshes: a pair swapped,
   the larger blocks in a random order where no frame keeps its place (the worst case), drawn from our own PCG32 generator so the
   same clip always gets the same order
+
+-dropped-before-wake takes one event instead, for a game that presents on demand (idle_behaviour): the frame of the clip's first
+rest after its first frame, rendered but never shown. The frame before it stays on screen through the rest, and the frame that wakes
+up after it follows a frame never shown: its static before flag speaks for that frame (frame index - 1), so it marks nothing, and
+the step to it is judged.
 
 A measurement counts a frame as presented when it first appears with a frame index above every one shown before it (mb-framepacing's
 rule): a dropped frame is never presented, and a frame shown only after a later one is out of order and not presented either.
@@ -26,7 +31,10 @@ from pcg32 import Pcg32
 
 DROPPED = "dropped-frames"
 OUT_OF_ORDER = "out-of-order"
-FAULTS = (DROPPED, OUT_OF_ORDER)
+DROPPED_BEFORE_WAKE = "dropped-before-wake"
+FAULTS = (DROPPED, OUT_OF_ORDER, DROPPED_BEFORE_WAKE)
+# The faults whose frames are rendered but never shown
+DROPS = (DROPPED, DROPPED_BEFORE_WAKE)
 # Where in each second a fault event starts
 FAULT_POINTS = (Fraction(3, 10), Fraction(7, 10))
 # How many frames each event takes, in turn: dropped in a row, or shown in another order
@@ -66,7 +74,7 @@ def blocks(mode: FrameMode, flips: tuple[int, ...], late: list[int], intervals: 
     """The mode's fault events: two a second, at FAULT_POINTS, each starting with the frame on screen there. Raises ValueError when
     a block's frames, or the frame before or after it, are not on time and shown for exactly one swap interval (a late or held
     frame of a replayed diagram, e.g. -3x-every-1s, whose copies sit at 30, 50 and 70 %)."""
-    assert mode.fault in FAULTS, mode.name
+    assert mode.fault in (DROPPED, OUT_OF_ORDER), mode.name
     second = fps.numerator if fps.denominator == 1 else None
     if second is None or refreshes % second:
         raise ValueError(f"{mode.name}: a fault every second needs whole seconds of whole refreshes ({refreshes} at {float(fps):g} fps)")
@@ -94,6 +102,16 @@ def blocks(mode: FrameMode, flips: tuple[int, ...], late: list[int], intervals: 
     return events
 
 
+def before_wake(mode: FrameMode, resting: tuple[bool, ...]) -> Block:
+    """dropped-before-wake's event: the first frame at rest after the clip's first frame, whose next frame moves again (a game that
+    presents on demand renders one frame per rest). Raises ValueError when there is none."""
+    assert mode.fault == DROPPED_BEFORE_WAKE, mode.name
+    for index in range(1, len(resting) - 1):
+        if resting[index] and not resting[index - 1] and not resting[index + 1]:
+            return Block(index, 1)
+    raise ValueError(f"{mode.name}: no rest of a single frame between moving frames, to drop the frame before the wake-up")
+
+
 def screen(flips: tuple[int, ...], refreshes: int, kind: str, events: list[Block]) -> tuple[int, ...]:
     """The frame on screen in each refresh with the fault events applied: a dropped frame's refreshes show the frame before its
     run; an out-of-order block's refreshes show its frames in the block's order."""
@@ -101,7 +119,7 @@ def screen(flips: tuple[int, ...], refreshes: int, kind: str, events: list[Block
     replaced: dict[int, int] = {}
     for block in events:
         for offset in range(block.count):
-            replaced[block.first + offset] = block.first - 1 if kind == DROPPED else block.first + block.order[offset]
+            replaced[block.first + offset] = block.first - 1 if kind in DROPS else block.first + block.order[offset]
     return tuple(replaced.get(frame, frame) for frame in base)
 
 

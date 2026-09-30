@@ -14,9 +14,13 @@ Two clips add a presentation fault to the perfect storm (presentation_faults.py)
 never shown) and frames out of order (swapped pairs, and blocks of 3 and 4 in an order where no frame keeps its place). Their
 manifests also give the frame on screen in every refresh (screen), the frames a measurement counts as presented (presented), the
 fault events (fault) and the counts a measurement should find (expected); a frame that is not presented has no animation error.
-Four clips show what a game does while nothing moves (idle_behaviour.py), for the marker's static flag and preferred frame time: the
+Four clips show what a game does while nothing moves (idle_behaviour.py), for the marker's static flags and preferred frame time: the
 naive timer with its frames at rest flagged static, a renderer that presents on demand (its clock running on, or paused while idle),
-and a device idling at 1 fps (at the idle speed, whose rests are 3 s: SCENARIO_SPEEDS).
+and a device idling at 1 fps (at the idle speed, whose rests are 3 s: SCENARIO_SPEEDS). Three more set the static flags each way a
+game can: a rest rendered every refresh with its clock paused (static after, and inside the rest static before too); the on-demand
+renderer with the paused clock flagged in hindsight (static before on the frame that wakes up, which analyses like the paused clock's
+static after on the frame before the wait); and the same with a rest's frame dropped, so the static before after it marks nothing.
+Their manifests give each frame's staticAfter and staticBefore.
 The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
 data (the manifest's "license"); this repository's own videos stay CC BY-NC-SA 4.0.
 """
@@ -35,8 +39,9 @@ import generate_videos as gv
 
 # The web page's scenarios: the perfect timer at full and half rate, delta time jitter, late frames, half rate evenly and badly
 # paced, a busy stretch at full rate and adapting like the Swappy frame pacer, and the perfect storm (jitter and late frames at once); then the
-# perfect storm with dropped frames and with frames out of order, for mb-framepacing's skipped and out of order frames; and what a
-# game does while nothing moves, for the marker's static flag and preferred frame time
+# perfect storm with dropped frames and with frames out of order, for mb-framepacing's skipped and out of order frames; what a game
+# does while nothing moves, for the marker's static flags and preferred frame time; and the static flags set each way: both inside a
+# rest, in hindsight, and in hindsight after a frame never shown
 SCENARIOS = (
     "60",
     "30",
@@ -53,6 +58,9 @@ SCENARIOS = (
     "60-on-demand",
     "60-on-demand-paused-clock",
     "60-idle-1fps",
+    "60-static-rests-paused-clock",
+    "60-on-demand-paused-clock-hindsight",
+    "60-on-demand-paused-clock-hindsight-dropped-before-wake",
 )
 # The speed of each scenario: fast, unless it needs the idle speed's long rests
 DEFAULT_SPEED = "fast"

@@ -82,7 +82,7 @@ How much sooner or later than usual the naive loop reads the clock:
 - **The perfect storm** (`RATE-naive-Nms-diagram-NAME…`, e.g. `60-naive-5ms-diagram-slow-frames-every-1s`): a replayed diagram
   and the naive timer's ±N ms window at once. The frames are flipped as the diagram shows them, late ones included, and every
   frame's animation time is off by its clock reading, as in a real measurement where both causes of stutter mix.
-- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, e.g.
+- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, `…-dropped-before-wake` after an on-demand one, e.g.
   `60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames`; `presentation_faults.py`): the game renders every frame as its mode
   simulates it, but not every frame reaches the screen, or not in the order it was rendered. Two events a second, at 30 % and 70 %
   of it (clear of a replayed diagram in the middle): dropped runs of 1, 2, 3, 4 frames (the frame before stays on screen, the one
@@ -90,18 +90,30 @@ How much sooner or later than usual the naive loop reads the clock:
   random order where no frame keeps its place). Only what is on screen changes: each marker carries the frame it shows, so the
   frame index skips or goes back. A measurement counts a frame as presented when it first appears above every index before it
   (mb-framepacing's rule), so dropped frames and frames shown after a later one are not presented. A fault that would land on a
-  late or held frame is rejected (e.g. with `-3x-every-1s`).
-- **Idle behaviours** (`…-static-rests`, `…-on-demand`, `…-on-demand-paused-clock`, `…-idle-1fps`, before a fault;
-  `idle_behaviour.py`): what the game does while the box rests (stands exactly at an end of its path, so nothing animates). Its
-  frames at rest are flagged **static** in the marker, so mb-framepacing does not judge a step from or to them.
-  - `-static-rests` renders every frame: `60-naive-5ms-static-rests` shows the jitter that cannot be seen while the box rests
-    going unjudged.
+  late or held frame is rejected (e.g. with `-3x-every-1s`). `-dropped-before-wake` drops a single frame instead: the frame of the
+  clip's first rest, in a game that presents on demand, so the frame before it stays on screen through the rest and the static
+  before flag of the frame that wakes up speaks for a frame never shown (it marks nothing, and that step is judged).
+- **Idle behaviours** (`…-static-rests`, `…-static-rests-paused-clock`, `…-on-demand`, `…-on-demand-paused-clock`,
+  `…-on-demand-paused-clock-hindsight`, `…-idle-1fps`, before a fault; `idle_behaviour.py`): what the game does while the box rests
+  (stands exactly at an end of its path, so nothing animates). Static describes a frame's time on screen: nothing animates from
+  its display until the next frame's. The marker says so with two flags: **static after** on the frame at rest (the game knows
+  while rendering it), or **static before** on the frame after it (the game only knows once it wakes up; it speaks for frame index
+  − 1, so after a frame never shown it marks nothing). mb-framepacing does not judge the step from a static frame to the next; the
+  step into it is judged.
+  - `-static-rests` renders every frame, its frames at rest static after: `60-naive-5ms-static-rests` shows the jitter that cannot
+    be seen while the box rests going unjudged.
+  - `-static-rests-paused-clock` renders every frame too, and its animation clock stands still through each rest (see
+    `-on-demand-paused-clock`): the frame that reaches the rest pose is static after, the frames inside the rest static after and
+    static before.
   - `-on-demand` presents only when something changes: the first frame at rest, then nothing until the box moves. Its target and
     preferred frame time are "on demand" (`0xFFFFFFFF`: no interval to aim for, so no wait is late). Its clock runs on, so the
     first moving frame shows exactly the right moment.
   - `-on-demand-paused-clock` does the same, but its animation clock stops while nothing animates and resumes with one frame's step.
     The box is still drawn where it belongs, but the marker's animation time falls behind by each rest: the first moving frame is
-    100 ms off at the fast speed's rests, and only the static flag of the frame before keeps that from being judged.
+    100 ms off at the fast speed's rests, and only the static flag of the frame before keeps that from being judged. It sets the
+    flag in advance: static after on the rest's frame.
+  - `-on-demand-paused-clock-hindsight` is the same, flagged in hindsight: the rest's frame has no flag, the first moving frame
+    after it is static before. It analyses exactly like `-on-demand-paused-clock`.
   - `-idle-1fps` saves power while idle: at rest the first frame, then one a second, with target and preferred frame time 1 s
     (idling at the rate it wants: not late, not below its preferred rate). It needs rests of at least 1 s: `--speed idle`.
 
@@ -229,8 +241,8 @@ import them and measure their animation error, and its numbers can be checked ag
   60 fps, 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
   long the CPU worked on it before presenting it); all in 100 ns ticks, 0 = unknown (the diagram modes' filler frames have no CPU
   busy); run id 1. It also carries the frame time the game prefers (what it would aim for if nothing held it back: Swappy lowered
-  to 30 fps still prefers 60, a 30 fps lock and the half-rate diagrams prefer 30, on demand has none) and the static flag of an
-  idle behaviour's frames at rest. The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first
+  to 30 fps still prefers 60, a 30 fps lock and the half-rate diagrams prefer 30, on demand has none) and the static flags of an
+  idle behaviour (static after, static before). The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first
   frame, and its `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
 - **Start and end:** 3 refreshes of start marker before the clip and 3 of end marker after it, showing the previous and next loop's
   frames. The start marker's sequence id is the mode's name when it fits 16 characters, else a UUID made from it (the manifest's
@@ -260,8 +272,9 @@ python ../../../../tools/frame_pacing_video/check_marker_run.py manifest.json si
 what mb-framepacing measures.
 
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `measure/test-data/videos`), plus the
-perfect storm with dropped frames and with frames out of order: a folder per scenario, named after its mode, with `video.mp4` and
-its own `manifest.json`. These copies are licensed for
+perfect storm with dropped frames and with frames out of order, the idle behaviours, and the static flags set each way (both inside a
+rest with a paused clock, in hindsight, and in hindsight after a rest's frame dropped): a folder per scenario, named after its mode,
+with `video.mp4` and its own `manifest.json`. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
 
@@ -423,9 +436,9 @@ Settings that would break the loop or the pacing are rejected with an error; not
     `first` frame and `count`, and out of order the `order` they are shown in) and `expected` (`skippedFrameIndices`: frame
     indices never presented; `outOfOrderRefreshes`: refreshes that show a frame below one shown before).
   - the rate the game prefers while showing each frame (`frames.preferredFps`); `frames.targetFps` and `frames.preferredFps` are
-    `null` for a game that presents on demand. With an idle behaviour, `frames.static` says which frames are at rest (their
-    markers are flagged static; `animationErrorMs` still gives the raw error of a step from or to them, which mb-framepacing leaves
-    unjudged).
+    `null` for a game that presents on demand. With an idle behaviour, `frames.staticAfter` and `frames.staticBefore` give each
+    frame's static flags as its marker carries them (`animationErrorMs` still gives the raw error of the step from a static frame
+    to the next, which mb-framepacing leaves unjudged).
   - the licence of the videos (`license`): this repository's, CC BY-NC-SA 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
@@ -473,5 +486,6 @@ at the moment. Windows and Linux (on a build server through Mesa's EGL) have bot
 - `test_check_marker_run.py`: comparing mb-framepacing's measurement with the manifest.
 - `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
 - `test_presentation_faults.py`: dropped frames and frames out of order: where the events go, drop runs of 1 to 4, swapped pairs
-  and derangements, the frame on screen, and what a measurement counts as presented.
-- `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps) and their pacing.
+  and derangements, a rest's frame dropped before the wake-up, the frame on screen, and what a measurement counts as presented.
+- `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps), their pacing and their
+  static flags (in advance, both inside a rest, in hindsight).

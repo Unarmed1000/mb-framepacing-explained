@@ -27,11 +27,20 @@ def events(name: str) -> tuple[ft.SimulatedFrames, list[faults.Block]]:
 
 class BlockTests(unittest.TestCase):
     def test_two_events_a_second_at_30_and_70_percent(self) -> None:
-        for fault in faults.FAULTS:
+        for fault in (faults.DROPPED, faults.OUT_OF_ORDER):
             frames, blocks = events(f"{STORM}-{fault}")
             self.assertEqual(len(blocks), 16, fault)
             starts = [frames.flips[block.first] for block in blocks]
             self.assertEqual(starts, [second * 60 + at for second in range(8) for at in (18, 42)], fault)
+
+    def test_before_wake_drops_the_first_single_frame_rest_after_the_first_frame(self) -> None:
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-before-wake")
+        # Frame 0 rests (the clip's first frame is never dropped); frame 3 is the first rest between moving frames
+        self.assertEqual(faults.before_wake(mode, (True, False, False, True, False, True, False)), faults.Block(3, 1))
+        with self.assertRaisesRegex(ValueError, "no rest of a single frame"):
+            _ = faults.before_wake(mode, (True, False, False, False))
+        # The frame before it stays on screen
+        self.assertEqual(faults.screen((0, 1, 2, 5, 6), 8, faults.DROPPED_BEFORE_WAKE, [faults.Block(3, 1)]), (0, 1, 2, 2, 2, 2, 4, 4))
 
     def test_drop_runs_are_1_to_4_frames(self) -> None:
         _, blocks = events(f"{STORM}-dropped-frames")

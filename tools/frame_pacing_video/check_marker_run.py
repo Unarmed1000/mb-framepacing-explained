@@ -10,9 +10,10 @@ then point this script at the manifest, the clip's file name and the analysis fo
 
 It reads mb-framepacing's run-1-frames.csv and checks, frame by frame, that every frame the clip presents was presented and that its
 animation error is the manifest's (animationErrorMs), within --tolerance-ms. A clip with a presentation fault (-dropped-frames,
--out-of-order) lists the frames it presents (presented); the others must not be measured. The run's first frame has no error in
-mb-framepacing (no previous frame), and neither has a step from or to a static frame (an idle behaviour's frames at rest: the
-manifest's static), so those are not compared. Exit code 0 when they agree.
+-out-of-order, -dropped-before-wake) lists the frames it presents (presented); the others must not be measured. The run's first frame
+has no error in mb-framepacing (no previous frame), and neither has the step from a static frame to the next (an idle behaviour's
+frames at rest: the manifest's staticAfter on the frame, or staticBefore on the next frame when that is frame index + 1), so those are
+not compared; the step into a static frame is. Exit code 0 when they agree.
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
@@ -51,14 +52,22 @@ def expected_errors(manifest: Path, video: str) -> tuple[int, list[float | None]
     frames = cast(dict[str, object], box["frames"])
     errors = cast(list[float | None], frames["animationErrorMs"])
     presented = cast(list[int] | None, box.get("presented"))
-    static = cast(list[bool] | None, frames.get("static"))
-    if static is not None:
-        # mb-framepacing does not judge a step from or to a static frame: no error to compare
+    after = cast(list[bool] | None, frames.get("staticAfter"))
+    before = cast(list[bool] | None, frames.get("staticBefore"))
+    if after is not None and before is not None:
         order = presented if presented is not None else list(range(len(errors)))
         for position, index in enumerate(order):
-            if static[index] or static[order[position - 1]]:
+            if static_step(after, before, order[position - 1], index):
                 errors[index] = None
     return cast(int, entry["markerFirstFrameIndex"]), errors, presented
+
+
+def static_step(after: Sequence[bool], before: Sequence[bool], previous: int, index: int) -> bool:
+    """Whether mb-framepacing leaves the step from presented frame `previous` to presented frame `index` unjudged: the previous frame
+    is static after, or this one is static before and follows it directly (frame index - 1; the clip's first frame follows its last
+    one, the previous loop's). Static before after a frame never shown marks nothing."""
+    follows = previous == index - 1 or (index == 0 and previous == len(before) - 1)
+    return after[previous] or (before[index] and follows)
 
 
 def measured_errors(analysis: Path) -> dict[int, float | None]:

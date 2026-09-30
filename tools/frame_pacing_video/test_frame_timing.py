@@ -64,7 +64,7 @@ class ModeTests(unittest.TestCase):
                 _ = ft.parse_mode(bad)
 
     def test_an_idle_behaviour_comes_before_a_fault(self) -> None:
-        for idle in ("static-rests", "on-demand", "on-demand-paused-clock", "idle-1fps"):
+        for idle in ("static-rests", "static-rests-paused-clock", "on-demand", "on-demand-paused-clock", "on-demand-paused-clock-hindsight", "idle-1fps"):
             self.assertEqual(ft.parse_mode(f"60-{idle}"), ft.FrameMode(f"60-{idle}", 60, idle=idle))
         mode = ft.parse_mode("60-naive-5ms-static-rests-dropped-frames")
         self.assertEqual((mode.noise, mode.window, mode.idle, mode.fault), (ft.Noise.WINDOW, 5 * MS, "static-rests", "dropped-frames"))
@@ -77,6 +77,9 @@ class ModeTests(unittest.TestCase):
             "60 Hz ideal timer, on demand, clock paused at rest, frames out of order",
         )
         self.assertEqual(ft.describe(ft.parse_mode("60-idle-1fps"), PARAMETERS), "60 Hz ideal timer, 1 fps at rest")
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-before-wake")
+        self.assertEqual((mode.idle, mode.fault), ("on-demand-paused-clock-hindsight", "dropped-before-wake"))
+        self.assertEqual(ft.describe(mode, PARAMETERS), "60 Hz ideal timer, on demand, clock paused at rest, flagged on waking, a rest's frame dropped")
 
     def test_labels(self) -> None:
         self.assertEqual(ft.describe(ft.parse_mode("60-dropped-frames"), PARAMETERS), "60 Hz ideal timer, dropped frames")

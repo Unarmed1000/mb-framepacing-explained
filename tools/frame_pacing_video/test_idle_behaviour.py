@@ -30,14 +30,27 @@ class IdleTests(unittest.TestCase):
     def test_static_rests_renders_every_frame_and_flags_the_ones_at_rest(self) -> None:
         result = idle.apply(ft.parse_mode("60-static-rests"), clip(10), resting((0, 1), (5, 7)), FPS)
         self.assertEqual(result.frames, clip(10))
-        self.assertEqual(result.static, (True, True, False, False, False, True, True, True, False, False))
+        self.assertEqual(result.resting, (True, True, False, False, False, True, True, True, False, False))
+        self.assertEqual((result.static_after, result.static_before), (result.resting, (False,) * 10))
         self.assertFalse(result.on_demand)
+
+    def test_static_rests_with_a_paused_clock_flag_both_inside_a_rest(self) -> None:
+        result = idle.apply(ft.parse_mode("60-static-rests-paused-clock"), clip(10), resting((0, 1), (5, 7)), FPS)
+        self.assertEqual(result.frames.flips, clip(10).flips)
+        self.assertEqual(result.static_after, result.resting)
+        # The frame that reaches the rest pose (5) is static after only; inside the rest (1, 6, 7) both. The clip's first frame follows
+        # its last, which moves
+        self.assertEqual(result.static_before, (False, True, False, False, False, False, True, True, False, False))
+        # The clock stands through each rest and resumes with one frame's step; the frame that reaches the rest pose keeps its step
+        self.assertEqual([moment * FPS for moment in result.frames.animation], [0, 0, 1, 2, 3, 4, 4, 4, 5, 6])
+        self.assertEqual(result.scene, clip(10).animation)
 
     def test_on_demand_renders_only_the_first_frame_at_rest(self) -> None:
         result = idle.apply(ft.parse_mode("60-on-demand"), clip(10), resting((0, 1), (5, 7)), FPS)
         # Frame 0 always, then 2 to 5, then nothing until frame 8 moves
         self.assertEqual(result.frames.flips, (0, 2, 3, 4, 5, 8, 9))
-        self.assertEqual(result.static, (True, False, False, False, True, False, False))
+        self.assertEqual(result.resting, (True, False, False, False, True, False, False))
+        self.assertEqual((result.static_after, result.static_before), (result.resting, (False,) * 7))
         self.assertTrue(result.on_demand)
         # The clock runs on: every frame shows its own flip's moment
         self.assertEqual(result.frames.animation, tuple(Fraction(flip) / FPS for flip in result.frames.flips))
@@ -50,11 +63,20 @@ class IdleTests(unittest.TestCase):
         self.assertEqual(result.scene, tuple(Fraction(flip) / FPS for flip in result.frames.flips))
         self.assertEqual([moment * FPS for moment in result.frames.animation], [0, 1, 2, 3, 4, 5, 6])
 
+    def test_hindsight_moves_the_flag_to_the_frame_that_wakes_up(self) -> None:
+        advance = idle.apply(ft.parse_mode("60-on-demand-paused-clock"), clip(10), resting((0, 1), (5, 7)), FPS)
+        hindsight = idle.apply(ft.parse_mode("60-on-demand-paused-clock-hindsight"), clip(10), resting((0, 1), (5, 7)), FPS)
+        self.assertEqual((hindsight.frames, hindsight.scene, hindsight.resting, hindsight.on_demand), (advance.frames, advance.scene, advance.resting, True))
+        self.assertEqual(hindsight.static_after, (False,) * 7)
+        # Static before on the frame after each rest frame: the frame shown before it
+        self.assertEqual(hindsight.static_before, (False, True, False, False, False, True, False))
+        self.assertEqual(hindsight.static_before, advance.static_after[-1:] + advance.static_after[:-1])
+
     def test_idling_at_1_fps_keeps_a_frame_a_second_paced_at_the_idle_rate(self) -> None:
         # At rest from the start and from refresh 100 to the clip's end
         result = idle.apply(ft.parse_mode("60-idle-1fps"), clip(240), resting((0, 30), (100, 239)), FPS)
         flips = result.frames.flips
-        self.assertEqual([flip for flip, still in zip(flips, result.static, strict=True) if still], [0, 100, 160, 220])
+        self.assertEqual([flip for flip, still in zip(flips, result.static_after, strict=True) if still], [0, 100, 160, 220])
         self.assertEqual(flips[-1], 220)
         # The clip's first follows the previous loop's last at rest (idle); the first at rest still comes at the full rate
         intervals = dict(zip(flips, result.frames.intervals, strict=True))

@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 import unittest
 import uuid
+from dataclasses import replace
 from fractions import Fraction
 from pathlib import Path
 from typing import cast
@@ -997,11 +998,55 @@ class SingleAndMarkerTests(unittest.TestCase):
         lead = gv.MARKER_LEAD_REFRESHES
         for frame, payload in zip(range(-lead, len(payloads) - lead), payloads, strict=True):
             at_rest = gv.at_rest(settings, job.speed, gv.content_time(settings, job.top, job.speed, frame))
-            self.assertEqual(payload.flags == MarkerFlags.STATIC, at_rest, frame)
+            self.assertEqual(payload.flags, MarkerFlags.STATIC_AFTER if at_rest else MarkerFlags.NONE, frame)
         entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
-        static = cast(dict[str, list[bool]], entry["frames"])["static"]
-        # 8 rests of 6 refreshes; every frame rendered
-        self.assertEqual((sum(static), len(static)), (48, 480))
+        frames = cast(dict[str, list[bool]], entry["frames"])
+        # 8 rests of 6 refreshes; every frame rendered; flagged in advance only
+        self.assertEqual((sum(frames["staticAfter"]), len(frames["staticAfter"])), (48, 480))
+        self.assertEqual(set(frames["staticBefore"]), {False})
+
+    def test_static_rests_with_a_paused_clock_flag_both_inside_a_rest(self) -> None:
+        settings, job, payloads = self.payloads("60-static-rests-paused-clock")
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        frames = cast(dict[str, list[object]], entry["frames"])
+        after, before = cast(list[bool], frames["staticAfter"]), cast(list[bool], frames["staticBefore"])
+        # 8 rests of 7 refreshes (the ideal timer): the frame that reaches the rest pose static after, the 6 after it both
+        self.assertEqual((sum(after), sum(before)), (56, 48))
+        self.assertTrue(all(not now or previous for now, previous in zip(before, after[-1:] + after[:-1], strict=True)))
+        # The clock stands inside a rest
+        animation = cast(list[float], frames["animationMs"])
+        self.assertTrue(all(b == a for (a, b), now in zip(itertools.pairwise(animation), before[1:], strict=True) if now))
+        flags = {payload.flags for payload in payloads}
+        self.assertEqual(flags, {MarkerFlags.NONE, MarkerFlags.STATIC_AFTER, MarkerFlags.STATIC_AFTER | MarkerFlags.STATIC_BEFORE})
+
+    def test_hindsight_analyses_like_the_flag_in_advance(self) -> None:
+        settings, job, hindsight = self.payloads("60-on-demand-paused-clock-hindsight")
+        _, _, advance = self.payloads("60-on-demand-paused-clock")
+        # The same markers but for the flags: static after on each rest's frame, or static before on the frame after it
+        self.assertEqual([replace(payload, flags=MarkerFlags.NONE) for payload in hindsight], [replace(payload, flags=MarkerFlags.NONE) for payload in advance])
+        indices = {payload.frame_index for payload in hindsight}
+        woken = {payload.frame_index for payload in hindsight if payload.flags == MarkerFlags.STATIC_BEFORE}
+        resting = {payload.frame_index for payload in advance if payload.flags == MarkerFlags.STATIC_AFTER}
+        self.assertEqual(woken, {index + 1 for index in resting} & indices)
+        self.assertEqual({payload.flags for payload in hindsight}, {MarkerFlags.NONE, MarkerFlags.STATIC_BEFORE})
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        self.assertEqual(set(cast(dict[str, list[bool]], entry["frames"])["staticAfter"]), {False})
+
+    def test_a_rest_frame_dropped_before_the_wake_up(self) -> None:
+        settings, job, _ = self.payloads("60-on-demand-paused-clock-hindsight-dropped-before-wake")
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        frames = cast(dict[str, list[object]], entry["frames"])
+        fault = cast(dict[str, object], entry["fault"])
+        (block,) = cast(list[dict[str, int]], fault["blocks"])
+        dropped = block["first"]
+        self.assertEqual((fault["kind"], block["count"], entry["expected"]), ("dropped-before-wake", 1, {"skippedFrameIndices": 1, "outOfOrderRefreshes": 0}))
+        # The rest's frame is never shown; the frame that wakes up after it still says static before, and its step is judged: the
+        # paused clock's full rest (the drop adds a frame to the animation step and a refresh to the display step alike)
+        self.assertIsNone(frames["refresh"][dropped])
+        self.assertEqual(cast(list[bool], frames["staticBefore"])[dropped + 1], True)
+        errors = cast(list[float | None], frames["animationErrorMs"])
+        self.assertIsNone(errors[dropped])
+        self.assertEqual(errors[dropped + 1], -100.0)
 
     def test_on_demand_renders_nothing_more_at_rest_and_has_no_frame_time(self) -> None:
         for mode in ("60-on-demand", "60-on-demand-paused-clock"):
@@ -1016,7 +1061,8 @@ class SingleAndMarkerTests(unittest.TestCase):
                 frames = cast(dict[str, list[object]], entry["frames"])
                 self.assertEqual((set(frames["targetFps"]), set(frames["preferredFps"]), entry["targetFps"]), ({None}, {None}, None))
                 # Only the first frame of each rest is rendered (and static), held until the box moves again
-                refreshes, static = cast(list[int], frames["refresh"]), cast(list[bool], frames["static"])
+                refreshes, static = cast(list[int], frames["refresh"]), cast(list[bool], frames["staticAfter"])
+                self.assertEqual(set(frames["staticBefore"]), {False})
                 self.assertTrue(all(not (a and b) for a, b in itertools.pairwise(static)))
                 held = [b - a for a, b, still in zip(refreshes, refreshes[1:], static, strict=False) if still]
                 self.assertTrue(held and all(hold > 1 for hold in held))

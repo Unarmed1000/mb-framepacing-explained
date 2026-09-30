@@ -112,7 +112,7 @@
 <text x="20.0" y="54.0" text-anchor="start" class="sub">The whole run: 8.0 s, 433 presented frames on a 60 Hz display, measured against a 16.7 ms target.</text>
 <text x="20.0" y="73.0" text-anchor="start" class="sub">Resolution 16.7 ms (one capture period); error threshold 1 ms.</text>
 <text x="20.0" y="92.0" text-anchor="start" class="sub">Every frame is drawn.</text>
-<text x="20.0" y="111.0" text-anchor="start" class="sub">Frame rates and display time steps excluding 8 static frames: nothing animates in them.</text>
+<text x="20.0" y="111.0" text-anchor="start" class="sub">Frame rates and display time steps excluding 8 static frames: nothing animates while they are on screen.</text>
 <rect class="tile" x="860.0" y="14" width="300" height="84" rx="10"/>
 <text x="874.0" y="33.0" text-anchor="start" class="label">DISPLAY</text>
 <text x="874.0" y="56.0" text-anchor="start"><tspan class="tile-value">60 Hz</tspan><tspan class="vsync-n">  fixed refresh (vsync)</tspan></text>

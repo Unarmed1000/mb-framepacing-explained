@@ -18,7 +18,15 @@
     {
       "name": "Measure it yourself",
       "about": "How to measure animation error on a real display, and what mb-framepacing reports for known problems.",
-      "slides": ["measure", "test-clips", "test-clips-late", "test-clips-busy", "test-clips-faults", "test-clips-idle"]
+      "slides": [
+        "measure",
+        "test-clips",
+        "test-clips-late",
+        "test-clips-busy",
+        "test-clips-faults",
+        "test-clips-idle",
+        "test-clips-static"
+      ]
     },
     {
       "name": "Staying within the frame budget",

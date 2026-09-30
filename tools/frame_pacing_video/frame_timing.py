@@ -139,8 +139,8 @@ MODE_PATTERN = re.compile(
     + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-busy-(?P<busy>full-rate|swappy))?"
-    + r"(?:-(?P<idle>static-rests|on-demand-paused-clock|on-demand|idle-1fps))?"
-    + r"(?:-(?P<fault>dropped-frames|out-of-order))?"
+    + r"(?:-(?P<idle>static-rests-paused-clock|static-rests|on-demand-paused-clock-hindsight|on-demand-paused-clock|on-demand|idle-1fps))?"
+    + r"(?:-(?P<fault>dropped-frames|out-of-order|dropped-before-wake))?"
 )
 NOISE_NAMES = "a system load (light, typical, heavy: errors in most frames; -realistic, e.g. typical-realistic: rare), a window like 1ms or 4ms, or synthetic"
 
@@ -166,8 +166,9 @@ def _parse_timing(name: str) -> FrameMode:
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
             + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
-            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy), each optionally followed by -static-rests, -on-demand, "
-            + "-on-demand-paused-clock or -idle-1fps and by -dropped-frames or -out-of-order"
+            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy), each optionally followed by -static-rests, "
+            + "-static-rests-paused-clock, -on-demand, -on-demand-paused-clock, -on-demand-paused-clock-hindsight or -idle-1fps and by "
+            + "-dropped-frames, -out-of-order or -dropped-before-wake"
         )
     rate = int(match["rate"])
     if match["storm_ms"] is not None:
@@ -499,11 +500,13 @@ def delta_times(frames: SimulatedFrames, duration: Fraction) -> list[Fraction]:
 
 IDLE_LABELS = {
     "static-rests": "static at rest",
+    "static-rests-paused-clock": "static at rest, clock paused",
     "on-demand": "on demand",
     "on-demand-paused-clock": "on demand, clock paused at rest",
+    "on-demand-paused-clock-hindsight": "on demand, clock paused at rest, flagged on waking",
     "idle-1fps": "1 fps at rest",
 }
-FAULT_LABELS = {"dropped-frames": "dropped frames", "out-of-order": "frames out of order"}
+FAULT_LABELS = {"dropped-frames": "dropped frames", "out-of-order": "frames out of order", "dropped-before-wake": "a rest's frame dropped"}
 
 
 def describe(mode: FrameMode, parameters: TimingParameters) -> str:

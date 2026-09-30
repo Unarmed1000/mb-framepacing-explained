@@ -33,15 +33,29 @@ class CompareTests(unittest.TestCase):
 
 
 class ManifestTests(unittest.TestCase):
-    def test_a_step_from_or_to_a_static_frame_is_not_compared(self) -> None:
-        frames = {"animationErrorMs": [0.0, 1.0, -100.0, 2.0, 3.0], "static": [False, True, False, False, False]}
-        manifest = {"videos": [{"file": "video.mp4", "markerFirstFrameIndex": 5, "box": {"frames": frames}}]}
+    def expected(self, after: list[bool], before: list[bool], presented: list[int] | None = None) -> tuple[int, list[float | None], list[int] | None]:
+        frames = {"animationErrorMs": [0.0, 1.0, -100.0, 2.0, 3.0], "staticAfter": after, "staticBefore": before}
+        box: dict[str, object] = {"frames": frames}
+        if presented is not None:
+            box["presented"] = presented
+        manifest = {"videos": [{"file": "video.mp4", "markerFirstFrameIndex": 5, "box": box}]}
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "manifest.json"
             _ = path.write_text(json.dumps(manifest), encoding="utf-8")
-            first, expected, presented = check.expected_errors(path, "video.mp4")
-        # Frame 1 is static, so neither its step nor the one after it (the paused clock's -100 ms) is judged
-        self.assertEqual((first, expected, presented), (5, [0.0, None, None, 2.0, 3.0], None))
+            return check.expected_errors(path, "video.mp4")
+
+    def test_the_step_from_a_static_frame_is_not_compared(self) -> None:
+        none = [False] * 5
+        # Frame 1 is static after (in advance) or frame 2 static before (in hindsight): the step from frame 1 (the paused clock's
+        # -100 ms) is not judged; the step into frame 1 is
+        self.assertEqual(self.expected([False, True, False, False, False], none), (5, [0.0, 1.0, None, 2.0, 3.0], None))
+        self.assertEqual(self.expected(none, [False, False, True, False, False]), (5, [0.0, 1.0, None, 2.0, 3.0], None))
+        # The clip's first frame follows its last one
+        self.assertEqual(self.expected(none, [True, False, False, False, False])[1], [None, 1.0, -100.0, 2.0, 3.0])
+
+    def test_static_before_after_a_frame_never_shown_marks_nothing(self) -> None:
+        # Frame 1 is dropped: frame 2 follows frame 0, so its static before (for frame 1) leaves its step judged
+        self.assertEqual(self.expected([False] * 5, [False, False, True, False, False], [0, 2, 3, 4]), (5, [0.0, 1.0, -100.0, 2.0, 3.0], [0, 2, 3, 4]))
 
 
 if __name__ == "__main__":
