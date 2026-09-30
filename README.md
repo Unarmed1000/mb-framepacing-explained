@@ -30,9 +30,11 @@ timing diagram's frames exactly, so the difference can be seen rather than descr
 | [`tools/web_export`](tools/web_export)                 | Generates exactly the clips the page's blind test needs, web-encoded                                                                     |
 | [`tools/timing_diagrams`](tools/timing_diagrams)       | Generates the timing diagrams and example charts of the docs and the page (`doc/images/*.svg`; `--png` for bitmaps)                      |
 
-Setup is one command: `setup.cmd` (Windows) or `./setup.sh` (Linux, macOS), optionally with `--ffmpeg <path>`. It creates the
-`.venv` and the machine-local `local.toml`, and fetches the mb-framepacing submodule (`external/mb-framepacing`, its frame marker
-library) when the clone did not (`git clone --recurse-submodules` fetches it right away).
+Setup needs [uv](https://docs.astral.sh/uv/) (`winget install --id astral-sh.uv` on Windows), then is one command: `setup.cmd`
+(Windows) or `./setup.sh` (Linux, macOS), optionally with `--ffmpeg <path>`. uv creates the `.venv` on the Python of
+`.python-version` with the packages `uv.lock` pins; the setup then writes the machine-local `local.toml` and fetches the
+mb-framepacing submodule (`external/mb-framepacing`, its frame marker library) when the clone did not (`git clone
+--recurse-submodules` fetches it right away). Run the tools with `uv run`, e.g. `uv run tools/frame_pacing_video/generate_videos.py --help`.
 
 ## Frame pacing in one minute
 

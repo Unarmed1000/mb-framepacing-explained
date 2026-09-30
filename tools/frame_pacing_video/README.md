@@ -118,6 +118,7 @@ How much sooner or later than usual the naive loop reads the clock:
     (idling at the rate it wants: not late, not below its preferred rate). It needs rests of at least 1 s: `--speed idle`.
 
   The game renders fewer frames, but their indices stay consecutive, and the clip's first frame is always rendered.
+
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
   really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also
@@ -258,7 +259,7 @@ import them and measure their animation error, and its numbers can be checked ag
 The page's scenarios as marked clips, then measured and compared, clip by clip:
 
 ```powershell
-.venv\Scripts\python tools/frame_pacing_video/generate_videos.py --single 60 30 60-naive-5ms 60-diagram-slow-frames-every-1s `
+uv run tools/frame_pacing_video/generate_videos.py --single 60 30 60-naive-5ms 60-diagram-slow-frames-every-1s `
   60-diagram-half-rate-even 60-diagram-half-rate-bad-pacing 60-busy-full-rate 60-busy-swappy `
   60-naive-5ms-diagram-slow-frames-every-1s --marker --speed fast
 cd out/frame_pacing_video/box-single-marker/fast
@@ -280,23 +281,23 @@ videos stay CC BY-NC-SA 4.0.
 
 ## Setup
 
-From the repository root:
+The Python setup uses [uv](https://docs.astral.sh/uv/), as mb-framepacing does: install it once (`winget install --id
+astral-sh.uv` on Windows, `curl -LsSf https://astral.sh/uv/install.sh | sh` on Linux and macOS). Then, from the repository root:
 
 ```powershell
 setup.cmd --ffmpeg D:\path\to\ffmpeg          # Windows
 ./setup.sh --ffmpeg /path/to/ffmpeg           # Linux, macOS
 ```
 
-This creates `.venv` with Python 3.14, installs Pillow, Ruff and basedpyright, writes `local.toml`, checks FFmpeg and fetches the
-mb-framepacing submodule (the marker library) when it is missing. It is safe to run again; `--ffmpeg` is optional.
+uv creates `.venv` on the Python of `.python-version` (3.14; it downloads it when missing) with the packages `uv.lock` pins (Pillow,
+moderngl, Ruff and basedpyright); then `tools/setup_local.py` writes `local.toml`, checks FFmpeg and fetches the mb-framepacing
+submodule (the marker library) when it is missing. It is safe to run again; `--ffmpeg` is optional.
 
 Manual equivalent, run from the repository root:
 
 ```powershell
 git submodule update --init external/mb-framepacing
-py -3.14 -m venv .venv
-.venv\Scripts\python -m pip install --upgrade pip
-.venv\Scripts\python -m pip install --group dev
+uv sync                                          # .venv, as uv.lock pins it
 copy local.example.toml local.toml               # then set [ffmpeg] path
 ```
 
@@ -322,7 +323,7 @@ it can encode lossless H.264. `ffprobe` is only needed by the tests and is taken
 
 ## Usage
 
-Run in the `.venv`:
+Run with `uv run` (or in the activated `.venv`, as below):
 
 ```powershell
 python tools/frame_pacing_video/generate_videos.py                       # all 486 side by side videos
@@ -468,7 +469,7 @@ at the moment. Windows and Linux (on a build server through Mesa's EGL) have bot
 ## Tests
 
 ```powershell
-.venv\Scripts\python -m unittest discover -s tools/frame_pacing_video -v
+uv run python -m unittest discover -s tools/frame_pacing_video -v
 ```
 
 - `test_pcg32.py`: the generator against PCG32's reference output, seeding from a text, even `randint`, `random` and `choice`.

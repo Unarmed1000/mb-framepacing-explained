@@ -44,8 +44,10 @@ contribution is a correction with a link to where it can be checked.
 
 The [pages workflow](.github/workflows/pages.yml) runs these on every push to master; please run them before a pull request:
 
-- Python tools: `setup.cmd` (Windows) or `./setup.sh` once, then `python -m unittest discover -s tools/frame_pacing_video` and
-  `-s tools/web_export`, `ruff check tools`, `ruff format --check tools` and `basedpyright tools`, in the `.venv`.
+- Python tools: `setup.cmd` (Windows) or `./setup.sh` once (it needs [uv](https://docs.astral.sh/uv/)), then
+  `uv run python -m unittest discover -s tools/frame_pacing_video` and `-s tools/web_export`, `uv run ruff check .`,
+  `uv run ruff format --check .` and `uv run basedpyright`. After changing `pyproject.toml`'s dependencies, `uv lock` updates
+  `uv.lock`; commit both.
 - The page, in `web/`: `npm ci`, then `npm run format:check`, `npm test` and `npm run build`. `npm run dev` serves it locally.
 - Markdown and JSON are formatted with Prettier (`npx prettier --write` on the files you changed).
 

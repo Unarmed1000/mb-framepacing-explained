@@ -39,10 +39,10 @@ The blind tests come before the explanations, so they cannot give their answers 
 
 ## Running it
 
-From the repository root, with the `.venv` set up (`setup.cmd` or `./setup.sh`) and Node.js 24:
+From the repository root, with the `.venv` set up (`setup.cmd` or `./setup.sh`, with uv) and Node.js 24:
 
 ```sh
-python tools/web_export/build_blind_test.py   # the clips, web-encoded, into web/public/videos (git-ignored)
+uv run tools/web_export/build_blind_test.py   # the clips, web-encoded, into web/public/videos (git-ignored)
 cd web
 npm install
 npm run dev        # or: npm run build, then npm run preview

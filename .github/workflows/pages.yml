@@ -23,21 +23,22 @@ jobs:
         with:
           submodules: true
 
-      # pip's cache keeps the wheels it downloads and builds (glcontext's, below), keyed on pyproject.toml's dependencies
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-
       # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl). moderngl's
-      # glcontext has no wheel for this Python yet, so pip builds it: it needs the X11 and EGL headers
-      - name: Install FFmpeg, Pillow and OpenGL
+      # glcontext has no wheel for this Python yet, so uv builds it: it needs the X11 and EGL headers
+      - name: Install FFmpeg and OpenGL
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
-          python -m pip install "Pillow>=12" "moderngl>=5.12"
-          python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
+
+      # uv: Python from .python-version, the packages from uv.lock (its cache keeps the wheels it downloads and builds)
+      - name: uv
+        uses: astral-sh/setup-uv@v10.2.0
+      - name: Python packages (pyproject.toml, uv.lock)
+        run: |
+          uv sync --locked
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: FFmpeg check
+        run: python tools/frame_pacing_video/generate_videos.py --check-ffmpeg
 
       - name: Test the video tools
         run: python -m unittest discover -s tools/frame_pacing_video

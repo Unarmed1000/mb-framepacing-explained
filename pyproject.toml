@@ -1,5 +1,12 @@
-# Project metadata and Python dependencies. The tools are scripts, not an installable package.
-# Set up the .venv with one command: setup.cmd (Windows) or ./setup.sh (Linux, macOS); see tools/setup_venv.py.
+# Project metadata and Python dependencies, managed with uv (https://docs.astral.sh/uv/). The tools are scripts, not an installable
+# package: `uv sync` creates .venv on the Python of .python-version (it downloads it when missing) with the dependencies below and the
+# dev group, and uv.lock pins every package they bring along.
+#   setup.cmd / ./setup.sh                     the whole setup: .venv, the mb-framepacing submodule, local.toml (tools/setup_local.py)
+#   uv sync                                    create or update .venv only (CI: uv sync --locked)
+#   uv run python -m unittest discover -s tools/frame_pacing_video
+#   uv run ruff check . && uv run ruff format --check . && uv run basedpyright
+#   uv run tools/frame_pacing_video/generate_videos.py --help
+#   uv lock --upgrade-package ruff             raise one package (a pinned tool: update its pin below first)
 
 [project]
 name = "mb-framepacing-explained"
@@ -15,13 +22,13 @@ dependencies = [
 ]
 
 [dependency-groups]
-# Everything the .venv needs: the runtime dependencies above plus the lint and type check tools (pinned, so every machine agrees).
+# The lint and type check tools, pinned so every machine agrees; uv sync installs them with the dependencies above
 dev = [
-    "Pillow>=12",
-    "moderngl>=5.12",
     "basedpyright==1.40.1",
     "ruff==0.16.8",
 ]
 
 [tool.uv]
+# Not a package: nothing here is built or installed, uv only manages the environment
 package = false
+required-version = ">=0.12"

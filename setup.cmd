@@ -1,13 +1,17 @@
 @echo off
 rem SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 rem SPDX-License-Identifier: CC-BY-NC-SA-4.0
-rem Create or update the .venv and local.toml (see tools\setup_venv.py). Arguments are passed on, for example:
+rem Set up the repository: uv creates or updates .venv (Python from .python-version, packages from uv.lock), then
+rem tools\setup_local.py fetches the mb-framepacing submodule and creates local.toml. Arguments are passed on, for example:
 rem   setup.cmd --ffmpeg C:\ffmpeg\bin
 setlocal
-where py >nul 2>nul
+where uv >nul 2>nul
 if errorlevel 1 (
-  python "%~dp0tools\setup_venv.py" %*
-) else (
-  py -3.14 "%~dp0tools\setup_venv.py" %*
+  echo uv was not found. Install it: winget install --id astral-sh.uv ^(or see https://docs.astral.sh/uv/^), then run setup.cmd again. 1>&2
+  exit /b 1
 )
-exit /b %errorlevel%
+pushd "%~dp0"
+uv run tools\setup_local.py %*
+set result=%errorlevel%
+popd
+exit /b %result%
