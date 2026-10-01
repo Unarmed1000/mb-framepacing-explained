@@ -20,8 +20,8 @@ and a device idling at 1 fps (at the idle speed, whose rests are 3 s: SCENARIO_S
 game can: a rest rendered every refresh with its clock paused (static after, and inside the rest static before too); the on-demand
 renderer with the paused clock flagged in hindsight (static before on the frame that wakes up, which analyses like the paused clock's
 static after on the frame before the wait); the same with a rest's frame dropped, so the static before after it marks nothing; and
-with the frame that wakes up dropped, so its static before never reaches the screen and the rest is judged. Three more are for
-an analysis that guesses such a lost rest: the paused clock's static after lost with its dropped rest frame; and two that are no
+with the frame that wakes up dropped, so its static before never reaches the screen and, by the flags alone, the rest is judged.
+Three more are for mb-framepacing's guess of such a lost rest (it assumes the frame that held the rest static): the paused clock's static after lost with its dropped rest frame; and two that are no
 rest, frames dropped in the middle of the motion, and a stall of a rest's length (the clock running on) with the frame after it
 dropped. Their manifests give each frame's staticAfter and staticBefore, and with a fault the steps static by those flags
 (expected.staticSteps).

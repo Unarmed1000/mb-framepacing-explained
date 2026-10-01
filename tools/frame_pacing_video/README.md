@@ -92,9 +92,11 @@ How much sooner or later than usual the naive loop reads the clock:
   (mb-framepacing's rule), so dropped frames and frames shown after a later one are not presented. A fault that would land on a
   late or held frame is rejected (e.g. with `-3x-every-1s`). `-dropped-before-wake` drops a single frame instead: the frame of the
   clip's first rest, in a game that presents on demand, so the frame before it stays on screen through the rest and the static
-  before flag of the frame that wakes up speaks for a frame never shown (it marks nothing, and that step is judged).
-  `-dropped-wake` drops the frame that wakes up after that rest: flagged in hindsight, its static before flag never reaches the
-  screen, so the rest is not known to be static and the step across it is judged. `-dropped-after-stall` is the look-alike that
+  before flag of the frame that wakes up speaks for a frame never shown (by the flags alone it marks nothing, and that step is
+  judged). `-dropped-wake` drops the frame that wakes up after that rest: flagged in hindsight, its static before flag never
+  reaches the screen, so by the flags alone the rest is not static and the step across it is judged. mb-framepacing guesses both
+  (it assumes the frame that held the rest static, since the animation clock stood still across the hold; `analyze
+--no-static-guess` switches that off). `-dropped-after-stall` is the look-alike that
   is no rest: in the middle of the motion the game renders nothing for 7 refreshes (as long as a rest of the fast speed) while its
   clock runs on, and the frame after the stall is dropped: one frame index missing after a long hold, but no animation error.
 - **Idle behaviours** (`…-static-rests`, `…-static-rests-paused-clock`, `…-on-demand`, `…-on-demand-paused-clock`,
@@ -273,7 +275,9 @@ python ../../../../tools/frame_pacing_video/check_marker_run.py manifest.json si
 
 `check_marker_run.py` checks that every frame the clip presents was presented (with a presentation fault, the manifest's
 `presented`; the others must not be) and that mb-framepacing's animation error of each frame is the manifest's `animationErrorMs`
-(within 0.01 ms). Every one of the clips above agrees: the numbers behind the web page's charts are
+(within 0.01 ms). The same steps must be judged on both sides: a step the manifest's static flags leave judged has an error in the
+measurement, a step they make static has none. It counts the steps mb-framepacing left unjudged because it assumed the frame before
+static (a flag lost with a dropped frame). Every one of the clips above agrees: the numbers behind the web page's charts are
 what mb-framepacing measures.
 
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `measure/test-data/videos`), plus the

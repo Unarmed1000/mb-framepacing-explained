@@ -17,10 +17,12 @@ middle of the second are clear of them), each a block of frames starting with th
 first rest after its first frame; the clip's other rests are untouched.
 - dropped-before-wake: the rest's frame is rendered but never shown. The frame before it stays on screen through the rest, and the
   frame that wakes up after it follows a frame never shown: its static before flag speaks for that frame (frame index - 1), so it
-  marks nothing, and the step to it is judged.
+  marks nothing, and by the flags alone the step to it is judged.
 - dropped-wake: the frame that wakes up after the rest is rendered but never shown. The rest's frame stays on screen a refresh
   longer; flagged in hindsight, the static before flag was on the dropped frame, so it never reaches the screen: the rest is not
-  known to be static, and the step across it is judged.
+  known to be static, and by the flags alone the step across it is judged.
+mb-framepacing guesses both: it assumes the frame that held the rest static, because the animation clock stood still across the hold
+(the manifest's expected.staticSteps are the steps static by the flags alone, without that guess).
 
 -dropped-after-stall, also for a game that presents on demand, is the look-alike that is not a rest: the game stalls in the middle
 of the motion (the frame on screen at the first FAULT_POINT of the clip's first second stays for STALL_REFRESHES, as long as a rest
