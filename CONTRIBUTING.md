@@ -67,7 +67,7 @@ file's own comment style:
 ```
 
 Third-party code keeps its own notices. The frame marker library is not copied here: it comes from the mb-framepacing submodule
-(`external/mb-framepacing`, its `marker/python`, BSD 3-Clause), pinned to a commit of mb-framepacing.
+(`external/mb-framepacing`, its `sdk/python`, BSD 3-Clause), pinned to a commit of mb-framepacing.
 
 ## The mb-framepacing submodule
 

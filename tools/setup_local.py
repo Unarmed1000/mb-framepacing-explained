@@ -57,7 +57,7 @@ def main() -> int:
     _ = parser.add_argument("--ffmpeg", metavar="PATH", help="store the FFmpeg executable (or the folder that holds it) in local.toml")
     ffmpeg: str | None = parser.parse_args().ffmpeg  # pyright: ignore[reportAny]
 
-    if not (SUBMODULE / "sdk" / "marker" / "python" / "mb_framemarker").is_dir():
+    if not (SUBMODULE / "sdk" / "python" / "mb_framepacing" / "marker").is_dir():
         run(["git", "-C", str(REPO_ROOT), "submodule", "update", "--init", SUBMODULE.relative_to(REPO_ROOT).as_posix()])
 
     if ffmpeg is not None:

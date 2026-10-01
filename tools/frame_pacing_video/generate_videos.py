@@ -22,7 +22,7 @@ while the ui scroll speeds are in virtual pixels per second: on a coarser grid a
 The divider and the labels are drawn at native 1:1 video pixels.
 
 --single MODE [MODE ...] makes one video per mode instead of pairs: a single box (or row) in the middle of the frame, no divider.
-With --marker those videos carry mb-framepacing's frame marker (mb_framemarker, its sdk/marker/python from the submodule), so
+With --marker those videos carry mb-framepacing's frame marker (mb_framepacing.marker, its sdk/python from the submodule), so
 mb-framepacing can import them and measure their animation error: the frame index and the animation time of the frame on screen at
 every refresh, with a start marker before the clip and an end marker after it.
 
@@ -81,11 +81,11 @@ from typing import IO, Protocol, cast
 from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 
 import idle_behaviour as idle
-import marker_path  # noqa: F401  # pyright: ignore[reportUnusedImport]  (mb_framemarker from the submodule)
+import marker_path  # noqa: F401  # pyright: ignore[reportUnusedImport]  (mb_framepacing from the submodule)
 import presentation_faults as faults
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
-from mb_framemarker import (
+from mb_framepacing.marker import (
     ON_DEMAND_FRAME_TICKS,
     TICKS_PER_SECOND,
     MarkerFlags,
@@ -95,12 +95,10 @@ from mb_framemarker import (
     SequenceId,
     StartMetadata,
     generate_modules,
-    marker_size_px,
     modules_to_bitmap,
-    recommended_origin,
 )
-from mb_framemarker import Options as MarkerOptions
-from mb_framemarker import Point as MarkerPoint
+from mb_framepacing.marker import Options as MarkerOptions
+from mb_framepacing.marker import Point as MarkerPoint
 
 type Rgb = tuple[int, int, int]
 
@@ -364,7 +362,7 @@ class Settings:
     @property
     def marker_origin(self) -> tuple[int, int]:
         """Top-left corner of the marker in video pixels: mb-framepacing's recommended place, near the top-left corner."""
-        origin = recommended_origin(MarkerKind.FRAME, self.width, self.height, self.marker_options)
+        origin = self.marker_options.recommended_origin(MarkerKind.FRAME, self.height)
         return origin.x, origin.y
 
     @property
@@ -514,7 +512,7 @@ def validate_marker(settings: Settings) -> None:
     minimum = MARKER_MIN_WEB_MODULE_PX if settings.web else MARKER_MIN_MODULE_PX
     if settings.marker_module_px < minimum:
         raise ValueError(f"--marker-module-px must be at least {minimum}{' for --web' if settings.web else ''}, got {settings.marker_module_px}")
-    size = marker_size_px(settings.marker_options)
+    size = settings.marker_options.marker_size_px()
     left, top = settings.marker_origin
     if top + size > settings.height:
         raise ValueError(f"the marker ({size} px) does not fit in the height {settings.height} below y = {top}")
@@ -641,10 +639,10 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     rendered = idle_frames(settings, mode, speed)
     if mode.fault is None:
         screen = faults.base_screen(frames.flips, refreshes)
-    elif mode.fault == faults.DROPPED_BEFORE_WAKE:
+    elif mode.fault in faults.WAKE_FAULTS:
         if rendered is None or not rendered.on_demand:
-            raise ValueError(f"{mode.name}: -{faults.DROPPED_BEFORE_WAKE} needs a game that presents on demand (-on-demand...)")
-        events = (faults.before_wake(mode, rendered.resting),)
+            raise ValueError(f"{mode.name}: -{mode.fault} needs a game that presents on demand (-on-demand...)")
+        events = (faults.wake_event(mode, rendered.resting),)
         screen = faults.screen(frames.flips, refreshes, mode.fault, list(events))
     else:
         late = [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
@@ -1066,7 +1064,7 @@ def draw_marker(settings: Settings, job: VideoJob, frame: int, image: bytes) -> 
     metadata = StartMetadata(0, marker_sequence_id(job.top)) if payload.kind == MarkerKind.SEQUENCE_START else None
     matrix = generate_modules(payload, metadata)
     pixels = bytearray(image)
-    modules_to_bitmap(matrix, settings.marker_options, MarkerPoint(*settings.marker_origin), pixels, settings.width, settings.height, PixelFormat.RGB24)
+    modules_to_bitmap(matrix, settings.marker_options, MarkerPoint(*settings.marker_origin), pixels, settings.width, settings.height, PixelFormat.R8G8B8)
     return bytes(pixels)
 
 

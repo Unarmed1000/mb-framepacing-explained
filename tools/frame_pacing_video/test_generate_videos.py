@@ -25,7 +25,7 @@ from PIL import Image
 
 import generate_videos as gv
 from frame_timing import parse_mode
-from mb_framemarker import (
+from mb_framepacing.marker import (
     ON_DEMAND_FRAME_TICKS,
     MarkerFlags,
     MarkerKind,
@@ -37,7 +37,7 @@ from mb_framemarker import (
     generate_modules,
     modules_to_bitmap,
 )
-from mb_framemarker import Options as MarkerOptions
+from mb_framepacing.marker import Options as MarkerOptions
 
 SPEEDS = {speed.name: speed for speed in gv.Settings().speeds}
 MODE = parse_mode
@@ -874,7 +874,7 @@ class SingleAndMarkerTests(unittest.TestCase):
                 expected_image,
                 settings.width,
                 settings.height,
-                PixelFormat.RGB24,
+                PixelFormat.R8G8B8,
             )
             self.assertEqual(gv.draw_marker(settings, job, -1, blank), bytes(expected_image))
             video = cast(list[dict[str, object]], gv.build_manifest(settings, jobs)["videos"])[0]
@@ -1044,6 +1044,30 @@ class SingleAndMarkerTests(unittest.TestCase):
         # paused clock's full rest (the drop adds a frame to the animation step and a refresh to the display step alike)
         self.assertIsNone(frames["refresh"][dropped])
         self.assertEqual(cast(list[bool], frames["staticBefore"])[dropped + 1], True)
+        errors = cast(list[float | None], frames["animationErrorMs"])
+        self.assertIsNone(errors[dropped])
+        self.assertEqual(errors[dropped + 1], -100.0)
+
+    def test_a_dropped_wake_up_frame_takes_its_static_before_flag_with_it(self) -> None:
+        settings, job, payloads = self.payloads("60-on-demand-paused-clock-hindsight-dropped-wake")
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        frames = cast(dict[str, list[object]], entry["frames"])
+        fault = cast(dict[str, object], entry["fault"])
+        (block,) = cast(list[dict[str, int]], fault["blocks"])
+        dropped = block["first"]
+        self.assertEqual((fault["kind"], block["count"], entry["expected"]), ("dropped-wake", 1, {"skippedFrameIndices": 1, "outOfOrderRefreshes": 0}))
+        # The frame that wakes up carries the rest's static before flag and is never shown; the frames around it have no flag
+        before = cast(list[bool], frames["staticBefore"])
+        self.assertEqual((before[dropped - 1], before[dropped], before[dropped + 1]), (False, True, False))
+        self.assertIsNone(frames["refresh"][dropped])
+        # No marker shows the dropped frame, so its flag never reaches the screen: in the clip's own loop, one static before fewer
+        # than the clip flagged in hindsight
+        count = len(frames["refresh"])
+        self.assertNotIn(count + dropped, {payload.frame_index for payload in payloads})
+        _, _, whole = self.payloads("60-on-demand-paused-clock-hindsight")
+        flagged = {payload.frame_index for payload in payloads if payload.flags == MarkerFlags.STATIC_BEFORE}
+        self.assertEqual({payload.frame_index for payload in whole if payload.flags == MarkerFlags.STATIC_BEFORE} - flagged, {count + dropped})
+        # The step across the rest is judged: the paused clock's full rest
         errors = cast(list[float | None], frames["animationErrorMs"])
         self.assertIsNone(errors[dropped])
         self.assertEqual(errors[dropped + 1], -100.0)

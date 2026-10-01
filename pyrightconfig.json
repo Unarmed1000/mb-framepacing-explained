@@ -8,18 +8,18 @@
   "executionEnvironments": [
     {
       "root": "tools/frame_pacing_video",
-      "extraPaths": ["tools/timing_diagrams", "external/mb-framepacing/sdk/marker/python"]
+      "extraPaths": ["tools/timing_diagrams", "external/mb-framepacing/sdk/python"]
     },
     {
       "root": "tools/timing_diagrams",
-      "extraPaths": ["tools/frame_pacing_video", "external/mb-framepacing/sdk/marker/python"]
+      "extraPaths": ["tools/frame_pacing_video", "external/mb-framepacing/sdk/python"]
     },
     {
       "root": "tools/web_export"
     },
     {
       "root": "tools",
-      "extraPaths": ["external/mb-framepacing/sdk/marker/python"]
+      "extraPaths": ["external/mb-framepacing/sdk/python"]
     }
   ],
   "typeCheckingMode": "recommended"

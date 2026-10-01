@@ -10,7 +10,7 @@ then point this script at the manifest, the clip's file name and the analysis fo
 
 It reads mb-framepacing's run-1-frames.csv and checks, frame by frame, that every frame the clip presents was presented and that its
 animation error is the manifest's (animationErrorMs), within --tolerance-ms. A clip with a presentation fault (-dropped-frames,
--out-of-order, -dropped-before-wake) lists the frames it presents (presented); the others must not be measured. The run's first frame
+-out-of-order, -dropped-before-wake, -dropped-wake) lists the frames it presents (presented); the others must not be measured. The run's first frame
 has no error in mb-framepacing (no previous frame), and neither has the step from a static frame to the next (an idle behaviour's
 frames at rest: the manifest's staticAfter on the frame, or staticBefore on the next frame when that is frame index + 1), so those are
 not compared; the step into a static frame is. Exit code 0 when they agree.

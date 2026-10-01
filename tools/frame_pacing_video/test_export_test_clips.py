@@ -18,7 +18,7 @@ class ClipManifestTests(unittest.TestCase):
         speeds = {job.top.name: job.speed.name for _, job in clips}
         self.assertEqual({name for name, speed in speeds.items() if speed != "fast"}, {"60-idle-1fps"})
         self.assertEqual(speeds["60-idle-1fps"], "idle")
-        self.assertEqual(len(clips), 18)
+        self.assertEqual(len(clips), 19)
 
     def test_the_manifest_is_the_clips_own_named_after_the_folders_video(self) -> None:
         _, settings = gv.parse_arguments(["--single", "60-busy-swappy", "--marker", "--speed", "fast"])

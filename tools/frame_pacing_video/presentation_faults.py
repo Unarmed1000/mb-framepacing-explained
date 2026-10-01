@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
-"""Presentation faults (modes ending in -dropped-frames, -out-of-order or -dropped-before-wake, e.g.
+"""Presentation faults (modes ending in -dropped-frames, -out-of-order, -dropped-before-wake or -dropped-wake, e.g.
 60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames): the game renders every frame as its mode simulates it, but not every
 frame reaches the screen, or not in the order it was rendered. Only what is on screen in each refresh changes; every frame keeps
 its animation time, the pacer's plan for it and its CPU times, and a marker carries the values of the frame it shows.
@@ -13,10 +13,14 @@ middle of the second are clear of them), each a block of frames starting with th
   the larger blocks in a random order where no frame keeps its place (the worst case), drawn from our own PCG32 generator so the
   same clip always gets the same order
 
--dropped-before-wake takes one event instead, for a game that presents on demand (idle_behaviour): the frame of the clip's first
-rest after its first frame, rendered but never shown. The frame before it stays on screen through the rest, and the frame that wakes
-up after it follows a frame never shown: its static before flag speaks for that frame (frame index - 1), so it marks nothing, and
-the step to it is judged.
+-dropped-before-wake and -dropped-wake take one event instead, for a game that presents on demand (idle_behaviour), at the clip's
+first rest after its first frame; the clip's other rests are untouched.
+- dropped-before-wake: the rest's frame is rendered but never shown. The frame before it stays on screen through the rest, and the
+  frame that wakes up after it follows a frame never shown: its static before flag speaks for that frame (frame index - 1), so it
+  marks nothing, and the step to it is judged.
+- dropped-wake: the frame that wakes up after the rest is rendered but never shown. The rest's frame stays on screen a refresh
+  longer; flagged in hindsight, the static before flag was on the dropped frame, so it never reaches the screen: the rest is not
+  known to be static, and the step across it is judged.
 
 A measurement counts a frame as presented when it first appears with a frame index above every one shown before it (mb-framepacing's
 rule): a dropped frame is never presented, and a frame shown only after a later one is out of order and not presented either.
@@ -32,9 +36,12 @@ from pcg32 import Pcg32
 DROPPED = "dropped-frames"
 OUT_OF_ORDER = "out-of-order"
 DROPPED_BEFORE_WAKE = "dropped-before-wake"
-FAULTS = (DROPPED, OUT_OF_ORDER, DROPPED_BEFORE_WAKE)
+DROPPED_WAKE = "dropped-wake"
+FAULTS = (DROPPED, OUT_OF_ORDER, DROPPED_BEFORE_WAKE, DROPPED_WAKE)
+# The faults of a single event at a rest's end, for a game that presents on demand
+WAKE_FAULTS = (DROPPED_BEFORE_WAKE, DROPPED_WAKE)
 # The faults whose frames are rendered but never shown
-DROPS = (DROPPED, DROPPED_BEFORE_WAKE)
+DROPS = (DROPPED, DROPPED_BEFORE_WAKE, DROPPED_WAKE)
 # Where in each second a fault event starts
 FAULT_POINTS = (Fraction(3, 10), Fraction(7, 10))
 # How many frames each event takes, in turn: dropped in a row, or shown in another order
@@ -102,14 +109,17 @@ def blocks(mode: FrameMode, flips: tuple[int, ...], late: list[int], intervals: 
     return events
 
 
-def before_wake(mode: FrameMode, resting: tuple[bool, ...]) -> Block:
-    """dropped-before-wake's event: the first frame at rest after the clip's first frame, whose next frame moves again (a game that
-    presents on demand renders one frame per rest). Raises ValueError when there is none."""
-    assert mode.fault == DROPPED_BEFORE_WAKE, mode.name
-    for index in range(1, len(resting) - 1):
-        if resting[index] and not resting[index - 1] and not resting[index + 1]:
-            return Block(index, 1)
-    raise ValueError(f"{mode.name}: no rest of a single frame between moving frames, to drop the frame before the wake-up")
+def wake_event(mode: FrameMode, resting: tuple[bool, ...]) -> Block:
+    """The event of dropped-before-wake and dropped-wake, at the first frame at rest after the clip's first frame that stands between
+    moving frames (a game that presents on demand renders one frame per rest): that frame itself (dropped-before-wake), or the frame
+    that wakes up after it (dropped-wake; the frame after that one must move too, to be shown next). Raises ValueError when there is
+    no such rest."""
+    assert mode.fault in WAKE_FAULTS, mode.name
+    after = 2 if mode.fault == DROPPED_WAKE else 1
+    for index in range(1, len(resting) - after):
+        if resting[index] and not resting[index - 1] and not any(resting[index + 1 : index + 1 + after]):
+            return Block(index + after - 1, 1)
+    raise ValueError(f"{mode.name}: no rest of a single frame between moving frames, to drop a frame at its wake-up")
 
 
 def screen(flips: tuple[int, ...], refreshes: int, kind: str, events: list[Block]) -> tuple[int, ...]:

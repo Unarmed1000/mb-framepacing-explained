@@ -82,7 +82,7 @@ How much sooner or later than usual the naive loop reads the clock:
 - **The perfect storm** (`RATE-naive-Nms-diagram-NAME…`, e.g. `60-naive-5ms-diagram-slow-frames-every-1s`): a replayed diagram
   and the naive timer's ±N ms window at once. The frames are flipped as the diagram shows them, late ones included, and every
   frame's animation time is off by its clock reading, as in a real measurement where both causes of stutter mix.
-- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, `…-dropped-before-wake` after an on-demand one, e.g.
+- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, `…-dropped-before-wake` and `…-dropped-wake` after an on-demand one, e.g.
   `60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames`; `presentation_faults.py`): the game renders every frame as its mode
   simulates it, but not every frame reaches the screen, or not in the order it was rendered. Two events a second, at 30 % and 70 %
   of it (clear of a replayed diagram in the middle): dropped runs of 1, 2, 3, 4 frames (the frame before stays on screen, the one
@@ -93,6 +93,8 @@ How much sooner or later than usual the naive loop reads the clock:
   late or held frame is rejected (e.g. with `-3x-every-1s`). `-dropped-before-wake` drops a single frame instead: the frame of the
   clip's first rest, in a game that presents on demand, so the frame before it stays on screen through the rest and the static
   before flag of the frame that wakes up speaks for a frame never shown (it marks nothing, and that step is judged).
+  `-dropped-wake` drops the frame that wakes up after that rest: flagged in hindsight, its static before flag never reaches the
+  screen, so the rest is not known to be static and the step across it is judged.
 - **Idle behaviours** (`…-static-rests`, `…-static-rests-paused-clock`, `…-on-demand`, `…-on-demand-paused-clock`,
   `…-on-demand-paused-clock-hindsight`, `…-idle-1fps`, before a fault; `idle_behaviour.py`): what the game does while the box rests
   (stands exactly at an end of its path, so nothing animates). Static describes a frame's time on screen: nothing animates from
@@ -251,10 +253,10 @@ import them and measure their animation error, and its numbers can be checked ag
   refreshes longer; it no longer loops seamlessly.
 - **Where:** mb-framepacing's recommended place, 32 px from the top-left corner, left of the box's path, in pure black and white,
   modules of `--marker-module-px` video pixels (3; 2 is enough lossless, `--web` needs 3).
-- **The library:** mb-framepacing's own Python marker library (`mb_framemarker`, its `marker/python`, BSD 3-Clause), from the
+- **The library:** mb-framepacing's own Python SDK (`mb_framepacing.marker`, its `sdk/python`, BSD 3-Clause), from the
   submodule `external/mb-framepacing`, pinned to a commit of mb-framepacing (`marker_path.py` puts it on the import path). It
   draws the same pixels as mb-framepacing's C++ and C# libraries; its tests, with the golden images, are mb-framepacing's
-  (`python -m unittest discover -s external/mb-framepacing/sdk/marker/python`). CONTRIBUTING.md says how to move the pin.
+  (`python -m unittest discover -s external/mb-framepacing/sdk/python -t external/mb-framepacing/sdk/python`). CONTRIBUTING.md says how to move the pin.
 
 The page's scenarios as marked clips, then measured and compared, clip by clip:
 
@@ -274,7 +276,7 @@ what mb-framepacing measures.
 
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `measure/test-data/videos`), plus the
 perfect storm with dropped frames and with frames out of order, the idle behaviours, and the static flags set each way (both inside a
-rest with a paused clock, in hindsight, and in hindsight after a rest's frame dropped): a folder per scenario, named after its mode,
+rest with a paused clock, in hindsight, and in hindsight with a rest's frame or its wake-up frame dropped): a folder per scenario, named after its mode,
 with `video.mp4` and its own `manifest.json`. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
@@ -487,6 +489,6 @@ uv run python -m unittest discover -s tools/frame_pacing_video -v
 - `test_check_marker_run.py`: comparing mb-framepacing's measurement with the manifest.
 - `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
 - `test_presentation_faults.py`: dropped frames and frames out of order: where the events go, drop runs of 1 to 4, swapped pairs
-  and derangements, a rest's frame dropped before the wake-up, the frame on screen, and what a measurement counts as presented.
+  and derangements, a rest's frame or its wake-up frame dropped, the frame on screen, and what a measurement counts as presented.
 - `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps), their pacing and their
   static flags (in advance, both inside a rest, in hindsight).

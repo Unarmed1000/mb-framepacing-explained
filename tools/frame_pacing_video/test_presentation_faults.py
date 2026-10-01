@@ -36,11 +36,22 @@ class BlockTests(unittest.TestCase):
     def test_before_wake_drops_the_first_single_frame_rest_after_the_first_frame(self) -> None:
         mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-before-wake")
         # Frame 0 rests (the clip's first frame is never dropped); frame 3 is the first rest between moving frames
-        self.assertEqual(faults.before_wake(mode, (True, False, False, True, False, True, False)), faults.Block(3, 1))
+        self.assertEqual(faults.wake_event(mode, (True, False, False, True, False, True, False)), faults.Block(3, 1))
         with self.assertRaisesRegex(ValueError, "no rest of a single frame"):
-            _ = faults.before_wake(mode, (True, False, False, False))
+            _ = faults.wake_event(mode, (True, False, False, False))
         # The frame before it stays on screen
         self.assertEqual(faults.screen((0, 1, 2, 5, 6), 8, faults.DROPPED_BEFORE_WAKE, [faults.Block(3, 1)]), (0, 1, 2, 2, 2, 2, 4, 4))
+
+    def test_the_wake_up_frame_after_that_rest_is_dropped(self) -> None:
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-wake")
+        # The frame after the rest's frame (3), with a moving frame after it to be shown next
+        self.assertEqual(faults.wake_event(mode, (True, False, False, True, False, False, True, False)), faults.Block(4, 1))
+        # A wake-up frame followed by another rest is passed over: the next shown frame must move
+        self.assertEqual(faults.wake_event(mode, (True, False, True, False, True, False, False)), faults.Block(5, 1))
+        with self.assertRaisesRegex(ValueError, "no rest of a single frame"):
+            _ = faults.wake_event(mode, (True, False, False, True, False))
+        # The rest's frame stays on screen a refresh longer
+        self.assertEqual(faults.screen((0, 1, 2, 5, 6, 7), 9, faults.DROPPED_WAKE, [faults.Block(3, 1)]), (0, 1, 2, 2, 2, 2, 4, 5, 5))
 
     def test_drop_runs_are_1_to_4_frames(self) -> None:
         _, blocks = events(f"{STORM}-dropped-frames")
