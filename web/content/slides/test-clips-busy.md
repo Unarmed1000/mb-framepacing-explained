@@ -12,4 +12,4 @@ eyebrow: Measure it yourself
 **Busy, the frame pacer lowers the rate:** a dozen frames late as the stretch begins, then the frame pacer drops to 30 fps for the
 rest of it (like [the Swappy frame pacer](#/adapt-rate) on Android): below the 60 fps the game prefers, but as planned, not late.
 
-![mb-framepacing's report of the 60-busy-swappy clip](../../../doc/images/test-clip-60-busy-swappy.svg)
+![mb-framepacing's report of the 60-busy-adaptive clip](../../../doc/images/test-clip-60-busy-adaptive.svg)

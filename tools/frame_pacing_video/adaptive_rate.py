@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
-"""Simulate a busy stretch in the videos (modes 60-busy-full-rate and 60-busy-swappy): a few seconds in which the frames take longer
+"""Simulate a busy stretch in the videos (modes 60-busy-full-rate and 60-busy-adaptive): a few seconds in which the frames take longer
 than a refresh about half the time, with calm stretches before and after, and a game that either stays at full rate or adapts its
 swap interval the way Android's Frame Pacing library (Swappy) does.
 
@@ -29,7 +29,7 @@ from fractions import Fraction
 
 from pcg32 import Pcg32
 
-POLICIES = ("full-rate", "swappy")
+POLICIES = ("full-rate", "adaptive")
 # The busy stretch, as a share of the clip, and the render times (ms) in and outside it
 BUSY = (Fraction(3, 16), Fraction(11, 16))  # 1.5 to 5.5 s of an 8 s clip
 CALM_MS = (9.0, 13.0)
@@ -71,7 +71,7 @@ def _intervals_needed(frame_ms: float, refresh_ms: float) -> int:
 
 
 def title(policy: str) -> str:
-    return "a busy stretch at full rate" if policy == "full-rate" else "a busy stretch, adapting like the Swappy frame pacer"
+    return "a busy stretch at full rate" if policy == "full-rate" else "a busy stretch, adapting its rate"
 
 
 @dataclass(frozen=True)
@@ -117,7 +117,7 @@ def with_lead(policy: str, refreshes: int, fps: Fraction, stages: tuple[Stage, .
         missed = at > target
         shown = at
         paced, seen, average, change = interval, None, None, None
-        if policy == "swappy":
+        if policy == "adaptive":
             window.add(at / float(fps), render_ms, missed)
             if window.enough():
                 seen, average = window.missed_percent(), window.average_ms()

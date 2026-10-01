@@ -55,7 +55,7 @@ SCENARIOS = (
     "60-diagram-half-rate-even",
     "60-diagram-half-rate-bad-pacing",
     "60-busy-full-rate",
-    "60-busy-swappy",
+    "60-busy-adaptive",
     "60-naive-5ms-diagram-slow-frames-every-1s",
     "60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames",
     "60-naive-5ms-diagram-slow-frames-every-1s-out-of-order",

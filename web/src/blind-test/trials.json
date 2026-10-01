@@ -48,8 +48,8 @@
       "id": "adapt-busy",
       "category": "late-frames",
       "a": "60-busy-full-rate",
-      "b": "60-busy-swappy",
-      "smoother": "60-busy-swappy",
+      "b": "60-busy-adaptive",
+      "smoother": "60-busy-adaptive",
       "motions": ["fast"]
     },
     {

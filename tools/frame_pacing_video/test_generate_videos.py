@@ -839,7 +839,7 @@ class SingleAndMarkerTests(unittest.TestCase):
     def test_the_manifest_has_the_rate_the_game_aims_for(self) -> None:
         settings = plain_settings("--single", "60", "--speed", "fast")
         speed = settings.speeds[0]
-        for name, expected in (("60", {60}), ("30", {30}), ("60-naive-5ms", {60}), ("60-diagram-half-rate-bad-pacing", {30}), ("60-busy-swappy", {30, 60})):
+        for name, expected in (("60", {60}), ("30", {30}), ("60-naive-5ms", {60}), ("60-diagram-half-rate-bad-pacing", {30}), ("60-busy-adaptive", {30, 60})):
             with self.subTest(name):
                 entry = gv._mode_entry(settings, MODE(name), speed)  # pyright: ignore[reportPrivateUsage]
                 self.assertEqual(set(cast(dict[str, list[int]], entry["frames"])["targetFps"]), expected)
@@ -848,8 +848,11 @@ class SingleAndMarkerTests(unittest.TestCase):
 
     def test_the_sequence_id_is_the_mode_name_or_a_uuid_made_from_it(self) -> None:
         # A name of at most 16 characters is the text tag itself, padded with zeros
-        short = gv.marker_sequence_id(MODE("60-busy-swappy"))
-        self.assertEqual((short, str(short)), (SequenceId(b"60-busy-swappy\0\0"), "60-busy-swappy"))
+        short = gv.marker_sequence_id(MODE("60-naive-5ms"))
+        self.assertEqual((short, str(short)), (SequenceId(b"60-naive-5ms\0\0\0\0"), "60-naive-5ms"))
+        # 16 characters fill it
+        full = gv.marker_sequence_id(MODE("60-busy-adaptive"))
+        self.assertEqual((full, str(full)), (SequenceId(b"60-busy-adaptive"), "60-busy-adaptive"))
         # A longer one is a version 5 UUID from the repository's URL and the name, shown as the UUID
         name = "60-naive-5ms-diagram-slow-frames-every-1s"
         expected = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/Unarmed1000/mb-framepacing-explained/" + name)
@@ -859,7 +862,7 @@ class SingleAndMarkerTests(unittest.TestCase):
             str(gv.marker_sequence_id(MODE("60-diagram-half-rate-even"))), str(uuid.uuid5(uuid.NAMESPACE_URL, gv.SEQUENCE_ID_URL + "60-diagram-half-rate-even"))
         )
         # The start marker carries it, with no start time; the manifest shows it as mb-framepacing does, and its bytes in hex
-        for mode, sequence_id in (("60-busy-swappy", short), (name, long)):
+        for mode, sequence_id in (("60-naive-5ms", short), ("60-busy-adaptive", full), (name, long)):
             settings, jobs = self.marked(mode)
             job = jobs[0]
             payload = gv.marker_payload(settings, job, -1)
@@ -882,7 +885,7 @@ class SingleAndMarkerTests(unittest.TestCase):
             self.assertRegex(cast(str, video["sequenceIdHex"]), "^[0-9a-f]{32}$")
 
     def test_the_markers_carry_the_manifests_cpu_start_and_busy_times(self) -> None:
-        modes = ("60", "30", "60-naive-5ms", "60-busy-full-rate", "60-busy-swappy", "60-diagram-half-rate-bad-pacing", "60-diagram-slow-frames-every-1s")
+        modes = ("60", "30", "60-naive-5ms", "60-busy-full-rate", "60-busy-adaptive", "60-diagram-half-rate-bad-pacing", "60-diagram-slow-frames-every-1s")
         for mode in modes:
             with self.subTest(mode):
                 settings, jobs = self.marked(mode)
@@ -985,7 +988,7 @@ class SingleAndMarkerTests(unittest.TestCase):
             ("60", {166_667}, {166_667}),
             ("30", {333_333}, {333_333}),
             ("60-diagram-half-rate-bad-pacing", {333_333}, {333_333}),
-            ("60-busy-swappy", {166_667}, {166_667, 333_333}),
+            ("60-busy-adaptive", {166_667}, {166_667, 333_333}),
         ):
             with self.subTest(mode):
                 _, _, payloads = self.payloads(mode)
@@ -1177,7 +1180,7 @@ class SingleAndMarkerTests(unittest.TestCase):
         self.assertIn("never rests 1 s", error.getvalue())
 
     def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
-        settings, jobs = self.marked("60-busy-swappy")
+        settings, jobs = self.marked("60-busy-adaptive")
         entry = cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])  # pyright: ignore[reportPrivateUsage]
         self.assertEqual(entry["cpuStartTicks"][1:], [round(Fraction(flip, 60) * 10_000_000) for flip in entry["refresh"][:-1]])
 

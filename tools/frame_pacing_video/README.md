@@ -264,7 +264,7 @@ The page's scenarios as marked clips, then measured and compared, clip by clip:
 
 ```powershell
 uv run tools/frame_pacing_video/generate_videos.py --single 60 30 60-naive-5ms 60-diagram-slow-frames-every-1s `
-  60-diagram-half-rate-even 60-diagram-half-rate-bad-pacing 60-busy-full-rate 60-busy-swappy `
+  60-diagram-half-rate-even 60-diagram-half-rate-bad-pacing 60-busy-full-rate 60-busy-adaptive `
   60-naive-5ms-diagram-slow-frames-every-1s --marker --speed fast
 cd out/frame_pacing_video/box-single-marker/fast
 mb-framepacing import single_fast_60-naive-5ms.mp4 --analyze -o single_fast_60-naive-5ms   # as the manifest's "measure" says

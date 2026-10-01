@@ -185,7 +185,7 @@ def windows(scenario: Scenario, timeline: list[Record]) -> Windows:
 
 
 def render(scenario: Scenario, background: str | None) -> str:
-    timeline = with_lead("swappy", scenario.refreshes, Fraction(scenario.fps), scenario.stages, scenario.calm)
+    timeline = with_lead("adaptive", scenario.refreshes, Fraction(scenario.fps), scenario.stages, scenario.calm)
     frames = [frame for frame in timeline if frame.shown >= 0]
     rule = windows(scenario, timeline)
     refreshes, refresh_ms = scenario.refreshes, scenario.refresh_ms

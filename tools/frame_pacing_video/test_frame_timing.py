@@ -57,7 +57,7 @@ class ModeTests(unittest.TestCase):
             )
             self.assertEqual(ft.parse_mode(f"60-{fault}"), ft.FrameMode(f"60-{fault}", 60, fault=fault))
             self.assertEqual(ft.parse_mode(f"60-diagram-slow-frames-{fault}").diagram, "slow-frames")
-            self.assertEqual(ft.parse_mode(f"60-busy-swappy-{fault}").busy, "swappy")
+            self.assertEqual(ft.parse_mode(f"60-busy-adaptive-{fault}").busy, "adaptive")
         self.assertIsNone(ft.parse_mode(storm).fault)
         for bad in ("60-dropped", "60-out-of-order-dropped-frames", "60-dropped-frames-naive-1ms"):
             with self.assertRaisesRegex(ValueError, "is not a mode"):
@@ -138,7 +138,7 @@ class LoopTests(unittest.TestCase):
             self.assertTrue(all(0 < dt < 2 * FRAME for dt in dts), name)
 
     def test_every_frame_starts_before_it_is_flipped_and_after_the_one_before(self) -> None:
-        names = ("60", "30", "60-naive-heavy", "60-naive-5ms", "60-diagram-half-rate-bad-pacing", "60-busy-full-rate", "60-busy-swappy")
+        names = ("60", "30", "60-naive-heavy", "60-naive-5ms", "60-diagram-half-rate-bad-pacing", "60-busy-full-rate", "60-busy-adaptive")
         for name in (*names, "60-naive-5ms-diagram-slow-frames-every-1s"):
             simulated = frames(name)
             self.assertEqual(len(simulated.starts), len(simulated.flips), name)
@@ -155,7 +155,7 @@ class LoopTests(unittest.TestCase):
         self.assertEqual(frames("30").starts[:3], (-2 * FRAME, Fraction(0), 2 * FRAME))
 
     def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
-        for name in ("60-busy-full-rate", "60-busy-swappy"):
+        for name in ("60-busy-full-rate", "60-busy-adaptive"):
             simulated = frames(name)
             self.assertEqual(simulated.starts[1:], tuple(Fraction(flip, 60) for flip in simulated.flips[:-1]), name)
             # The first frame starts when the last frame of the pass before the clip is shown

@@ -10,7 +10,7 @@ describe("choiceName", () => {
     expect(choiceName("60-naive-4ms")).toBe("jittery 60 fps");
     expect(choiceName("60-diagram-slow-frames-every-1s")).toBe("60 fps with late frames");
     expect(choiceName("60-diagram-slow-frames-3x-every-1s")).toBe("60 fps with late frames");
-    expect(choiceName("60-busy-swappy")).toBe("60 fps adapting its rate");
+    expect(choiceName("60-busy-adaptive")).toBe("60 fps adapting its rate");
     expect(choiceName("60-busy-full-rate")).toBe("60 fps with late frames in a busy stretch");
   });
 });

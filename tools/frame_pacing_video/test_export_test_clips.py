@@ -21,12 +21,12 @@ class ClipManifestTests(unittest.TestCase):
         self.assertEqual(len(clips), 22)
 
     def test_the_manifest_is_the_clips_own_named_after_the_folders_video(self) -> None:
-        _, settings = gv.parse_arguments(["--single", "60-busy-swappy", "--marker", "--speed", "fast"])
+        _, settings = gv.parse_arguments(["--single", "60-busy-adaptive", "--marker", "--speed", "fast"])
         manifest = export.clip_manifest(settings, gv.plan_videos(settings)[0])
         videos = cast(list[dict[str, object]], manifest["videos"])
         self.assertEqual(len(videos), 1)
         self.assertEqual((videos[0]["file"], videos[0]["measure"]), ("video.mp4", "mb-framepacing import video.mp4 --analyze -o analysis"))
-        self.assertEqual(cast(dict[str, object], videos[0]["box"])["mode"], "60-busy-swappy")
+        self.assertEqual(cast(dict[str, object], videos[0]["box"])["mode"], "60-busy-adaptive")
         self.assertTrue(cast(str, manifest["license"]).startswith("PolyForm Perimeter License 1.0.1"))
 
 

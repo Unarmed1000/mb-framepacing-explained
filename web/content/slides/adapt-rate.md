@@ -10,7 +10,7 @@ system or a driver took the CPU or GPU for a moment, or the load spiked once, th
 that one miss, and keep it from turning into more. Adapting the rate is for the stretches: a lower rate only where it is needed,
 full rate while the frames fit, half rate through a busy stretch, and back up when they fit again.
 
-:::video pair fast 60-busy-full-rate 60-busy-swappy chart frames
+:::video pair fast 60-busy-full-rate 60-busy-adaptive chart frames
 
 A 4 s busy stretch in which frames take 12 to 24 ms, around the 16.7 ms refresh, with calm frames before and after it. Top: kept
 at full rate, frames take one refresh or two, unevenly, for the whole stretch. Bottom: the rate adapts like the rule of

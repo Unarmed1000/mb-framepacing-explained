@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the adaptive rate history video: the moving box of a game adapting its rate like Swappy through a busy stretch, and
 under it the history the rule keeps (the frames of the last 2 s) as it sees it at each moment, and the target pace it sets from
-it. The box is the bottom half of the adapt the rate video's clip (60-busy-full-rate against 60-busy-swappy), made by
+it. The box is the bottom half of the adapt the rate video's clip (60-busy-full-rate against 60-busy-adaptive), made by
 generate_videos.py; the history comes from the same simulation (adaptive_rate.py), frame for frame.
 
 The window is drawn as one filled strip, each frame as high as its render time and as wide as it stays on screen, newest on the
@@ -41,7 +41,7 @@ WINDOW_REFRESHES = round(WINDOW_S * FPS)
 BANNER_REFRESHES = 75  # how long a decision's banner stays
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "out" / "adaptive-rate" / "adaptive-history.mp4"
 VIDEO_TOOL = Path(__file__).resolve().parent / "generate_videos.py"
-PAIR = ("60-busy-full-rate", "60-busy-swappy")
+PAIR = ("60-busy-full-rate", "60-busy-adaptive")
 # The clip's bottom half, as the page shows it (live.ts halfRows): below the divider and a row of margin
 BOX_HEIGHT = 384
 BOX_ROWS = (194, 384)
@@ -232,7 +232,7 @@ def main() -> None:
     )  # fmt: skip
     box = box_dir / "box" / "fast" / f"fast_top-{PAIR[0]}_bottom-{PAIR[1]}.mp4"
     # The pass before the clip in front: the window at the start of the clip holds its frames
-    frames = with_lead("swappy", REFRESHES, Fraction(FPS))
+    frames = with_lead("adaptive", REFRESHES, Fraction(FPS))
     video = [draw_frame(frames, refresh).tobytes() for refresh in range(REFRESHES)]
     rows = BOX_ROWS[1] - BOX_ROWS[0]
     command = [

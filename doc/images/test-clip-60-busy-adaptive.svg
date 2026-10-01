@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1273" viewBox="0 0 1180 1273" role="img" aria-label="60-busy-swappy">
-<title>60-busy-swappy</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1273" viewBox="0 0 1180 1273" role="img" aria-label="60-busy-adaptive">
+<title>60-busy-adaptive</title>
 <style>
   text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
          font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
@@ -108,7 +108,7 @@
   .key-light { fill: #adbac7; }
 </style>
 <rect class="card" x="0.5" y="0.5" width="1179" height="1272" rx="14"/>
-<text x="20.0" y="30.0" text-anchor="start" class="title">60-busy-swappy</text>
+<text x="20.0" y="30.0" text-anchor="start" class="title">60-busy-adaptive</text>
 <text x="20.0" y="54.0" text-anchor="start" class="sub">The whole run: 8.0 s, 336 presented frames on a 60 Hz display, measured against a 16.7 ms target.</text>
 <text x="20.0" y="73.0" text-anchor="start" class="sub">Resolution 16.7 ms (one capture period); error threshold 1 ms.</text>
 <text x="20.0" y="92.0" text-anchor="start" class="sub">Every frame is drawn.</text>

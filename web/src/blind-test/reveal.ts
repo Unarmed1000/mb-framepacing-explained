@@ -14,7 +14,7 @@ export function choiceName(mode: string): string {
   const rate = Number.parseInt(mode, 10);
   if (mode.includes("naive")) return `jittery ${rate} fps`;
   if (mode.includes("-diagram-slow-frames")) return `${rate} fps with late frames`;
-  if (mode.endsWith("-busy-swappy")) return `${rate} fps adapting its rate`;
+  if (mode.endsWith("-busy-adaptive")) return `${rate} fps adapting its rate`;
   if (mode.endsWith("-busy-full-rate")) return `${rate} fps with late frames in a busy stretch`;
   return `perfect ${rate} fps`;
 }

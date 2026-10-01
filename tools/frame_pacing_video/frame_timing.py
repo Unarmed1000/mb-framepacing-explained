@@ -125,7 +125,7 @@ class FrameMode:
     times: int = 1
     # A window's burst: how many frames in a row jitter, every `every` seconds
     burst: int | None = None
-    # A busy stretch (adaptive_rate): the policy, full-rate or swappy
+    # A busy stretch (adaptive_rate): the policy, full-rate or adaptive
     busy: str | None = None
     # What the game does while nothing moves (idle_behaviour): static-rests, on-demand, on-demand-paused-clock or idle-1fps
     idle: str | None = None
@@ -138,7 +138,7 @@ MODE_PATTERN = re.compile(
     r"(?P<rate>[1-9][0-9]*)(?:-naive-(?P<storm_ms>[0-9]+(?:\.[0-9]+)?)ms-diagram-(?P<storm_diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<storm_times>[1-9])x)?-every-(?P<storm_every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
-    + r"|-busy-(?P<busy>full-rate|swappy))?"
+    + r"|-busy-(?P<busy>full-rate|adaptive))?"
     + r"(?:-(?P<idle>static-rests-paused-clock|static-rests|on-demand-paused-clock-hindsight|on-demand-paused-clock|on-demand|idle-1fps))?"
     + r"(?:-(?P<fault>dropped-frames|out-of-order|dropped-before-wake|dropped-wake|dropped-after-stall))?"
 )
@@ -150,7 +150,7 @@ def parse_mode(name: str) -> FrameMode:
     bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
     60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
     frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
-    full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-swappy). Any of them may then say what the game does while the
+    full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-adaptive). Any of them may then say what the game does while the
     box rests, -static-rests, -on-demand, -on-demand-paused-clock or -idle-1fps (60-on-demand), and end in a presentation fault,
     -dropped-frames or -out-of-order (60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames)."""
     mode = _parse_timing(name)
@@ -166,7 +166,7 @@ def _parse_timing(name: str) -> FrameMode:
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
             + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
-            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-swappy), each optionally followed by -static-rests, "
+            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-adaptive), each optionally followed by -static-rests, "
             + "-static-rests-paused-clock, -on-demand, -on-demand-paused-clock, -on-demand-paused-clock-hindsight or -idle-1fps and by "
             + "-dropped-frames, -out-of-order, -dropped-before-wake, -dropped-wake or -dropped-after-stall"
         )
