@@ -25,7 +25,8 @@
         "test-clips-busy",
         "test-clips-faults",
         "test-clips-idle",
-        "test-clips-static"
+        "test-clips-static",
+        "test-clips-static-lost"
       ]
     },
     {

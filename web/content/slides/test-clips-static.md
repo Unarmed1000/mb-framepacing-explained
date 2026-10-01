@@ -21,17 +21,6 @@ then.
 
 ![mb-framepacing's report of the 60-on-demand-paused-clock-hindsight clip](../../../doc/images/test-clip-60-on-demand-paused-clock-hindsight.svg)
 
-**A rest's frame dropped:** flagged in hindsight, but the first rest's frame is rendered and never shown. The frame that wakes up says
-static before about a frame nobody saw, so it marks nothing, and that step is judged: −100 ms. Every other rest stays unjudged.
-
-![mb-framepacing's report of the 60-on-demand-paused-clock-hindsight-dropped-before-wake clip](../../../doc/images/test-clip-60-on-demand-paused-clock-hindsight-dropped-before-wake.svg)
-
-**The wake-up frame dropped:** flagged in hindsight again, but here the frame that wakes up after the first rest is the one never
-shown. Its static before flag never reaches the display, so nothing says the rest was static, and the step across it is judged: −100 ms.
-A flag set in advance, on the rest's own frame, would have survived.
-
-![mb-framepacing's report of the 60-on-demand-paused-clock-hindsight-dropped-wake clip](../../../doc/images/test-clip-60-on-demand-paused-clock-hindsight-dropped-wake.svg)
-
 **Static rests, clock paused:** every frame is rendered while the box rests, and the clock stands still. The frame that reaches the rest
 pose says static after; the frames inside the rest say both. The display steps on while the animation stands, which would be −16.7 ms
 for every frame of a rest. The flags keep all of it from being judged, so the card stays flat.

@@ -56,6 +56,24 @@ class IdleTests(unittest.TestCase):
         self.assertEqual(result.frames.animation, tuple(Fraction(flip) / FPS for flip in result.frames.flips))
         self.assertEqual(result.scene, result.frames.animation)
 
+    def test_a_stall_renders_nothing_while_the_clock_runs_on(self) -> None:
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight")
+        result = idle.apply(mode, clip(12), resting((0, 1), (9, 11)), FPS, range(4, 7))
+        # Frames 4 to 6 are not rendered: frame 3 stays on screen 4 refreshes, and frame 7 shows its own moment (the paused clock is
+        # 1 frame behind since the first rest, as before the stall)
+        self.assertEqual(result.frames.flips, (0, 2, 3, 7, 8, 9))
+        self.assertEqual(result.scene, tuple(Fraction(flip) / FPS for flip in result.frames.flips))
+        self.assertEqual([moment * FPS for moment in result.frames.animation], [0, 1, 2, 6, 7, 8])
+        # Nothing was static in the stall: only the rests are flagged (on the frames after them)
+        self.assertEqual(result.resting, (True, False, False, False, False, True))
+        self.assertEqual(result.static_before, (True, True, False, False, False, False))
+        with self.assertRaisesRegex(ValueError, "away from every rest"):
+            _ = idle.apply(mode, clip(12), resting((0, 1), (9, 11)), FPS, range(2, 4))
+        with self.assertRaisesRegex(ValueError, "away from every rest"):
+            _ = idle.apply(mode, clip(12), resting((0, 1), (9, 11)), FPS, range(6, 9))
+        with self.assertRaisesRegex(ValueError, "needs a game that presents on demand"):
+            _ = idle.apply(ft.parse_mode("60-static-rests"), clip(12), resting((0, 1), (9, 11)), FPS, range(4, 7))
+
     def test_a_paused_clock_resumes_with_one_frames_step(self) -> None:
         result = idle.apply(ft.parse_mode("60-on-demand-paused-clock"), clip(10), resting((0, 1), (5, 7)), FPS)
         self.assertEqual(result.frames.flips, (0, 2, 3, 4, 5, 8, 9))

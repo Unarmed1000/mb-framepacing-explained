@@ -82,7 +82,7 @@ How much sooner or later than usual the naive loop reads the clock:
 - **The perfect storm** (`RATE-naive-Nms-diagram-NAME…`, e.g. `60-naive-5ms-diagram-slow-frames-every-1s`): a replayed diagram
   and the naive timer's ±N ms window at once. The frames are flipped as the diagram shows them, late ones included, and every
   frame's animation time is off by its clock reading, as in a real measurement where both causes of stutter mix.
-- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, `…-dropped-before-wake` and `…-dropped-wake` after an on-demand one, e.g.
+- **Presentation faults** (`…-dropped-frames`, `…-out-of-order` after any mode, `…-dropped-before-wake`, `…-dropped-wake` and `…-dropped-after-stall` after an on-demand one, e.g.
   `60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames`; `presentation_faults.py`): the game renders every frame as its mode
   simulates it, but not every frame reaches the screen, or not in the order it was rendered. Two events a second, at 30 % and 70 %
   of it (clear of a replayed diagram in the middle): dropped runs of 1, 2, 3, 4 frames (the frame before stays on screen, the one
@@ -94,7 +94,9 @@ How much sooner or later than usual the naive loop reads the clock:
   clip's first rest, in a game that presents on demand, so the frame before it stays on screen through the rest and the static
   before flag of the frame that wakes up speaks for a frame never shown (it marks nothing, and that step is judged).
   `-dropped-wake` drops the frame that wakes up after that rest: flagged in hindsight, its static before flag never reaches the
-  screen, so the rest is not known to be static and the step across it is judged.
+  screen, so the rest is not known to be static and the step across it is judged. `-dropped-after-stall` is the look-alike that
+  is no rest: in the middle of the motion the game renders nothing for 7 refreshes (as long as a rest of the fast speed) while its
+  clock runs on, and the frame after the stall is dropped: one frame index missing after a long hold, but no animation error.
 - **Idle behaviours** (`…-static-rests`, `…-static-rests-paused-clock`, `…-on-demand`, `…-on-demand-paused-clock`,
   `…-on-demand-paused-clock-hindsight`, `…-idle-1fps`, before a fault; `idle_behaviour.py`): what the game does while the box rests
   (stands exactly at an end of its path, so nothing animates). Static describes a frame's time on screen: nothing animates from
@@ -276,7 +278,8 @@ what mb-framepacing measures.
 
 `export_test_clips.py --output-dir DIR` makes the same scenarios for mb-framepacing's tests (its `measure/test-data/videos`), plus the
 perfect storm with dropped frames and with frames out of order, the idle behaviours, and the static flags set each way (both inside a
-rest with a paused clock, in hindsight, and in hindsight with a rest's frame or its wake-up frame dropped): a folder per scenario, named after its mode,
+rest with a paused clock, in hindsight, with a rest's frame or its wake-up frame dropped, and the drops that are no lost rest: in the motion, and after a
+stall): a folder per scenario, named after its mode,
 with `video.mp4` and its own `manifest.json`. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
@@ -440,7 +443,8 @@ Settings that would break the loop or the pacing are rejected with an error; not
     indices never presented; `outOfOrderRefreshes`: refreshes that show a frame below one shown before).
   - the rate the game prefers while showing each frame (`frames.preferredFps`); `frames.targetFps` and `frames.preferredFps` are
     `null` for a game that presents on demand. With an idle behaviour, `frames.staticAfter` and `frames.staticBefore` give each
-    frame's static flags as its marker carries them (`animationErrorMs` still gives the raw error of the step from a static frame
+    frame's static flags as its marker carries them, and with a presentation fault `expected.staticSteps` lists the presented frames
+    whose step from the presented frame before them is static by those flags (`animationErrorMs` still gives the raw error of the step from a static frame
     to the next, which mb-framepacing leaves unjudged).
   - the licence of the videos (`license`): this repository's, CC BY-NC-SA 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
@@ -489,6 +493,6 @@ uv run python -m unittest discover -s tools/frame_pacing_video -v
 - `test_check_marker_run.py`: comparing mb-framepacing's measurement with the manifest.
 - `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
 - `test_presentation_faults.py`: dropped frames and frames out of order: where the events go, drop runs of 1 to 4, swapped pairs
-  and derangements, a rest's frame or its wake-up frame dropped, the frame on screen, and what a measurement counts as presented.
+  and derangements, a rest's frame or its wake-up frame dropped, a stall and the frame dropped after it, the frame on screen, and what a measurement counts as presented.
 - `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps), their pacing and their
   static flags (in advance, both inside a rest, in hindsight).

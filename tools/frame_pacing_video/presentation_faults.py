@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
-"""Presentation faults (modes ending in -dropped-frames, -out-of-order, -dropped-before-wake or -dropped-wake, e.g.
+"""Presentation faults (modes ending in -dropped-frames, -out-of-order, -dropped-before-wake, -dropped-wake or -dropped-after-stall, e.g.
 60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames): the game renders every frame as its mode simulates it, but not every
 frame reaches the screen, or not in the order it was rendered. Only what is on screen in each refresh changes; every frame keeps
 its animation time, the pacer's plan for it and its CPU times, and a marker carries the values of the frame it shows.
@@ -22,6 +22,12 @@ first rest after its first frame; the clip's other rests are untouched.
   longer; flagged in hindsight, the static before flag was on the dropped frame, so it never reaches the screen: the rest is not
   known to be static, and the step across it is judged.
 
+-dropped-after-stall, also for a game that presents on demand, is the look-alike that is not a rest: the game stalls in the middle
+of the motion (the frame on screen at the first FAULT_POINT of the clip's first second stays for STALL_REFRESHES, as long as a rest
+of the fast speed; idle_behaviour leaves out the frames it does not render, and the clock runs on), and the first frame after the
+stall is rendered but never shown. One frame index is missing after a long hold, as with dropped-wake, but the animation moved on
+by as much as the display did: nothing was static.
+
 A measurement counts a frame as presented when it first appears with a frame index above every one shown before it (mb-framepacing's
 rule): a dropped frame is never presented, and a frame shown only after a later one is out of order and not presented either.
 """
@@ -37,11 +43,16 @@ DROPPED = "dropped-frames"
 OUT_OF_ORDER = "out-of-order"
 DROPPED_BEFORE_WAKE = "dropped-before-wake"
 DROPPED_WAKE = "dropped-wake"
-FAULTS = (DROPPED, OUT_OF_ORDER, DROPPED_BEFORE_WAKE, DROPPED_WAKE)
+DROPPED_AFTER_STALL = "dropped-after-stall"
+FAULTS = (DROPPED, OUT_OF_ORDER, DROPPED_BEFORE_WAKE, DROPPED_WAKE, DROPPED_AFTER_STALL)
 # The faults of a single event at a rest's end, for a game that presents on demand
 WAKE_FAULTS = (DROPPED_BEFORE_WAKE, DROPPED_WAKE)
+# The faults of a single event that need a game that presents on demand
+ON_DEMAND_FAULTS = (*WAKE_FAULTS, DROPPED_AFTER_STALL)
 # The faults whose frames are rendered but never shown
-DROPS = (DROPPED, DROPPED_BEFORE_WAKE, DROPPED_WAKE)
+DROPS = (DROPPED, DROPPED_BEFORE_WAKE, DROPPED_WAKE, DROPPED_AFTER_STALL)
+# How long a stalled frame stays on screen, in refreshes: as long as a rest's frame at the fast speed
+STALL_REFRESHES = 7
 # Where in each second a fault event starts
 FAULT_POINTS = (Fraction(3, 10), Fraction(7, 10))
 # How many frames each event takes, in turn: dropped in a row, or shown in another order
@@ -120,6 +131,27 @@ def wake_event(mode: FrameMode, resting: tuple[bool, ...]) -> Block:
         if resting[index] and not resting[index - 1] and not any(resting[index + 1 : index + 1 + after]):
             return Block(index + after - 1, 1)
     raise ValueError(f"{mode.name}: no rest of a single frame between moving frames, to drop a frame at its wake-up")
+
+
+def stall(mode: FrameMode, flips: tuple[int, ...], fps: Fraction) -> range:
+    """dropped-after-stall's stall, over the simulated frames: the frames the game does not render while the frame on screen at the
+    first FAULT_POINT of the clip's first second stays for STALL_REFRESHES."""
+    assert mode.fault == DROPPED_AFTER_STALL, mode.name
+    at = FAULT_POINTS[0] * fps
+    if at.denominator != 1:
+        raise ValueError(f"{mode.name}: {float(FAULT_POINTS[0]):g} of a second is not a whole refresh at {float(fps):g} fps")
+    held = bisect.bisect_right(flips, int(at)) - 1
+    return range(held + 1, bisect.bisect_left(flips, flips[held] + STALL_REFRESHES))
+
+
+def after_stall(mode: FrameMode, flips: tuple[int, ...], resting: tuple[bool, ...]) -> Block:
+    """dropped-after-stall's event, over the rendered frames: the first frame that comes STALL_REFRESHES after a moving frame (a
+    rest's frame is followed as late, but rests). Raises ValueError when there is none, or no moving frame after it to show next."""
+    assert mode.fault == DROPPED_AFTER_STALL, mode.name
+    for index in range(1, len(flips) - 1):
+        if flips[index] - flips[index - 1] == STALL_REFRESHES and not any(resting[index - 1 : index + 2]):
+            return Block(index, 1)
+    raise ValueError(f"{mode.name}: no stall of {STALL_REFRESHES} refreshes between moving frames, to drop the frame after it")
 
 
 def screen(flips: tuple[int, ...], refreshes: int, kind: str, events: list[Block]) -> tuple[int, ...]:

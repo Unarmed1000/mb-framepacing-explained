@@ -33,9 +33,13 @@ judged as usual.
 
 The game renders only the frames it keeps, so their frame indices stay consecutive. The clip's first frame is always rendered, so
 every clip starts with a presented frame.
+
+A game that presents on demand can also stall (apply's `stalled`): in the middle of the motion it renders nothing for a while, and
+its animation clock runs on, so the next frame shows its real moment. The frame before stays on screen as long as a rest's frame
+would, but something was animating: nothing is static, and no flag says so.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 
@@ -71,12 +75,15 @@ class IdleFrames:
     on_demand: bool
 
 
-def _kept(mode: FrameMode, flips: tuple[int, ...], resting: list[bool], idle_refreshes: int) -> list[int]:
-    """The frames the game renders: all, or at rest only the first (on demand) or one every idle_refreshes (idle-1fps)."""
+def _kept(mode: FrameMode, flips: tuple[int, ...], resting: list[bool], idle_refreshes: int, stalled: Collection[int]) -> list[int]:
+    """The frames the game renders: all, or at rest only the first (on demand) or one every idle_refreshes (idle-1fps); never the
+    stalled ones."""
     if mode.idle in EVERY_FRAME:
         return list(range(len(flips)))
     kept: list[int] = []
     for index, flip in enumerate(flips):
+        if index in stalled:
+            continue
         # The first frame always, every frame that moves, and the first frame at rest; idling, one every idle_refreshes
         changes = index == 0 or not resting[index] or not resting[index - 1]
         if changes or (mode.idle == IDLE_1FPS and flip - flips[kept[-1]] >= idle_refreshes):
@@ -84,17 +91,32 @@ def _kept(mode: FrameMode, flips: tuple[int, ...], resting: list[bool], idle_ref
     return kept
 
 
-def apply(mode: FrameMode, frames: SimulatedFrames, at_rest: Callable[[Fraction], bool], fps: Fraction) -> IdleFrames:
-    """The mode's idle behaviour over the simulated frames: `at_rest` says whether the box stands still at an animation time. Raises
-    ValueError when the box never rests (a scroll), or, for idle-1fps, never rests long enough to show an idle frame."""
+def _check_stall(mode: FrameMode, resting: list[bool], stalled: Collection[int]) -> None:
+    """Raises ValueError unless the stalled frames are a stretch of the motion of a game that presents on demand: none of them, nor
+    the frame before or after them, at rest or beyond the clip."""
+    if not stalled:
+        return
+    if mode.idle not in ON_DEMANDS:
+        raise ValueError(f"{mode.name}: a stall needs a game that presents on demand (-on-demand...)")
+    around = range(min(stalled) - 1, max(stalled) + 2)
+    if around.start < 0 or around.stop > len(resting) or any(resting[index] for index in around):
+        raise ValueError(f"{mode.name}: the stall (frames {min(stalled)} to {max(stalled)}) must be in the middle of the motion, away from every rest")
+
+
+def apply(mode: FrameMode, frames: SimulatedFrames, at_rest: Callable[[Fraction], bool], fps: Fraction, stalled: Collection[int] = ()) -> IdleFrames:
+    """The mode's idle behaviour over the simulated frames: `at_rest` says whether the box stands still at an animation time;
+    `stalled` are simulated frames the game does not render (a stall in the middle of the motion; its clock runs on). Raises
+    ValueError when the box never rests (a scroll), for idle-1fps when it never rests long enough to show an idle frame, or when a
+    stall touches a rest."""
     assert mode.idle in IDLES, mode.name
     resting = [at_rest(moment) for moment in frames.animation]
     if not any(resting):
         raise ValueError(f"{mode.name}: the box never rests at this speed, so there is nothing idle to show")
+    _check_stall(mode, resting, stalled)
     idle_refreshes = IDLE_SECONDS * fps
     if idle_refreshes.denominator != 1:
         raise ValueError(f"{mode.name}: {float(IDLE_SECONDS):g} s is not a whole number of refreshes at {float(fps):g} fps")
-    kept = _kept(mode, frames.flips, resting, int(idle_refreshes))
+    kept = _kept(mode, frames.flips, resting, int(idle_refreshes), stalled)
     intervals = list(frames.intervals)
     if mode.idle == IDLE_1FPS:
         # A frame after another frame at rest is paced at the idle rate (the clip's first follows the previous loop's last); the
@@ -143,3 +165,11 @@ def static_flags(mode: FrameMode, resting: tuple[bool, ...]) -> tuple[tuple[bool
     if mode.idle == STATIC_RESTS_PAUSED_CLOCK:
         return resting, tuple(now and before for now, before in zip(resting, after_rest, strict=True))
     return resting, none
+
+
+def static_step(after: Sequence[bool], before: Sequence[bool], previous: int, index: int) -> bool:
+    """Whether mb-framepacing leaves the step from presented frame `previous` to presented frame `index` unjudged, by the flags
+    alone: the previous frame is static after, or this one is static before and follows it directly (frame index - 1; the clip's
+    first frame follows its last one, the previous loop's). Static before after a frame never shown marks nothing."""
+    follows = previous == index - 1 or (index == 0 and previous == len(before) - 1)
+    return after[previous] or (before[index] and follows)

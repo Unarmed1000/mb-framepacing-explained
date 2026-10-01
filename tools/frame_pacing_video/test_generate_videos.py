@@ -1039,7 +1039,12 @@ class SingleAndMarkerTests(unittest.TestCase):
         fault = cast(dict[str, object], entry["fault"])
         (block,) = cast(list[dict[str, int]], fault["blocks"])
         dropped = block["first"]
-        self.assertEqual((fault["kind"], block["count"], entry["expected"]), ("dropped-before-wake", 1, {"skippedFrameIndices": 1, "outOfOrderRefreshes": 0}))
+        expected = cast(dict[str, object], entry["expected"])
+        self.assertEqual((fault["kind"], block["count"]), ("dropped-before-wake", 1))
+        self.assertEqual((expected["skippedFrameIndices"], expected["outOfOrderRefreshes"]), (1, 0))
+        # By the flags alone, every other rest's step is static; this one is not
+        self.assertEqual(expected["staticSteps"], [0, 1, 109, 163, 217, 271, 325, 379])
+        self.assertNotIn(dropped + 1, cast(list[int], expected["staticSteps"]))
         # The rest's frame is never shown; the frame that wakes up after it still says static before, and its step is judged: the
         # paused clock's full rest (the drop adds a frame to the animation step and a refresh to the display step alike)
         self.assertIsNone(frames["refresh"][dropped])
@@ -1055,7 +1060,11 @@ class SingleAndMarkerTests(unittest.TestCase):
         fault = cast(dict[str, object], entry["fault"])
         (block,) = cast(list[dict[str, int]], fault["blocks"])
         dropped = block["first"]
-        self.assertEqual((fault["kind"], block["count"], entry["expected"]), ("dropped-wake", 1, {"skippedFrameIndices": 1, "outOfOrderRefreshes": 0}))
+        expected = cast(dict[str, object], entry["expected"])
+        self.assertEqual((fault["kind"], block["count"]), ("dropped-wake", 1))
+        self.assertEqual((expected["skippedFrameIndices"], expected["outOfOrderRefreshes"]), (1, 0))
+        self.assertEqual(expected["staticSteps"], [0, 1, 109, 163, 217, 271, 325, 379])
+        self.assertNotIn(dropped + 1, cast(list[int], expected["staticSteps"]))
         # The frame that wakes up carries the rest's static before flag and is never shown; the frames around it have no flag
         before = cast(list[bool], frames["staticBefore"])
         self.assertEqual((before[dropped - 1], before[dropped], before[dropped + 1]), (False, True, False))
@@ -1101,6 +1110,58 @@ class SingleAndMarkerTests(unittest.TestCase):
         )
         errors = cast(list[float], cast(dict[str, object], gv._mode_entry(settings, job.top, job.speed)["frames"])["animationErrorMs"])  # pyright: ignore[reportPrivateUsage]
         self.assertEqual(min(errors), -100.0)
+
+    def fault_entry(self, mode: str) -> tuple[dict[str, list[object]], list[dict[str, int]], dict[str, object]]:
+        """The frames, the fault's blocks and what a measurement should count of a clip with a fault."""
+        settings, job, _ = self.payloads(mode)
+        entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
+        blocks = cast(list[dict[str, int]], cast(dict[str, object], entry["fault"])["blocks"])
+        return cast(dict[str, list[object]], entry["frames"]), blocks, cast(dict[str, object], entry["expected"])
+
+    def test_a_static_after_flag_is_lost_with_its_dropped_rest_frame(self) -> None:
+        frames, (block,), expected = self.fault_entry("60-on-demand-paused-clock-dropped-before-wake")
+        dropped = block["first"]
+        # The rest's frame carries static after and is never shown; the frame before it holds the rest without a flag
+        after = cast(list[bool], frames["staticAfter"])
+        self.assertEqual((after[dropped - 1], after[dropped], after[dropped + 1]), (False, True, False))
+        self.assertIsNone(frames["refresh"][dropped])
+        self.assertEqual(set(frames["staticBefore"]), {False})
+        # So the step to the frame that wakes up is not static by the flags, and is judged: the paused clock's full rest
+        self.assertNotIn(dropped + 1, cast(list[int], expected["staticSteps"]))
+        self.assertEqual(cast(list[float | None], frames["animationErrorMs"])[dropped + 1], -100.0)
+        self.assertEqual(len(cast(list[int], expected["staticSteps"])), 8)
+
+    def test_frames_dropped_in_the_motion_are_no_rests(self) -> None:
+        frames, blocks, expected = self.fault_entry("60-on-demand-paused-clock-hindsight-dropped-frames")
+        self.assertEqual((len(blocks), expected["skippedFrameIndices"]), (16, 40))
+        errors, steps = cast(list[float | None], frames["animationErrorMs"]), cast(list[int], expected["staticSteps"])
+        resting = cast(list[bool], frames["staticBefore"])
+        for block in blocks:
+            shown_next = block["first"] + block["count"]
+            # The clock ran through the drop: the next frame shows the right moment, and nothing around it is flagged static
+            self.assertEqual(errors[shown_next], 0.0, block)
+            self.assertNotIn(shown_next, steps)
+            self.assertFalse(any(resting[block["first"] - 1 : shown_next + 1]), block)
+        # The rests are flagged as in the clip without drops
+        self.assertEqual(len(steps), 9)
+
+    def test_a_frame_dropped_after_a_stall_is_no_rest(self) -> None:
+        frames, (block,), expected = self.fault_entry("60-on-demand-paused-clock-hindsight-dropped-after-stall")
+        dropped = block["first"]
+        refreshes = cast(list[int | None], frames["refresh"])
+        self.assertIsNone(refreshes[dropped])
+        # The frame before the stall is on screen 8 refreshes (its 7 and the dropped frame's), as long as with a dropped wake-up frame
+        self.assertEqual(cast(int, refreshes[dropped + 1]) - cast(int, refreshes[dropped - 1]), 8)
+        # But the clock ran on: the next frame shown is 8 frames further, with no animation error, and no flag anywhere near it
+        animation = cast(list[float], frames["animationMs"])
+        self.assertAlmostEqual(animation[dropped + 1] - animation[dropped - 1], 8 * 1000 / 60, places=3)
+        self.assertEqual(cast(list[float | None], frames["animationErrorMs"])[dropped + 1], 0.0)
+        self.assertFalse(any(cast(list[bool], frames["staticBefore"])[dropped - 1 : dropped + 2]))
+        self.assertNotIn(dropped + 1, cast(list[int], expected["staticSteps"]))
+        self.assertEqual((expected["skippedFrameIndices"], len(cast(list[int], expected["staticSteps"]))), (1, 9))
+        # The stall needs a game that presents on demand
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            _ = gv.parse_arguments(["--single", "60-dropped-after-stall", "--marker", "--speed", "fast"])
 
     def test_idling_at_1_fps_prefers_what_it_runs_at(self) -> None:
         settings, job, payloads = self.payloads("60-idle-1fps", "idle")

@@ -42,6 +42,19 @@ class BlockTests(unittest.TestCase):
         # The frame before it stays on screen
         self.assertEqual(faults.screen((0, 1, 2, 5, 6), 8, faults.DROPPED_BEFORE_WAKE, [faults.Block(3, 1)]), (0, 1, 2, 2, 2, 2, 4, 4))
 
+    def test_a_stall_holds_a_moving_frame_as_long_as_a_rest_and_the_next_frame_is_dropped(self) -> None:
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-after-stall")
+        # The frame on screen at 30 % of the first second (refresh 18) stays 7 refreshes: the 6 frames after it are not rendered
+        self.assertEqual(faults.stall(mode, tuple(range(CLIP)), FPS), range(19, 25))
+        # Over the rendered frames: frame 2 rests and frame 3 comes 7 refreshes later (a rest's wait); frame 5 moves and frame 6
+        # comes 7 refreshes later: the stall
+        flips, resting = (0, 1, 2, 9, 10, 11, 18, 19), (False, False, True, False, False, False, False, False)
+        self.assertEqual(faults.after_stall(mode, flips, resting), faults.Block(6, 1))
+        with self.assertRaisesRegex(ValueError, "no stall of 7 refreshes"):
+            _ = faults.after_stall(mode, flips[:5], resting[:5])
+        # The stalled frame stays on screen a refresh longer
+        self.assertEqual(faults.screen(flips, 20, faults.DROPPED_AFTER_STALL, [faults.Block(6, 1)])[11:], (5,) * 8 + (7,))
+
     def test_the_wake_up_frame_after_that_rest_is_dropped(self) -> None:
         mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-wake")
         # The frame after the rest's frame (3), with a moving frame after it to be shown next

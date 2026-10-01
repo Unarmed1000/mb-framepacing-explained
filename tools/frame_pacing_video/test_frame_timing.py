@@ -83,6 +83,9 @@ class ModeTests(unittest.TestCase):
         mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-wake")
         self.assertEqual((mode.idle, mode.fault), ("on-demand-paused-clock-hindsight", "dropped-wake"))
         self.assertTrue(ft.describe(mode, PARAMETERS).endswith("flagged on waking, a wake-up frame dropped"))
+        mode = ft.parse_mode("60-on-demand-paused-clock-hindsight-dropped-after-stall")
+        self.assertEqual((mode.idle, mode.fault), ("on-demand-paused-clock-hindsight", "dropped-after-stall"))
+        self.assertTrue(ft.describe(mode, PARAMETERS).endswith("flagged on waking, a frame dropped after a stall"))
 
     def test_labels(self) -> None:
         self.assertEqual(ft.describe(ft.parse_mode("60-dropped-frames"), PARAMETERS), "60 Hz ideal timer, dropped frames")

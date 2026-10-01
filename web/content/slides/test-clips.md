@@ -6,7 +6,7 @@ eyebrow: Measure it yourself
 # What mb-framepacing reports for known problems
 
 mb-framepacing tests itself against clips this project makes: the box of these slides with the marker in every frame, each clip
-with one known problem and a manifest of every frame's truth. On this and the next five slides is each clip as mb-framepacing
+with one known problem and a manifest of every frame's truth. On this and the next six slides is each clip as mb-framepacing
 reports it, its default report card for a capture of the video.
 
 **The cards need the app's help:** these clips fill every field the marker has. Besides the frame index and animation time, that is

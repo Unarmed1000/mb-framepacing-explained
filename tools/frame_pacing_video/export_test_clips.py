@@ -20,8 +20,11 @@ and a device idling at 1 fps (at the idle speed, whose rests are 3 s: SCENARIO_S
 game can: a rest rendered every refresh with its clock paused (static after, and inside the rest static before too); the on-demand
 renderer with the paused clock flagged in hindsight (static before on the frame that wakes up, which analyses like the paused clock's
 static after on the frame before the wait); the same with a rest's frame dropped, so the static before after it marks nothing; and
-with the frame that wakes up dropped, so its static before never reaches the screen and the rest is judged. Their manifests give each
-frame's staticAfter and staticBefore.
+with the frame that wakes up dropped, so its static before never reaches the screen and the rest is judged. Three more are for
+an analysis that guesses such a lost rest: the paused clock's static after lost with its dropped rest frame; and two that are no
+rest, frames dropped in the middle of the motion, and a stall of a rest's length (the clock running on) with the frame after it
+dropped. Their manifests give each frame's staticAfter and staticBefore, and with a fault the steps static by those flags
+(expected.staticSteps).
 The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
 data (the manifest's "license"); this repository's own videos stay CC BY-NC-SA 4.0.
 """
@@ -42,7 +45,8 @@ import generate_videos as gv
 # paced, a busy stretch at full rate and adapting like the Swappy frame pacer, and the perfect storm (jitter and late frames at once); then the
 # perfect storm with dropped frames and with frames out of order, for mb-framepacing's skipped and out of order frames; what a game
 # does while nothing moves, for the marker's static flags and preferred frame time; and the static flags set each way: both inside a
-# rest, in hindsight, in hindsight after a frame never shown, and in hindsight on a frame never shown
+# rest, in hindsight, in hindsight after a frame never shown, and in hindsight on a frame never shown; then a static after lost
+# with its frame, and the look-alikes that are no rest: frames dropped in the motion, and a frame dropped after a stall
 SCENARIOS = (
     "60",
     "30",
@@ -63,6 +67,9 @@ SCENARIOS = (
     "60-on-demand-paused-clock-hindsight",
     "60-on-demand-paused-clock-hindsight-dropped-before-wake",
     "60-on-demand-paused-clock-hindsight-dropped-wake",
+    "60-on-demand-paused-clock-dropped-before-wake",
+    "60-on-demand-paused-clock-hindsight-dropped-frames",
+    "60-on-demand-paused-clock-hindsight-dropped-after-stall",
 )
 # The speed of each scenario: fast, unless it needs the idle speed's long rests
 DEFAULT_SPEED = "fast"

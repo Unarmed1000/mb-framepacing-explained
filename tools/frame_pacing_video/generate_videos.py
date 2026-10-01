@@ -626,7 +626,9 @@ def idle_frames(settings: Settings, mode: FrameMode, speed: Speed) -> idle.IdleF
     if mode.idle is None:
         return None
     frames = simulate(mode, settings.timing, settings.frame_count(speed))
-    return idle.apply(mode, frames, lambda time: at_rest(settings, speed, time), settings.fps)
+    # A stall (dropped-after-stall): frames the game does not render in the middle of the motion
+    stalled = faults.stall(mode, frames.flips, settings.fps) if mode.fault == faults.DROPPED_AFTER_STALL else ()
+    return idle.apply(mode, frames, lambda time: at_rest(settings, speed, time), settings.fps, stalled)
 
 
 @functools.cache
@@ -639,10 +641,13 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     rendered = idle_frames(settings, mode, speed)
     if mode.fault is None:
         screen = faults.base_screen(frames.flips, refreshes)
-    elif mode.fault in faults.WAKE_FAULTS:
+    elif mode.fault in faults.ON_DEMAND_FAULTS:
         if rendered is None or not rendered.on_demand:
             raise ValueError(f"{mode.name}: -{mode.fault} needs a game that presents on demand (-on-demand...)")
-        events = (faults.wake_event(mode, rendered.resting),)
+        if mode.fault == faults.DROPPED_AFTER_STALL:
+            events = (faults.after_stall(mode, frames.flips, rendered.resting),)
+        else:
+            events = (faults.wake_event(mode, rendered.resting),)
         screen = faults.screen(frames.flips, refreshes, mode.fault, list(events))
     else:
         late = [flip - target for flip, target in zip(frames.flips, frames.targets, strict=True)]
@@ -1339,10 +1344,17 @@ def _milliseconds(values: Sequence[Fraction | None], digits: int = 3) -> list[fl
     return [None if value is None else round(float(value * 1000), digits) for value in values]
 
 
-def _fault_entry(schedule: FrameSchedule, mode: FrameMode) -> dict[str, object]:
+def _fault_entry(schedule: FrameSchedule, mode: FrameMode, pacing: Pacing) -> dict[str, object]:
     """A presentation fault's part of a mode's manifest entry: the frame on screen in every refresh of the clip, the frames a
-    measurement counts as presented, the fault events, and what a measurement should count."""
+    measurement counts as presented, the fault events, and what a measurement should count; with an idle behaviour also the
+    presented frames whose step from the presented frame before them is static by the flags alone (staticSteps: the step is not
+    judged; the clip's first presented frame follows its last one)."""
     presented = {index: _first_shown(schedule, index) for index in schedule.presented}
+    order = schedule.presented
+    static_steps: dict[str, object] = {}
+    if mode.idle is not None:
+        steps = [index for position, index in enumerate(order) if idle.static_step(pacing.static_after, pacing.static_before, order[position - 1], index)]
+        static_steps = {"staticSteps": steps}
     return {
         "screen": list(schedule.screen),
         "presented": list(schedule.presented),
@@ -1353,6 +1365,7 @@ def _fault_entry(schedule: FrameSchedule, mode: FrameMode) -> dict[str, object]:
         "expected": {
             "skippedFrameIndices": faults.skipped_frame_indices(presented),
             "outOfOrderRefreshes": faults.out_of_order_refreshes(schedule.screen),
+            **static_steps,
         },
     }
 
@@ -1367,8 +1380,8 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
     schedule = frame_schedule(settings, mode, speed)
     animation = list(frames.animation)
     duration = settings.duration(speed)
-    fault = {} if mode.fault is None else _fault_entry(schedule, mode)
     pacing = frame_pacing(settings, mode, speed)
+    fault = {} if mode.fault is None else _fault_entry(schedule, mode, pacing)
     # An idle behaviour only: each frame's static flags, as its marker carries them. Static after: nothing animates while it is on
     # screen; static before: nothing animated while the frame before it (frame index - 1) was, marking nothing when that frame was
     # never shown. mb-framepacing does not judge the animation error of the step from a static frame to the next
