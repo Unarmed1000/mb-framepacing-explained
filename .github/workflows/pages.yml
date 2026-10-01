@@ -24,11 +24,33 @@ jobs:
           submodules: true
 
       # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl). moderngl's
-      # glcontext has no wheel for this Python yet, so uv builds it: it needs the X11 and EGL headers
-      - name: Install FFmpeg and OpenGL
+      # glcontext has no wheel for this Python yet, so uv builds it: it needs the X11 and EGL headers.
+      # The packages (about 80 with their dependencies) are kept between runs: the runner's package mirror stalls for minutes on
+      # some downloads. The key is the list of package files apt would download, so an unchanged list downloads nothing, and after
+      # an update of Ubuntu's packages only the changed ones are fetched (the older cache is the starting point)
+      - name: The apt packages to install
+        id: apt
+        env:
+          PACKAGES: ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
+          files=$(sudo apt-get install --yes --no-install-recommends --print-uris $PACKAGES | { grep "^'" || true; } | cut -d' ' -f2 | sort)
+          echo "$(echo "$files" | grep -c . || true) package files"
+          echo "key=$(echo "$files" | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "packages=$PACKAGES" >> "$GITHUB_OUTPUT"
+      - name: Cache the apt packages
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-archives
+          key: apt-ubuntu-26.04-${{ steps.apt.outputs.key }}
+          restore-keys: apt-ubuntu-26.04-
+      - name: Install FFmpeg and OpenGL
+        run: |
+          mkdir -p ~/apt-archives
+          sudo apt-get install --yes --no-install-recommends -o Dir::Cache::Archives="$HOME/apt-archives" -o APT::Sandbox::User=root ${{ steps.apt.outputs.packages }}
+          # Package files of versions Ubuntu no longer offers leave the cache; the cache step must be able to read the rest
+          sudo apt-get autoclean --yes -o Dir::Cache::Archives="$HOME/apt-archives"
+          sudo chown -R "$USER" ~/apt-archives
 
       # uv: Python from .python-version, the packages from uv.lock (its cache keeps the wheels it downloads and builds)
       - name: uv
