@@ -1043,7 +1043,7 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     started = cpu_start_ticks(settings, job.top, job.speed, index, loops)
     busy = cpu_busy_ticks(settings, job.top, job.speed, index)
     kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
-    flags = MarkerFlags.NONE
+    flags = MarkerFlags.NO_FLAGS
     if pacing.static_after[index]:
         flags |= MarkerFlags.STATIC_AFTER
     if pacing.static_before[index]:

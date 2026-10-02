@@ -994,14 +994,14 @@ class SingleAndMarkerTests(unittest.TestCase):
                 _, _, payloads = self.payloads(mode)
                 self.assertEqual({payload.preferred_frame_ticks for payload in payloads}, preferred)
                 self.assertEqual({payload.target_frame_ticks for payload in payloads}, targets)
-                self.assertEqual({payload.flags for payload in payloads}, {MarkerFlags.NONE})
+                self.assertEqual({payload.flags for payload in payloads}, {MarkerFlags.NO_FLAGS})
 
     def test_static_rests_flag_exactly_the_frames_at_rest(self) -> None:
         settings, job, payloads = self.payloads("60-naive-5ms-static-rests")
         lead = gv.MARKER_LEAD_REFRESHES
         for frame, payload in zip(range(-lead, len(payloads) - lead), payloads, strict=True):
             at_rest = gv.at_rest(settings, job.speed, gv.content_time(settings, job.top, job.speed, frame))
-            self.assertEqual(payload.flags, MarkerFlags.STATIC_AFTER if at_rest else MarkerFlags.NONE, frame)
+            self.assertEqual(payload.flags, MarkerFlags.STATIC_AFTER if at_rest else MarkerFlags.NO_FLAGS, frame)
         entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
         frames = cast(dict[str, list[bool]], entry["frames"])
         # 8 rests of 6 refreshes; every frame rendered; flagged in advance only
@@ -1020,18 +1020,20 @@ class SingleAndMarkerTests(unittest.TestCase):
         animation = cast(list[float], frames["animationMs"])
         self.assertTrue(all(b == a for (a, b), now in zip(itertools.pairwise(animation), before[1:], strict=True) if now))
         flags = {payload.flags for payload in payloads}
-        self.assertEqual(flags, {MarkerFlags.NONE, MarkerFlags.STATIC_AFTER, MarkerFlags.STATIC_AFTER | MarkerFlags.STATIC_BEFORE})
+        self.assertEqual(flags, {MarkerFlags.NO_FLAGS, MarkerFlags.STATIC_AFTER, MarkerFlags.STATIC_AFTER | MarkerFlags.STATIC_BEFORE})
 
     def test_hindsight_analyses_like_the_flag_in_advance(self) -> None:
         settings, job, hindsight = self.payloads("60-on-demand-paused-clock-hindsight")
         _, _, advance = self.payloads("60-on-demand-paused-clock")
         # The same markers but for the flags: static after on each rest's frame, or static before on the frame after it
-        self.assertEqual([replace(payload, flags=MarkerFlags.NONE) for payload in hindsight], [replace(payload, flags=MarkerFlags.NONE) for payload in advance])
+        self.assertEqual(
+            [replace(payload, flags=MarkerFlags.NO_FLAGS) for payload in hindsight], [replace(payload, flags=MarkerFlags.NO_FLAGS) for payload in advance]
+        )
         indices = {payload.frame_index for payload in hindsight}
         woken = {payload.frame_index for payload in hindsight if payload.flags == MarkerFlags.STATIC_BEFORE}
         resting = {payload.frame_index for payload in advance if payload.flags == MarkerFlags.STATIC_AFTER}
         self.assertEqual(woken, {index + 1 for index in resting} & indices)
-        self.assertEqual({payload.flags for payload in hindsight}, {MarkerFlags.NONE, MarkerFlags.STATIC_BEFORE})
+        self.assertEqual({payload.flags for payload in hindsight}, {MarkerFlags.NO_FLAGS, MarkerFlags.STATIC_BEFORE})
         entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
         self.assertEqual(set(cast(dict[str, list[bool]], entry["frames"])["staticAfter"]), {False})
 
