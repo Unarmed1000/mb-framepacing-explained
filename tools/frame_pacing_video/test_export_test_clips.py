@@ -19,6 +19,12 @@ class ClipManifestTests(unittest.TestCase):
         self.assertEqual({name for name, speed in speeds.items() if speed != "fast"}, {"60-idle-1fps"})
         self.assertEqual(speeds["60-idle-1fps"], "idle")
         self.assertEqual(len(clips), 22)
+        # Every clip's start marker names it with a short text tag (its mode's name, or one of its own), never a UUID, each its own
+        tags = [str(gv.marker_sequence_id(job.top)) for _, job in clips]
+        # (a UUID shows as 36 characters)
+        self.assertTrue(all(len(tag) <= 16 for tag in tags), tags)
+        self.assertEqual(len(set(tags)), len(tags))
+        self.assertEqual(set(gv.SEQUENCE_TAGS), {job.top.name for _, job in clips if len(job.top.name) > 16})
 
     def test_the_manifest_is_the_clips_own_named_after_the_folders_video(self) -> None:
         _, settings = gv.parse_arguments(["--single", "60-busy-adaptive", "--marker", "--speed", "fast"])

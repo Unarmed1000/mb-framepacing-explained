@@ -252,8 +252,9 @@ import them and measure their animation error, and its numbers can be checked ag
   idle behaviour (static after, static before). The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first
   frame, and its `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
 - **Start and end:** 3 refreshes of start marker before the clip and 3 of end marker after it, showing the previous and next loop's
-  frames. The start marker's sequence id is the mode's name when it fits 16 characters, else a UUID made from it (the manifest's
-  `sequenceId`). The measured run is then exactly the clip, and the video 6
+  frames. The start marker's sequence id is the mode's name when it fits 16 characters; a test clip with a longer name has a short
+  name of its own (`SEQUENCE_TAGS` in `generate_videos.py`, e.g. `perfect-storm`), and any other mode a UUID made from its name
+  (the manifest's `sequenceId`). The measured run is then exactly the clip, and the video 6
   refreshes longer; it no longer loops seamlessly.
 - **Where:** mb-framepacing's recommended place, 32 px from the top-left corner, left of the box's path, in pure black and white,
   modules of `--marker-module-px` video pixels (3; 2 is enough lossless, `--web` needs 3).

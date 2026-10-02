@@ -125,6 +125,26 @@ MARKER_MIN_MODULE_PX = 2
 MARKER_MIN_WEB_MODULE_PX = 3
 # The start marker's sequence id of a mode whose name is no short text tag: a UUID (version 5) from this URL plus the mode's name
 SEQUENCE_ID_URL = "https://github.com/Unarmed1000/mb-framepacing-explained/"
+# The start marker's sequence id of each test clip (export_test_clips.SCENARIOS) whose mode name is longer than a text tag (16
+# characters): a short name of its own, as mb-framepacing's reports show it, never a UUID
+SEQUENCE_TAGS = {
+    "60-diagram-slow-frames-every-1s": "slow-frames",
+    "60-diagram-half-rate-even": "half-rate-even",
+    "60-diagram-half-rate-bad-pacing": "half-rate-uneven",
+    "60-busy-full-rate": "busy-full-rate",
+    "60-naive-5ms-diagram-slow-frames-every-1s": "perfect-storm",
+    "60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames": "storm-dropped",
+    "60-naive-5ms-diagram-slow-frames-every-1s-out-of-order": "storm-reordered",
+    "60-naive-5ms-static-rests": "static-rests",
+    "60-static-rests-paused-clock": "static-paused",
+    "60-on-demand-paused-clock": "paused-advance",
+    "60-on-demand-paused-clock-hindsight": "paused-hindsight",
+    "60-on-demand-paused-clock-dropped-before-wake": "advance-rest",
+    "60-on-demand-paused-clock-hindsight-dropped-before-wake": "hindsight-rest",
+    "60-on-demand-paused-clock-hindsight-dropped-wake": "hindsight-wake",
+    "60-on-demand-paused-clock-hindsight-dropped-frames": "hindsight-moving",
+    "60-on-demand-paused-clock-hindsight-dropped-after-stall": "hindsight-stall",
+}
 
 # The modes of the default run: 60, 30 and 20 Hz with the ideal timer, then 60 and 30 Hz with the naive timer under light, typical
 # and heavy system load (the demo profile: errors in most frames; 20 Hz only as the ideal reference). Opt-in: the realistic loads,
@@ -1003,8 +1023,11 @@ def renderer_for(settings: Settings, job: VideoJob) -> Renderer:
 
 
 def marker_sequence_id(mode: FrameMode) -> SequenceId:
-    """The start marker's sequence id, one per clip: the mode's name as a text tag when it is 1 to 16 printable ASCII characters,
-    otherwise a UUID made from it (version 5, from this repository's URL and the name), so it never changes."""
+    """The start marker's sequence id, one per clip: a test clip's own short name (SEQUENCE_TAGS), else the mode's name as a text tag
+    when it is 1 to 16 printable ASCII characters, otherwise a UUID made from it (version 5, from this repository's URL and the name),
+    so it never changes."""
+    if mode.name in SEQUENCE_TAGS:
+        return SequenceId.from_text(SEQUENCE_TAGS[mode.name])
     try:
         return SequenceId.from_text(mode.name)
     except ValueError:

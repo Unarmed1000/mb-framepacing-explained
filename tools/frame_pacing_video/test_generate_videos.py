@@ -846,23 +846,24 @@ class SingleAndMarkerTests(unittest.TestCase):
                 self.assertEqual(entry["targetFps"], max(expected))
         self.assertIn("CC BY-NC-SA 4.0", cast(str, gv.build_manifest(settings, gv.plan_videos(settings))["license"]))
 
-    def test_the_sequence_id_is_the_mode_name_or_a_uuid_made_from_it(self) -> None:
+    def test_the_sequence_id_is_a_short_name_or_a_uuid_made_from_the_mode(self) -> None:
         # A name of at most 16 characters is the text tag itself, padded with zeros
         short = gv.marker_sequence_id(MODE("60-naive-5ms"))
         self.assertEqual((short, str(short)), (SequenceId(b"60-naive-5ms\0\0\0\0"), "60-naive-5ms"))
         # 16 characters fill it
         full = gv.marker_sequence_id(MODE("60-busy-adaptive"))
         self.assertEqual((full, str(full)), (SequenceId(b"60-busy-adaptive"), "60-busy-adaptive"))
-        # A longer one is a version 5 UUID from the repository's URL and the name, shown as the UUID
-        name = "60-naive-5ms-diagram-slow-frames-every-1s"
+        # A test clip with a longer name has a short name of its own
+        storm = "60-naive-5ms-diagram-slow-frames-every-1s"
+        tagged = gv.marker_sequence_id(MODE(storm))
+        self.assertEqual((tagged, str(tagged)), (SequenceId(b"perfect-storm\0\0\0"), "perfect-storm"))
+        # Any other longer one is a version 5 UUID from the repository's URL and the name, shown as the UUID
+        name = "60-naive-heavy-realistic"
         expected = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/Unarmed1000/mb-framepacing-explained/" + name)
         long = gv.marker_sequence_id(MODE(name))
         self.assertEqual((long, str(long)), (SequenceId(expected.bytes), str(expected)))
-        self.assertEqual(
-            str(gv.marker_sequence_id(MODE("60-diagram-half-rate-even"))), str(uuid.uuid5(uuid.NAMESPACE_URL, gv.SEQUENCE_ID_URL + "60-diagram-half-rate-even"))
-        )
         # The start marker carries it, with no start time; the manifest shows it as mb-framepacing does, and its bytes in hex
-        for mode, sequence_id in (("60-naive-5ms", short), ("60-busy-adaptive", full), (name, long)):
+        for mode, sequence_id in (("60-naive-5ms", short), ("60-busy-adaptive", full), (storm, tagged), (name, long)):
             settings, jobs = self.marked(mode)
             job = jobs[0]
             payload = gv.marker_payload(settings, job, -1)
