@@ -16,8 +16,8 @@ What it covers:
 It is the companion of [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing) (pre-alpha), which measures animation error
 on a real display output. To see its frame marker in a real application, the author's unofficial
 [gtec-demo-framework](https://github.com/Unarmed1000/gtec-demo-framework) can show it in every OpenGL ES and Vulkan sample
-(`--FramePacing`), and has FramePacing samples that pace their frames with mb-framepacing's experimental frame pacer. This project and mb-framepacing
-follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
+(`--FramePacing`), and has FramePacing samples that pace their frames with mb-framepacing's experimental frame pacer. This project
+and mb-framepacing follow the vocabulary of [Intel PresentMon](https://github.com/GameTechDev/PresentMon) and the
 [Gamers Nexus animation error methodology](https://gamersnexus.net/gpus-gn-extras-cpus/problem-gpu-benchmarks-reality-vs-numbers-animation-error-methodology-white).
 
 ## What is in this repository
