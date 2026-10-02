@@ -65,6 +65,10 @@ run from start to end, analyses it and writes the results as JSON and CSV, ready
 3. **Analyse:** it reads the marker back from every captured frame and compares the animation time with when the frame really
    appeared: animation error, display time steps, dropped and torn frames, as a GUI, CSV or JSON.
 
+**To see the marker in a real application:** the author's unofficial
+[gtec-demo-framework](https://github.com/Unarmed1000/gtec-demo-framework) has it built in. Every OpenGL ES and Vulkan sample can show
+it (`--FramePacing`), and its FramePacing samples also pace their frames with mb-framepacing's experimental frame pacer.
+
 It needs the application's source code: it cannot measure an application you cannot rebuild. {.note}
 
 :::
@@ -84,5 +88,6 @@ Next: what mb-framepacing reports for each of its test clips, known problems mea
 [PresentMon's columns](https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md#csv-columns)
 [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing#readme)
 [Integrating the marker](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md)
+[The marker in the gtec-demo-framework](https://github.com/Unarmed1000/gtec-demo-framework/blob/master/Doc/FramePacing.md)
 [Measured in real games](https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/measured-errors.md)
 {.more}

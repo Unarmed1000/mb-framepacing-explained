@@ -26,6 +26,8 @@ fetched and quotes checked, but check the linked source before relying on a deta
   error in real games, next to the videos' timers
 - [All the articles and videos](https://github.com/Unarmed1000/mb-framepacing-explained/blob/master/doc/further-reading.md)
   Grouped by subject
+- [gtec-demo-framework](https://github.com/Unarmed1000/gtec-demo-framework) The author's unofficial demo framework: the marker in
+  every OpenGL ES and Vulkan sample, and FramePacing samples that pace their frames
 
 :::
 
