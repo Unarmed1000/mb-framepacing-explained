@@ -16,6 +16,11 @@ frame on screen.
     own</a></figcaption>
 </figure>
 
+**Photosensitivity:** the video shows mb-framepacing's marker, a small black-and-white pattern that changes every frame, and
+flickering patterns can trigger seizures in people with photosensitive epilepsy. At this size it is within the
+[guideline for flashing content](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md#photosensitivity),
+which lowers the risk and does not remove it. The video plays only when you press play. {.note}
+
 :::guide
 
 :::card What it does

@@ -59,7 +59,9 @@ run from start to end, analyses it and writes the results as JSON and CSV, ready
 :::card How it works
 
 1. **Once: add the marker.** A small library (C++, C#, Python or a Unity package) draws a marker with the frame index and animation
-   time as the last thing in every frame.
+   time as the last thing in every frame. In test builds only: the marker is a pattern that flickers, so read about
+   [photosensitivity](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md#photosensitivity)
+   before showing it to anyone.
 2. **Record:** a capture card records the display signal with its own clock, at the display's refresh rate (or import a video
    from a high-speed camera).
 3. **Analyse:** it reads the marker back from every captured frame and compares the animation time with when the frame really

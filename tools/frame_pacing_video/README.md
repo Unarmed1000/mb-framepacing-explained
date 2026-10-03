@@ -242,6 +242,11 @@ video of this tool into a given file, as the page's other video generators do.
 import them and measure their animation error, and its numbers can be checked against the generator's. They go to
 `box-single-marker/…`, apart from the web page's clips.
 
+> **Photosensitivity warning.** The marker is a high-contrast pattern that changes every frame, and flickering patterns can
+> trigger seizures in people with photosensitive epilepsy. At the default size (3 px modules in a 1280x720 video: 1.6 % of the
+> frame) it is within the guideline for flashing content, which lowers the risk and does not remove it. Keep `--marker-module-px`
+> no larger than the clip needs, and see mb-framepacing's [Photosensitivity](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md#photosensitivity) before showing a marked clip to anyone.
+
 - **What it carries:** at every refresh, the index of the frame on screen (a held frame keeps its index, so mb-framepacing sees one
   presented frame), the animation time it shows, and the frame pacer's plan for it: its intended display time (the refresh it was
   rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 166 667 ticks at
