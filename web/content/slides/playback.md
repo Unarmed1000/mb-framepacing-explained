@@ -9,17 +9,17 @@ A report says where the animation error is; the recording shows what it looked l
 side by side: the recording a capture was imported from plays next to the run's report card, with a playhead on every panel at the
 frame on screen.
 
+**Photosensitivity:** the video below shows mb-framepacing's marker, a small black-and-white pattern that changes every frame, and
+flickering patterns can trigger seizures in people with photosensitive epilepsy. At this size it is within the
+[guideline for flashing content](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md#photosensitivity),
+which lowers the risk and does not remove it. The video plays only when you press play. {.note}
+
 <figure class="live-embed">
   <iframe src="playback/60-busy-adaptive/index.html#t=2.05" title="mb-framepacing's playback report of the test clip 60-busy-adaptive" loading="lazy"></iframe>
   <figcaption>Live: mb-framepacing's playback report of the test clip 60-busy-adaptive, opened at its busy stretch. Play it,
     step it, or click a panel. <a href="playback/60-busy-adaptive/index.html#t=2.05" target="_blank" rel="noopener">Open it on its
     own</a></figcaption>
 </figure>
-
-**Photosensitivity:** the video shows mb-framepacing's marker, a small black-and-white pattern that changes every frame, and
-flickering patterns can trigger seizures in people with photosensitive epilepsy. At this size it is within the
-[guideline for flashing content](https://github.com/Unarmed1000/mb-framepacing/blob/master/sdk/doc/integrating.md#photosensitivity),
-which lowers the risk and does not remove it. The video plays only when you press play. {.note}
 
 :::guide
 
