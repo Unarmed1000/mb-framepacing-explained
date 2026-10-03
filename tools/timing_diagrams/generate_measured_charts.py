@@ -19,6 +19,12 @@ With --test-clips it measures mb-framepacing's test clips instead (export_test_c
 keeps mb-framepacing's default report card, as the app draws it for a capture, titled with the clip's mode:
 doc/images/test-clip-<mode>.svg, for the web page's "test clips, measured" slides.
 
+With --playback-example it writes the web page's live playback report instead: mb-framepacing's playback page of the test clip
+60-busy-adaptive (the recording next to its report card, with a player), web/public/playback/60-busy-adaptive/index.html. The page
+plays the clip's web-encoded copy, which build_blind_test.py makes into web/public/videos with the page's other clips (the same
+frames and timestamps): it names it by a path relative to itself (--playback-video-url), so no video goes into the folder. The
+folder's playback.json is left out: the page does not read it.
+
 mb-framepacing comes from the submodule external/mb-framepacing (the commit this repository pins): the script builds it there with
 dotnet build -c Release (incremental; its bin/ and obj/ are ignored by the submodule's git). --mb-framepacing, the MB_FRAMEPACING
 environment variable or local.toml ([mb-framepacing] path) name another build instead. The clips and the captures stay in
@@ -27,19 +33,23 @@ out/measured_charts.
 Run from the repository's .venv:
   python tools/timing_diagrams/generate_measured_charts.py [--output-dir DIR] [--png] [MODE ...]
   python tools/timing_diagrams/generate_measured_charts.py --test-clips [MODE ...]
+  python tools/timing_diagrams/generate_measured_charts.py --playback-example
 """
 
 # argparse sets the attributes of Arguments (the typed command line) after construction
 # pyright: reportUninitializedInstanceVariable=false
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "frame_pacing_video"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "web_export"))
 
+import build_blind_test  # noqa: E402
 import export_test_clips  # noqa: E402
 import generate_videos as gv  # noqa: E402
 from frame_timing import TimingParameters, describe, parse_mode  # noqa: E402
@@ -51,6 +61,9 @@ HISTOGRAM_MODES = ("60-naive-heavy",)
 WORK_DIR = gv.REPO_ROOT / "out" / "measured_charts"
 SUBMODULE_PROJECT = gv.REPO_ROOT / "external" / "mb-framepacing" / "measure" / "app" / "FramePacing" / "FramePacing.csproj"
 SUBMODULE_BUILD = SUBMODULE_PROJECT.parent / "bin" / "Release" / "net10.0"
+# The web page's live playback report: the test clip it plays (build_blind_test.py makes its web-encoded video), and where it goes
+PLAYBACK_MODE = build_blind_test.PLAYBACK_MODE
+PLAYBACK_DIR = gv.REPO_ROOT / "web" / "public" / "playback" / PLAYBACK_MODE
 
 MB_FRAMEPACING = gv.Tool(
     "mb-framepacing",
@@ -81,6 +94,7 @@ class Arguments(argparse.Namespace):
     output_dir: Path
     png: bool
     test_clips: bool
+    playback_example: bool
     mb_framepacing: str | None
     ffmpeg: str | None
     config: Path | None
@@ -129,6 +143,31 @@ def find_mb_framepacing(explicit: str | None, config: Path | None) -> Path:
     """mb-framepacing: where it was given (--mb-framepacing, MB_FRAMEPACING, local.toml), else the submodule's, built."""
     configured = gv.configured_tool(MB_FRAMEPACING, explicit, config)
     return configured.path if configured is not None else submodule_tool()
+
+
+def playback_url(page_dir: Path) -> str:
+    """The path of the live playback report's video (build_blind_test.py's, in web/public/videos) relative to its page's folder."""
+    return Path(os.path.relpath(build_blind_test.playback_video(build_blind_test.DEFAULT_OUTPUT_DIR), page_dir)).as_posix()
+
+
+def playback_example(tool: Path, ffmpeg: Path, output_dir: Path) -> Path:
+    """Import the test clip PLAYBACK_MODE with mb-framepacing's playback report, playing the video playback_url names, and copy its
+    page to output_dir; returns the page."""
+    settings, job = next((settings, job) for settings, job in export_test_clips.planned() if job.top.name == PLAYBACK_MODE)
+    work = WORK_DIR / "playback"
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    video = work / "video.mp4"
+    gv.encode_video(ffmpeg, settings, job, video)
+    capture = work / "capture"
+    run([str(tool), "import", str(video), "-o", str(capture), "--analyze", "--playback", "--playback-video-url", playback_url(output_dir)])
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True)
+    page = output_dir / "index.html"
+    _ = shutil.copyfile(capture / "analysis" / "playback" / "run-1" / "index.html", page)
+    return page
 
 
 def measure_clip(settings: gv.Settings, job: gv.VideoJob, tool: Path, ffmpeg: Path, render: list[str]) -> Path:
@@ -197,6 +236,11 @@ def main(argv: list[str] | None = None) -> int:
         "--test-clips", action="store_true", help="measure the test clips (MODE: some of them; default all) as test-clip-<mode>.svg, the default report card"
     )
     _ = parser.add_argument(
+        "--playback-example",
+        action="store_true",
+        help=f"write the web page's live playback report of {PLAYBACK_MODE} to {PLAYBACK_DIR.relative_to(gv.REPO_ROOT).as_posix()}",
+    )
+    _ = parser.add_argument(
         "--mb-framepacing", metavar="PATH", help="mb-framepacing executable or its folder (default: MB_FRAMEPACING, local.toml, then the submodule's, built)"
     )
     _ = parser.add_argument("--ffmpeg", metavar="PATH", help="FFmpeg executable or its folder (default: MB_FFMPEG, local.toml, then PATH)")
@@ -215,6 +259,9 @@ def main(argv: list[str] | None = None) -> int:
         tool = find_mb_framepacing(args.mb_framepacing, args.config)
         ffmpeg = gv.find_ffmpeg(args.ffmpeg, args.config).path
         gv.require_lossless_encoder(gv.list_encoders(ffmpeg), ffmpeg)
+        if args.playback_example:
+            print(playback_example(tool, ffmpeg, PLAYBACK_DIR))
+            return 0
         args.output_dir.mkdir(parents=True, exist_ok=True)
         if args.test_clips:
             _ = measure_test_clips(modes, tool, ffmpeg, args.output_dir, args.png)

@@ -5,6 +5,8 @@
 web/node_modules/
 web/dist/
 web/public/videos/
+# The live playback report is committed as its page only: its video comes from web/public/videos
+web/public/playback/**/*.mp4
 
 # Machine-local settings (see local.example.toml)
 local.toml

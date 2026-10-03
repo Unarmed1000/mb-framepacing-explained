@@ -12,10 +12,11 @@
     },
     {
       "root": "tools/timing_diagrams",
-      "extraPaths": ["tools/frame_pacing_video", "external/mb-framepacing/sdk/python"]
+      "extraPaths": ["tools/frame_pacing_video", "tools/web_export", "external/mb-framepacing/sdk/python"]
     },
     {
-      "root": "tools/web_export"
+      "root": "tools/web_export",
+      "extraPaths": ["tools/frame_pacing_video", "external/mb-framepacing/sdk/python"]
     },
     {
       "root": "tools",

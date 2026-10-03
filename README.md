@@ -164,4 +164,7 @@ It is provided as is, without warranty or liability. Quotations from third-party
 The exceptions are AMD's FSR 1 headers in [`tools/frame_pacing_video/fsr1`](tools/frame_pacing_video/fsr1), under their own MIT
 licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)). The frame marker library comes from mb-framepacing itself, the
 submodule [`external/mb-framepacing`](https://github.com/Unarmed1000/mb-framepacing) (its `sdk/python`, under the BSD 3-Clause
-licence; its QR encoder under the MIT licence), and is not part of this repository.
+licence; its QR encoder under the MIT licence), and is not part of this repository. The live playback report in
+[`web/public/playback`](web/public/playback) is mb-framepacing's output, its playback page, under mb-framepacing's
+[PolyForm Perimeter License 1.0.1](https://polyformproject.org/licenses/perimeter/1.0.1) (Required Notice: Copyright (c) 2026
+Mana Battery ApS (https://github.com/Unarmed1000/mb-framepacing)).

@@ -81,6 +81,7 @@ git -C external/mb-framepacing checkout <commit>
 git add external/mb-framepacing
 ```
 
-Run the tests, regenerate the measured charts (`generate_measured_charts.py`), commit the new pin, then export the test clips again
-(`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's `measure/test-data/videos`; committing them there is mb-framepacing's
-work.
+Run the tests, regenerate the measured charts (`generate_measured_charts.py`, and with `--test-clips` the test clips' cards), and
+when its playback page changed the web page's live playback report (`--playback-example`, into `web/public/playback`), commit the
+new pin, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's
+`measure/test-data/videos`; committing them there is mb-framepacing's work.

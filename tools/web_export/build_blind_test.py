@@ -7,7 +7,8 @@ The questions live in web/src/blind-test/trials.json, the one place both the pag
 speed of the single-box scene; never the rows) it collects the top/bottom pairs: identical pairs once, every other pair in both
 orders (the page asks each pair once with each mode on top), plus the warm-up pairs for the warm-up's motions. It runs the video
 tool once per motion, so each motion's folder (videos/box/<motion>) gets all its clips and one complete manifest.json, and renders
-the slides' rendered videos (clips.json's "rendered", e.g. the dynamic resolution example) into videos/rendered. Every command
+the slides' rendered videos (clips.json's "rendered", e.g. the dynamic resolution example) into videos/rendered, and the video of
+the live playback report (PLAYBACK_MODE, marked, into videos/box-single-marker; the report is generate_measured_charts.py's). Every command
 writes its own files, so they run side by side (--jobs, default one per CPU core); each one's output is printed when it ends.
 
 Run from the repository's .venv:
@@ -37,6 +38,10 @@ GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_videos.py"
 # The slides' rendered videos (3D scenes, OpenGL): not clips of the video tool
 RENDER_GENERATOR = REPO_ROOT / "tools" / "frame_pacing_video" / "generate_render_scale_video.py"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "web" / "public" / "videos"
+# The web page's live playback report (generate_measured_charts.py --playback-example) plays this test clip, web-encoded: the same
+# frames and timestamps as the clip mb-framepacing imported for it, only encoded for browsers
+PLAYBACK_MODE = "60-busy-adaptive"
+PLAYBACK_SPEED = "fast"
 
 
 def required_pairs(definitions: dict[str, object]) -> dict[str, list[tuple[str, str]]]:
@@ -91,6 +96,17 @@ def rendered_commands(clips: dict[str, object], output_dir: Path, ffmpeg: str | 
         command = [sys.executable, str(generator), *cast(list[str], video["arguments"]), "--output", str(output)]
         commands.append(command + (["--ffmpeg", ffmpeg] if ffmpeg else []))
     return commands
+
+
+def playback_command(output_dir: Path, ffmpeg: str | None) -> list[str]:
+    """The command for the live playback report's video: the test clip PLAYBACK_MODE, marked and web-encoded (playback_video)."""
+    command = [sys.executable, str(GENERATOR), "--single", PLAYBACK_MODE, "--marker", "--web", "--speed", PLAYBACK_SPEED, "--output-dir", str(output_dir)]
+    return command + (["--ffmpeg", ffmpeg] if ffmpeg else [])
+
+
+def playback_video(output_dir: Path) -> Path:
+    """Where playback_command writes the live playback report's video (the video tool's folder and name for a marked clip)."""
+    return output_dir / "box-single-marker" / PLAYBACK_SPEED / f"single_{PLAYBACK_SPEED}_{PLAYBACK_MODE}.mp4"
 
 
 @dataclass(frozen=True)
@@ -161,6 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         steps.append(Step(f"{motion}: {len(pairs)} clips", generator_command(motion, pairs, clip_arguments, args.output_dir, args.ffmpeg)))
     for command in rendered_commands(clips, args.output_dir, args.ffmpeg):
         steps.append(Step(f"rendered: {Path(command[command.index('--output') + 1]).name}", command))
+    steps.append(Step(f"playback report's video: {PLAYBACK_MODE}", playback_command(args.output_dir, args.ffmpeg)))
     print(f"{len(steps)} commands, {args.jobs} at a time", flush=True)
     failed = [outcome for outcome in run_steps(steps, args.jobs) if outcome.returncode != 0]
     if failed:

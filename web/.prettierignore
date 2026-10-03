@@ -1,5 +1,6 @@
-# Build output and the generated clips: never reformat
+# Build output, the generated clips and mb-framepacing's generated playback report: never reformat
 dist/
 public/videos/
+public/playback/
 node_modules/
 package-lock.json

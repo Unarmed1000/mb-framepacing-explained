@@ -9,12 +9,11 @@ A report says where the animation error is; the recording shows what it looked l
 side by side: the recording a capture was imported from plays next to the run's report card, with a playhead on every panel at the
 frame on screen.
 
-<figure class="screenshot">
-  <a href="https://github.com/Unarmed1000/mb-framepacing/blob/master/measure/doc/usage.md#the-playback-page" target="_blank" rel="noopener">
-    <img src="https://raw.githubusercontent.com/Unarmed1000/mb-framepacing/master/measure/doc/images/playback-page.png" alt="mb-framepacing's playback report: the recording with its player on the left, the run's report with the playhead on the right" loading="lazy" />
-  </a>
-  <figcaption>The playback report of the test clip 60-busy-adaptive, at its busy stretch (from the mb-framepacing
-    repository).</figcaption>
+<figure class="live-embed">
+  <iframe src="playback/60-busy-adaptive/index.html#t=2.05" title="mb-framepacing's playback report of the test clip 60-busy-adaptive" loading="lazy"></iframe>
+  <figcaption>Live: mb-framepacing's playback report of the test clip 60-busy-adaptive, opened at its busy stretch. Play it,
+    step it, or click a panel. <a href="playback/60-busy-adaptive/index.html#t=2.05" target="_blank" rel="noopener">Open it on its
+    own</a></figcaption>
 </figure>
 
 :::guide

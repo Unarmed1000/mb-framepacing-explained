@@ -12,6 +12,11 @@ from typing import cast
 
 import build_blind_test as export
 
+# The video tool and its test clips, to check the live playback report's video against them
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "frame_pacing_video"))
+import export_test_clips  # noqa: E402
+import generate_videos as gv  # noqa: E402
+
 
 class PairTests(unittest.TestCase):
     def test_pairs_of_the_real_definitions(self) -> None:
@@ -85,6 +90,17 @@ class PairTests(unittest.TestCase):
         self.assertEqual(command[2:], ["--web", "--speed", "fast", "--output-dir", "out", "--pairs", "60:30", "30:60"])
         with_ffmpeg = export.generator_command("fast", [("60", "30")], ["--web"], Path("out"), "D:/ffmpeg")
         self.assertEqual(with_ffmpeg[-2:], ["--ffmpeg", "D:/ffmpeg"])
+
+    def test_the_playback_reports_video_is_its_test_clip_web_encoded_where_the_page_looks(self) -> None:
+        command = export.playback_command(Path("out"), None)
+        _, settings = gv.parse_arguments(command[2:])
+        (job,) = gv.plan_videos(settings)
+        self.assertTrue(settings.web and job.single and job.marker)
+        # Where the generator writes it is where the page plays it from
+        self.assertEqual(Path("out") / job.group / job.filename, export.playback_video(Path("out")))
+        # The test clip mb-framepacing imported for the report: the same mode at the same speed (so the same frames and timestamps)
+        speeds = {clip.top.name: clip.speed.name for _, clip in export_test_clips.planned()}
+        self.assertEqual((job.top.name, job.speed.name), (export.PLAYBACK_MODE, speeds[export.PLAYBACK_MODE]))
 
 
 if __name__ == "__main__":
