@@ -63,7 +63,8 @@ run from start to end, analyses it and writes the results as JSON and CSV, ready
 2. **Record:** a capture card records the display signal with its own clock, at the display's refresh rate (or import a video
    from a high-speed camera).
 3. **Analyse:** it reads the marker back from every captured frame and compares the animation time with when the frame really
-   appeared: animation error, display time steps, dropped and torn frames, as a GUI, CSV or JSON.
+   appeared: animation error, display time steps, dropped and torn frames, as a GUI, CSV or JSON, or [played back next to the
+   recording](#/playback).
 
 **To see the marker in a real application:** the author's unofficial
 [gtec-demo-framework](https://github.com/Unarmed1000/gtec-demo-framework) has it built in. Every OpenGL ES and Vulkan sample can show
@@ -83,7 +84,8 @@ It needs the application's source code: it cannot measure an application you can
 
 :::
 
-Next: what mb-framepacing reports for each of its test clips, known problems measured from their videos.
+Next: playing a measurement back next to its report, and then what mb-framepacing reports for each of its test clips, known
+problems measured from their videos.
 
 [PresentMon's columns](https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md#csv-columns)
 [mb-framepacing](https://github.com/Unarmed1000/mb-framepacing#readme)

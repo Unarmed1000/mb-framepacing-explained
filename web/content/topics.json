@@ -17,9 +17,10 @@
     },
     {
       "name": "Measure it yourself",
-      "about": "How to measure animation error on a real display, and what mb-framepacing reports for known problems.",
+      "about": "How to measure animation error on a real display, how to play a measurement back next to its report, and what mb-framepacing reports for known problems.",
       "slides": [
         "measure",
+        "playback",
         "test-clips",
         "test-clips-late",
         "test-clips-busy",
