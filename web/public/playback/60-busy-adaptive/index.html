@@ -8,7 +8,8 @@
   report time.
 -->
 <!--
-Every page written from this one is a copy of part of mb-framepacing, and carries its license's terms and notice:
+This page's code (its markup, styles and script) is part of mb-framepacing, so every page written from it carries the tool's license
+terms and notice. They cover the tool's code only, not the report's measurements or the video.
 PolyForm Perimeter License 1.0.1: https://polyformproject.org/licenses/perimeter/1.0.1
 Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed1000/mb-framepacing)
 -->
@@ -696,6 +697,22 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
         color: var(--pb-faint);
         font-size: 12px;
         text-align: center;
+      }
+      .pb-footer p {
+        margin: 0 0 4px;
+      }
+      .pb-footer a {
+        color: var(--pb-muted);
+        text-decoration: none;
+        border-radius: 3px;
+      }
+      .pb-footer a:hover {
+        color: var(--pb-accent);
+        text-decoration: underline;
+      }
+      .pb-footer a:focus-visible {
+        outline: 2px solid var(--pb-accent);
+        outline-offset: 2px;
       }
 
       /* Keyboard shortcuts */
@@ -2665,7 +2682,15 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
         </section>
       </main>
 
-      <footer class="pb-footer" id="pb-footer"></footer>
+      <footer class="pb-footer">
+        <p id="pb-footer-note"></p>
+        <p>
+          Made with
+          <a href="https://github.com/Unarmed1000/mb-framepacing" target="_blank" rel="noopener" id="pb-footer-tool"
+            >mb-framepacing</a
+          >
+        </p>
+      </footer>
     </div>
 
     <div class="pb-keys" id="pb-keys" role="dialog" aria-label="Keyboard shortcuts" hidden>
@@ -2784,9 +2809,9 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
           '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>',
           `${data.video.name} · ${videoKinds[data.video.kind] ?? data.video.kind}`,
         );
-        $("pb-footer").textContent =
-          (data.toolVersion ? `mb-framepacing ${data.toolVersion}` : "mb-framepacing") +
-          " · the report's times are seconds since the run's first frame, from the video's own timestamps";
+        if (data.toolVersion) $("pb-footer-tool").textContent = `mb-framepacing ${data.toolVersion}`;
+        $("pb-footer-note").textContent =
+          "The report's times are seconds since the run's first frame, from the video's own timestamps";
 
         const tiles = $("pb-tiles");
         for (const tile of data.tiles) {
