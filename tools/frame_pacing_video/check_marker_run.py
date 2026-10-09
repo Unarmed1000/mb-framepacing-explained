@@ -9,7 +9,7 @@ then point this script at the manifest, the clip's file name and the analysis fo
   python tools/frame_pacing_video/check_marker_run.py manifest.json single_fast_60-naive-5ms.mp4 single_fast_60-naive-5ms/analysis
 
 It reads mb-framepacing's run-1-frames.csv and checks, frame by frame, that every frame the clip presents was presented and that its
-animation error (animationErrorTicks: whole 100 ns ticks) is the manifest's (animationErrorMs), within --tolerance-ms. A clip with a presentation fault (-dropped-frames,
+animation error (animationErrorNs: whole nanoseconds) is the manifest's (animationErrorMs), within --tolerance-ms. A clip with a presentation fault (-dropped-frames,
 -out-of-order, -dropped-before-wake, -dropped-wake, -dropped-after-stall) lists the frames it presents (presented); the others
 must not be measured. The run's first frame has no error in mb-framepacing (no previous frame), and neither has the step from a static
 frame to the next (an idle behaviour's frames at rest: the manifest's staticAfter on the frame, or staticBefore on the next frame when
@@ -34,10 +34,10 @@ from typing import cast
 
 from idle_behaviour import static_step
 
-# The manifest keeps 3 decimals (ms) and mb-framepacing 4; the capture times come from the video's timestamps
+# The manifest keeps 3 decimals (ms) and mb-framepacing whole nanoseconds; the capture times come from the video's timestamps
 DEFAULT_TOLERANCE_MS = 0.01
-# The times of mb-framepacing's analysis output are whole 100 ns ticks
-TICKS_PER_MILLISECOND = 10_000
+# The times of mb-framepacing's analysis output are whole nanoseconds
+NS_PER_MILLISECOND = 1_000_000
 # The flag of a frame mb-framepacing assumed static, in run-1-frames.csv's flags (joined with |)
 STATIC_ASSUMED = "StaticAssumed"
 
@@ -74,11 +74,11 @@ def expected_errors(manifest: Path, video: str) -> tuple[int, list[float | None]
 
 
 def measured_errors(analysis: Path) -> dict[int, float | None]:
-    """mb-framepacing's animation error of every presented frame of run 1 in milliseconds (the CSV's animationErrorTicks), by marker
+    """mb-framepacing's animation error of every presented frame of run 1 in milliseconds (the CSV's animationErrorNs), by marker
     frame index (None for the run's first frame, and where the step is not judged)."""
     with (analysis / "run-1-frames.csv").open(newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
-    return {int(row["frameIndex"]): int(row["animationErrorTicks"]) / TICKS_PER_MILLISECOND if row["animationErrorTicks"] else None for row in rows}
+    return {int(row["frameIndex"]): int(row["animationErrorNs"]) / NS_PER_MILLISECOND if row["animationErrorNs"] else None for row in rows}
 
 
 def assumed_static(analysis: Path) -> set[int]:

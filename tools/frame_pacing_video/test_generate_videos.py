@@ -26,7 +26,7 @@ from PIL import Image
 import generate_videos as gv
 from frame_timing import parse_mode
 from mb_framepacing.marker import (
-    ON_DEMAND_FRAME_TICKS,
+    ON_DEMAND_FRAME_NS,
     MarkerFlags,
     MarkerKind,
     Payload,
@@ -806,19 +806,21 @@ class SingleAndMarkerTests(unittest.TestCase):
         self.assertEqual([b - a for a, b in itertools.pairwise(dict.fromkeys(indices))], [1] * (len(set(indices)) - 1))
         self.assertEqual(payloads[lead].frame_index, frames // 2)
         self.assertEqual(indices[lead : lead + 4], [240, 240, 241, 241])
-        # The animation time of the frame on screen, in ticks
-        self.assertEqual(payloads[lead + 3].animation_ticks, round(gv.content_time(settings, job.top, job.speed, 3) * 10_000_000))
+        # The animation time of the frame on screen, in nanoseconds
+        self.assertEqual(payloads[lead + 3].animation_ns, round(gv.content_time(settings, job.top, job.speed, 3) * 1_000_000_000))
         self.assertEqual({payload.run_id for payload in payloads}, {gv.MARKER_RUN_ID})
-        # The manifest's animation time of each frame is the marker's, in ms
-        animation_ms = cast(dict[str, list[float]], gv._mode_entry(settings, job.top, job.speed)["frames"])["animationMs"]  # pyright: ignore[reportPrivateUsage]
+        # The manifest's animation time of each frame is the marker's, in nanoseconds and in ms
+        entry = cast(dict[str, list[float]], gv._mode_entry(settings, job.top, job.speed)["frames"])  # pyright: ignore[reportPrivateUsage]
+        animation_ms = entry["animationMs"]
         clip = [payload for payload in payloads if payload.kind == MarkerKind.FRAME]
-        by_index = {payload.frame_index - frames // 2: payload.animation_ticks for payload in clip}
-        self.assertEqual([round(ms * 10_000) for ms in animation_ms], [by_index[k] for k in range(len(animation_ms))])
+        by_index = {payload.frame_index - frames // 2: payload.animation_ns for payload in clip}
+        self.assertEqual(entry["animationNs"], [by_index[k] for k in range(len(animation_ms))])
+        self.assertEqual([round(ms * 1_000_000) for ms in animation_ms], entry["animationNs"])
         # The pacer's plan: 30 fps, each frame meant for its own refresh (every second one), counted from the clip's first refresh
-        self.assertEqual({payload.target_frame_ticks for payload in payloads}, {333_333})
-        self.assertEqual([payload.intended_display_ticks for payload in payloads[lead : lead + 3]], [0, 0, 333_333])
+        self.assertEqual({payload.target_frame_ns for payload in payloads}, {33_333_333})
+        self.assertEqual([payload.intended_display_ns for payload in payloads[lead : lead + 3]], [0, 0, 33_333_333])
         # The lead-in shows the previous loop's last frame, meant for 2 refreshes before the clip's first
-        self.assertEqual(payloads[lead - 1].intended_display_ticks, -333_333)
+        self.assertEqual(payloads[lead - 1].intended_display_ns, -33_333_333)
 
     def test_the_marker_is_drawn_into_every_frame(self) -> None:
         settings, jobs = self.marked("60-naive-5ms")
@@ -894,29 +896,29 @@ class SingleAndMarkerTests(unittest.TestCase):
                 count = settings.frame_count(job.speed)
                 first = len(gv.simulated_frames(settings, job.top, job.speed).flips)
                 entry = cast(dict[str, list[int]], gv._mode_entry(settings, job.top, job.speed)["frames"])  # pyright: ignore[reportPrivateUsage]
-                starts, cpu = entry["cpuStartTicks"], entry["cpuBusyTicks"]
+                starts, cpu = entry["cpuStartNs"], entry["cpuBusyNs"]
                 # Loop 0: every frame of the clip, by its marker frame index (a held frame keeps its values)
                 payloads = {payload.frame_index - first: payload for payload in (gv.marker_payload(settings, job, frame) for frame in range(count))}
                 self.assertEqual(sorted(payloads), list(range(len(starts))))
-                self.assertEqual([payloads[index].cpu_start_ticks for index in range(len(starts))], starts)
-                self.assertEqual([payloads[index].cpu_busy_ticks for index in range(len(starts))], cpu)
+                self.assertEqual([payloads[index].cpu_start_ns for index in range(len(starts))], starts)
+                self.assertEqual([payloads[index].cpu_busy_ns for index in range(len(starts))], cpu)
                 # Starts only move forward
                 self.assertTrue(all(a < b for a, b in itertools.pairwise(starts)))
-                clip_ticks = count * 10_000_000 // 60
+                clip_ns = count * 1_000_000_000 // 60
                 # The lead-in shows the previous loop's last frame, one clip earlier; the lead-out the next loop's first, one clip later
                 before, after = gv.marker_payload(settings, job, -1), gv.marker_payload(settings, job, count)
-                self.assertEqual((before.cpu_start_ticks, before.cpu_busy_ticks), (starts[-1] - clip_ticks, cpu[-1]))
-                self.assertEqual((after.cpu_start_ticks, after.cpu_busy_ticks), (starts[0] + clip_ticks, cpu[0]))
+                self.assertEqual((before.cpu_start_ns, before.cpu_busy_ns), (starts[-1] - clip_ns, cpu[-1]))
+                self.assertEqual((after.cpu_start_ns, after.cpu_busy_ns), (starts[0] + clip_ns, cpu[0]))
                 # A frame is done before the refresh it is flipped on
                 flips = entry["refresh"]
-                self.assertTrue(all(start + took <= flip * clip_ticks // count + 1 for start, took, flip in zip(starts, cpu, flips, strict=True)))
+                self.assertTrue(all(start + took <= flip * clip_ns // count + 1 for start, took, flip in zip(starts, cpu, flips, strict=True)))
         # CPU busy is known in every frame except the on-time frames around a replayed diagram's own
         for mode in modes[:-1]:
             settings, jobs = self.marked(mode)
             entry = cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])  # pyright: ignore[reportPrivateUsage]
-            self.assertTrue(all(took > 0 for took in entry["cpuBusyTicks"]), mode)
+            self.assertTrue(all(took > 0 for took in entry["cpuBusyNs"]), mode)
         settings, jobs = self.marked("60")
-        self.assertEqual(set(cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])["cpuBusyTicks"]), {50_000})  # pyright: ignore[reportPrivateUsage]
+        self.assertEqual(set(cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])["cpuBusyNs"]), {5_000_000})  # pyright: ignore[reportPrivateUsage]
 
     def fault_clip(self, fault: str) -> tuple[list[int], dict[str, object]]:
         """The marker frame index of every refresh of the storm with a presentation fault (from the clip's first frame), and its manifest entry."""
@@ -972,7 +974,7 @@ class SingleAndMarkerTests(unittest.TestCase):
         self.assertNotIn("screen", entries[0])
         for entry in entries[1:]:
             frames = cast(dict[str, object], entry["frames"])
-            for key in ("animationMs", "dtMs", "sampleMs", "targetFps", "cpuStartTicks", "cpuBusyTicks"):
+            for key in ("animationMs", "animationNs", "dtMs", "sampleMs", "targetFps", "cpuStartNs", "cpuBusyNs"):
                 self.assertEqual(frames[key], plain[key], key)
         # And the sequence id is the full name's
         self.assertEqual(len({str(gv.marker_sequence_id(job.top)) for job in jobs}), 3)
@@ -986,15 +988,15 @@ class SingleAndMarkerTests(unittest.TestCase):
     def test_the_marker_carries_the_preferred_frame_time(self) -> None:
         # Swappy lowered to 30 fps still prefers 60; a 30 fps lock and bad half rate prefer 30; nothing is static
         for mode, preferred, targets in (
-            ("60", {166_667}, {166_667}),
-            ("30", {333_333}, {333_333}),
-            ("60-diagram-half-rate-bad-pacing", {333_333}, {333_333}),
-            ("60-busy-adaptive", {166_667}, {166_667, 333_333}),
+            ("60", {16_666_667}, {16_666_667}),
+            ("30", {33_333_333}, {33_333_333}),
+            ("60-diagram-half-rate-bad-pacing", {33_333_333}, {33_333_333}),
+            ("60-busy-adaptive", {16_666_667}, {16_666_667, 33_333_333}),
         ):
             with self.subTest(mode):
                 _, _, payloads = self.payloads(mode)
-                self.assertEqual({payload.preferred_frame_ticks for payload in payloads}, preferred)
-                self.assertEqual({payload.target_frame_ticks for payload in payloads}, targets)
+                self.assertEqual({payload.preferred_frame_ns for payload in payloads}, preferred)
+                self.assertEqual({payload.target_frame_ns for payload in payloads}, targets)
                 self.assertEqual({payload.flags for payload in payloads}, {MarkerFlags.NO_FLAGS})
 
     def test_static_rests_flag_exactly_the_frames_at_rest(self) -> None:
@@ -1091,8 +1093,8 @@ class SingleAndMarkerTests(unittest.TestCase):
         for mode in ("60-on-demand", "60-on-demand-paused-clock"):
             with self.subTest(mode):
                 settings, job, payloads = self.payloads(mode)
-                self.assertEqual({payload.target_frame_ticks for payload in payloads}, {ON_DEMAND_FRAME_TICKS})
-                self.assertEqual({payload.preferred_frame_ticks for payload in payloads}, {ON_DEMAND_FRAME_TICKS})
+                self.assertEqual({payload.target_frame_ns for payload in payloads}, {ON_DEMAND_FRAME_NS})
+                self.assertEqual({payload.preferred_frame_ns for payload in payloads}, {ON_DEMAND_FRAME_NS})
                 # Frame indices stay consecutive: the game renders fewer frames, none is lost
                 indices = list(dict.fromkeys(payload.frame_index for payload in payloads))
                 self.assertEqual([b - a for a, b in itertools.pairwise(indices)], [1] * (len(indices) - 1))
@@ -1171,7 +1173,9 @@ class SingleAndMarkerTests(unittest.TestCase):
 
     def test_idling_at_1_fps_prefers_what_it_runs_at(self) -> None:
         settings, job, payloads = self.payloads("60-idle-1fps", "idle")
-        self.assertEqual({(payload.target_frame_ticks, payload.preferred_frame_ticks) for payload in payloads}, {(166_667, 166_667), (10_000_000, 10_000_000)})
+        self.assertEqual(
+            {(payload.target_frame_ns, payload.preferred_frame_ns) for payload in payloads}, {(16_666_667, 16_666_667), (1_000_000_000, 1_000_000_000)}
+        )
         entry = gv._mode_entry(settings, job.top, job.speed)  # pyright: ignore[reportPrivateUsage]
         frames = cast(dict[str, list[object]], entry["frames"])
         idle_refreshes = [refresh for refresh, rate in zip(frames["refresh"], frames["targetFps"], strict=True) if rate == 1]
@@ -1185,7 +1189,7 @@ class SingleAndMarkerTests(unittest.TestCase):
     def test_a_busy_frame_starts_when_the_previous_one_is_shown(self) -> None:
         settings, jobs = self.marked("60-busy-adaptive")
         entry = cast(dict[str, list[int]], gv._mode_entry(settings, jobs[0].top, jobs[0].speed)["frames"])  # pyright: ignore[reportPrivateUsage]
-        self.assertEqual(entry["cpuStartTicks"][1:], [round(Fraction(flip, 60) * 10_000_000) for flip in entry["refresh"][:-1]])
+        self.assertEqual(entry["cpuStartNs"][1:], [round(Fraction(flip, 60) * 1_000_000_000) for flip in entry["refresh"][:-1]])
 
     def test_the_manifest_says_how_to_measure(self) -> None:
         settings, jobs = self.marked("60")

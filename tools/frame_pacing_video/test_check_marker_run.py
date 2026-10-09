@@ -55,13 +55,13 @@ class JudgedStepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "run-1-frames.csv"
             _ = path.write_text(
-                "frameIndex,animationErrorTicks,flags\n10,,\n11,0,StaticAfter|StaticAssumed\n12,,SkippedBefore|StaticBefore\n13,-1000000,\n", encoding="utf-8"
+                "frameIndex,animationErrorNs,flags\n10,,\n11,0,StaticAfter|StaticAssumed\n12,,SkippedBefore|StaticBefore\n13,-100000000,\n", encoding="utf-8"
             )
             self.assertEqual(check.assumed_static(Path(folder)), {11})
-            # The errors are whole 100 ns ticks in the file, milliseconds here; an empty one is a step not judged
+            # The errors are whole nanoseconds in the file, milliseconds here; an empty one is a step not judged
             self.assertEqual(check.measured_errors(Path(folder)), {10: None, 11: 0.0, 12: None, 13: -100.0})
             # An analysis without the column has none
-            _ = path.write_text("frameIndex,animationErrorTicks\n10,\n11,0\n", encoding="utf-8")
+            _ = path.write_text("frameIndex,animationErrorNs\n10,\n11,0\n", encoding="utf-8")
             self.assertEqual(check.assumed_static(Path(folder)), set())
 
 

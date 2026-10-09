@@ -249,13 +249,13 @@ import them and measure their animation error, and its numbers can be checked ag
 
 - **What it carries:** at every refresh, the index of the frame on screen (a held frame keeps its index, so mb-framepacing sees one
   presented frame), the animation time it shows, and the frame pacer's plan for it: its intended display time (the refresh it was
-  rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 166 667 ticks at
-  60 fps, 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
-  long the CPU worked on it before presenting it); all in 100 ns ticks, 0 = unknown (the diagram modes' filler frames have no CPU
+  rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 16 666 667 ns at
+  60 fps, 33 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
+  long the CPU worked on it before presenting it); all in nanoseconds, 0 = unknown (the diagram modes' filler frames have no CPU
   busy); run id 1. It also carries the frame time the game prefers (what it would aim for if nothing held it back: Swappy lowered
   to 30 fps still prefers 60, a 30 fps lock and the half-rate diagrams prefer 30, on demand has none) and the static flags of an
   idle behaviour (static after, static before). The index counts on across loops; the manifest's `markerFirstFrameIndex` is the clip's first
-  frame, and its `cpuStartTicks` and `cpuBusyTicks` list both for every frame.
+  frame, and its `cpuStartNs` and `cpuBusyNs` list both for every frame.
 - **Start and end:** 3 refreshes of start marker before the clip and 3 of end marker after it, showing the previous and next loop's
   frames. The start marker's sequence id is the mode's name when it fits 16 characters; a test clip with a longer name has a short
   name of its own (`SEQUENCE_TAGS` in `generate_videos.py`, e.g. `perfect-storm`), and any other mode a UUID made from its name
@@ -438,7 +438,7 @@ Settings that would break the loop or the pacing are rejected with an error; not
   - for the top and the bottom half (or each box of the follow stack): the mode, its timer, noise and window, its label, and
     **every frame of the clip**: the output refresh it is flipped on (`frames.refresh`), when the naive loop read the clock
     (`frames.sampleMs`, the first frame is shown at 0), the animation time it shows (`frames.animationMs`, the clip's first
-    refresh is 0; the marker carries the same in ticks), the dt its animation advanced by (`frames.dtMs`) and its **animation
+    refresh is 0; `frames.animationNs` is the same in whole nanoseconds, as the marker carries it), the dt its animation advanced by (`frames.dtMs`) and its **animation
     error** in ms (`frames.animationErrorMs`), computed like PresentMon's `MsAnimationError`: positive = shown too soon,
     negative = shown too late, and how many refreshes after the one it was rendered for it is flipped (`frames.late`, 0 on
     time; the naive timer's frames are always on time), and the rate the game aims for while showing it (`frames.targetFps`:

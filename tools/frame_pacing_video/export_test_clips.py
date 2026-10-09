@@ -8,7 +8,7 @@ scenario, named after its mode, holding video.mp4 and its own manifest.json.
 
 Each clip is generate_videos.py --single MODE --marker --speed fast: lossless, 1280 x 720, 8 s plus 3 refreshes of start marker
 before and 3 of end marker after. Its manifest is the generator's, for that one clip: per frame the refresh it is flipped on, its
-animation error, how late it is, the rate the game aims for (targetFps), its CPU start time and CPU busy (cpuStartTicks, cpuBusyTicks),
+animation error, how late it is, the rate the game aims for (targetFps), its CPU start time and CPU busy (cpuStartNs, cpuBusyNs),
 the marker frame index of the clip's first frame and the start marker's sequence id.
 Two clips add a presentation fault to the perfect storm (presentation_faults.py): dropped frames (runs of 1 to 4 rendered frames
 never shown) and frames out of order (swapped pairs, and blocks of 3 and 4 in an order where no frame keeps its place). Their

@@ -86,8 +86,8 @@ import presentation_faults as faults
 from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
 from frame_timing import validate as validate_timing
 from mb_framepacing.marker import (
-    ON_DEMAND_FRAME_TICKS,
-    TICKS_PER_SECOND,
+    NS_PER_SECOND,
+    ON_DEMAND_FRAME_NS,
     MarkerFlags,
     MarkerKind,
     Payload,
@@ -731,9 +731,9 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
     return Pacing(target, preferred, after, before)
 
 
-def _frame_ticks(settings: Settings, refreshes: int | None) -> int:
-    """A frame time in refreshes as the marker's ticks, or on demand."""
-    return ON_DEMAND_FRAME_TICKS if refreshes is None else round(refreshes * TICKS_PER_SECOND / settings.fps)
+def _frame_ns(settings: Settings, refreshes: int | None) -> int:
+    """A frame time in refreshes as the marker's nanoseconds, or on demand."""
+    return ON_DEMAND_FRAME_NS if refreshes is None else round(refreshes * NS_PER_SECOND / settings.fps)
 
 
 def _first_shown(schedule: FrameSchedule, index: int) -> int:
@@ -1034,17 +1034,17 @@ def marker_sequence_id(mode: FrameMode) -> SequenceId:
         return SequenceId.from_uuid(uuid.uuid5(uuid.NAMESPACE_URL, SEQUENCE_ID_URL + mode.name))
 
 
-def cpu_start_ticks(settings: Settings, mode: FrameMode, speed: Speed, index: int, loops: int) -> int:
-    """The CPU start time of frame `index` of loop `loops` of the clip (when the CPU started working on it), in the marker's 100 ns
-    ticks on the clock of its intended display time (0 is the clip's first refresh; a loop adds a clip)."""
+def cpu_start_ns(settings: Settings, mode: FrameMode, speed: Speed, index: int, loops: int) -> int:
+    """The CPU start time of frame `index` of loop `loops` of the clip (when the CPU started working on it), in the marker's
+    nanoseconds on the clock of its intended display time (0 is the clip's first refresh; a loop adds a clip)."""
     frames = simulated_frames(settings, mode, speed)
-    return round((frames.starts[index] + loops * settings.duration(speed)) * TICKS_PER_SECOND)
+    return round((frames.starts[index] + loops * settings.duration(speed)) * NS_PER_SECOND)
 
 
-def cpu_busy_ticks(settings: Settings, mode: FrameMode, speed: Speed, index: int) -> int:
+def cpu_busy_ns(settings: Settings, mode: FrameMode, speed: Speed, index: int) -> int:
     """The CPU busy time of frame `index` of the clip: how long the CPU worked on it before presenting it, from its CPU start time, in
-    ticks (0: unknown)."""
-    return round(simulated_frames(settings, mode, speed).cpu[index] * TICKS_PER_SECOND)
+    nanoseconds (0: unknown)."""
+    return round(simulated_frames(settings, mode, speed).cpu[index] * NS_PER_SECOND)
 
 
 def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
@@ -1052,19 +1052,19 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     frame on screen, counted on across loops so it never repeats (the clip's first frame is the clip's frame count), the animation
     time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
     0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval, or on demand); then its CPU start time (on
-    the same clock) and CPU busy (until it was presented; 0 when unknown), all in ticks, the frame time the game prefers, and the static
+    the same clock) and CPU busy (until it was presented; 0 when unknown), all in nanoseconds, the frame time the game prefers, and the static
     flags (static after: nothing animates while it is on screen; static before: nothing animated while the frame before it was). A held
     frame keeps its index, so mb-framepacing sees one presented frame. Start marker in the
     lead-in, end marker in the lead-out: they carry the values of the frame they show."""
     index, loops = frame_on_screen(settings, job.top, job.speed, frame)
     frames = simulated_frames(settings, job.top, job.speed)
     pacing = frame_pacing(settings, job.top, job.speed)
-    ticks = round(animation_time(settings, job.top, job.speed, frame) * TICKS_PER_SECOND)
-    refresh_ticks = TICKS_PER_SECOND / settings.fps
-    intended = round((frames.targets[index] + loops * settings.frame_count(job.speed)) * refresh_ticks)
-    target = _frame_ticks(settings, pacing.target[index])
-    started = cpu_start_ticks(settings, job.top, job.speed, index, loops)
-    busy = cpu_busy_ticks(settings, job.top, job.speed, index)
+    animation = round(animation_time(settings, job.top, job.speed, frame) * NS_PER_SECOND)
+    refresh_ns = NS_PER_SECOND / settings.fps
+    intended = round((frames.targets[index] + loops * settings.frame_count(job.speed)) * refresh_ns)
+    target = _frame_ns(settings, pacing.target[index])
+    started = cpu_start_ns(settings, job.top, job.speed, index, loops)
+    busy = cpu_busy_ns(settings, job.top, job.speed, index)
     kind = MarkerKind.SEQUENCE_START if frame < 0 else MarkerKind.SEQUENCE_END if frame >= settings.frame_count(job.speed) else MarkerKind.FRAME
     flags = MarkerFlags.NO_FLAGS
     if pacing.static_after[index]:
@@ -1076,12 +1076,12 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
         run_id=MARKER_RUN_ID,
         frame_index=((loops + 1) * len(frames.flips)) + index,
         flags=flags,
-        animation_ticks=ticks,
-        preferred_frame_ticks=_frame_ticks(settings, pacing.preferred[index]),
-        target_frame_ticks=target,
-        intended_display_ticks=intended,
-        cpu_start_ticks=started,
-        cpu_busy_ticks=busy,
+        animation_ns=animation,
+        preferred_frame_ns=_frame_ns(settings, pacing.preferred[index]),
+        target_frame_ns=target,
+        intended_display_ns=intended,
+        cpu_start_ns=started,
+        cpu_busy_ns=busy,
     )
 
 
@@ -1402,6 +1402,7 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
     frames = simulated_frames(settings, mode, speed)
     schedule = frame_schedule(settings, mode, speed)
     animation = list(frames.animation)
+    animation_ns = [round(time * NS_PER_SECOND) for time in animation]
     duration = settings.duration(speed)
     pacing = frame_pacing(settings, mode, speed)
     fault = {} if mode.fault is None else _fault_entry(schedule, mode, pacing)
@@ -1420,25 +1421,27 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         "targetFps": None if pacing.target[0] is None else _json_number(settings.fps / min(frames.intervals)),
         # Every frame of the clip: the output refresh it first appears on (null: never, a dropped frame), when the naive loop read
         # the clock (ms, the first frame is shown at 0), the animation time it shows (ms, the clip's first refresh is 0; the marker
-        # carries it in ticks), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError; null when it
+        # carries it in nanoseconds), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError; null when it
         # is not presented) and how many refreshes after the one it was rendered for it first appears (0: on time, negative: early;
         # null: never), and the rate the game aims for while showing it (the refresh rate divided by the swap interval it is paced at)
         "frames": {
             "refresh": list(schedule.shown),
             "sampleMs": _milliseconds(frames.samples),
-            # To the 100 ns tick the marker uses, so ms x 10 000 is exactly the marker's animation ticks
-            "animationMs": _milliseconds(animation, 4),
+            # To the nanosecond the marker uses: animationNs is exactly the marker's animation time in the clip's first loop, and
+            # animationMs the same in ms (ms x 1 000 000 is animationNs)
+            "animationMs": [ns / 1_000_000 for ns in animation_ns],
+            "animationNs": animation_ns,
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
             "late": refreshes_late(settings, mode, speed),
             "targetFps": _rates(settings, pacing.target),
             # The rate the game would aim for if nothing held it back (Swappy lowered to 30 fps still prefers 60; null: on demand)
             "preferredFps": _rates(settings, pacing.preferred),
-            # Its CPU start time, in the marker's 100 ns ticks on the clock of its intended display time (the clip's first refresh is
+            # Its CPU start time, in the marker's nanoseconds on the clock of its intended display time (the clip's first refresh is
             # 0; the first frame starts before it), and its CPU busy (how long the CPU worked on it before presenting it; 0: unknown):
             # the marker carries exactly these in the clip's first loop
-            "cpuStartTicks": [cpu_start_ticks(settings, mode, speed, index, 0) for index in range(len(frames.starts))],
-            "cpuBusyTicks": [cpu_busy_ticks(settings, mode, speed, index) for index in range(len(frames.cpu))],
+            "cpuStartNs": [cpu_start_ns(settings, mode, speed, index, 0) for index in range(len(frames.starts))],
+            "cpuBusyNs": [cpu_busy_ns(settings, mode, speed, index) for index in range(len(frames.cpu))],
             **static,
         },
         # A presentation fault only: screen (the frame on screen in each refresh of the clip), presented (the frames a measurement
