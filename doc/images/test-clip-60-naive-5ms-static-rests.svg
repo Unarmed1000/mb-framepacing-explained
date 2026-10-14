@@ -597,7 +597,7 @@
 <rect class="bar-jitter" x="1129.27" y="409.0" width="1.55" height="8.5"/>
 <rect class="bar" x="1131.42" y="409.0" width="1.55" height="6.5"/>
 <rect class="bar-jitter" x="1133.56" y="396.6" width="1.55" height="12.4"/>
-<text x="1140.0" y="318.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-jitter">■</tspan> jitter: off by less than the intended period  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
+<text x="1140.0" y="318.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-jitter">■</tspan> delta time jitter: off by less than the intended period  <tspan class="key-violet-a">■</tspan> static: nothing animates</text>
 <line class="zero-line" x1="110" y1="409" x2="1140" y2="409"/>
 <text x="100.0" y="413.0" text-anchor="end" class="vsync-n">0</text>
 <text x="110.0" y="502.0" text-anchor="middle" class="vsync-n">0 s</text>
@@ -695,7 +695,7 @@
 <text x="1011.2" y="1052.0" text-anchor="middle" class="vsync-n">7 s</text>
 <text x="1140.0" y="1052.0" text-anchor="middle" class="vsync-n">8 s</text>
 <text x="20.0" y="1088.0" text-anchor="start" class="label">REFRESH STRIP: ONE CELL PER REFRESH, A NEW SHADE PER FRAME</text>
-<text x="1140.0" y="1088.0" text-anchor="end" class="vsync-n"><tspan class="key-jitter">■</tspan> jitter  <tspan class="key-violet-a">▐</tspan><tspan class="key-violet-b">▌</tspan> static</text>
+<text x="1140.0" y="1088.0" text-anchor="end" class="vsync-n"><tspan class="key-jitter">■</tspan> delta time jitter  <tspan class="key-violet-a">▐</tspan><tspan class="key-violet-b">▌</tspan> static</text>
 <rect class="strip-static-a" x="110.5" y="1104" width="1.1" height="28" rx="2"/>
 <rect class="strip-static-b" x="112.6" y="1104" width="1.1" height="28" rx="2"/>
 <rect class="strip-static-a" x="114.8" y="1104" width="1.1" height="28" rx="2"/>
