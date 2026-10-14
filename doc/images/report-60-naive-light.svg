@@ -90,6 +90,10 @@
   .frametime-fill { fill: #58a6ff; }
   .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
   .strip-late { fill: #e5534b; }
+  .bar-jitter { fill: #e3b341; }
+  .bar-range-jitter { fill: #e3b341; fill-opacity: 0.3; }
+  .strip-jitter { fill: #e3b341; }
+  .key-jitter { fill: #e3b341; }
   .hist-bar { fill: #58a6ff; }
   .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
   .clip-mark { fill: #e5534b; }
@@ -139,68 +143,67 @@
 <text x="100.0" y="258.0" text-anchor="end" class="vsync-n">+2 ms</text>
 <line class="grid" x1="110" y1="364.0" x2="1140" y2="364.0"/>
 <text x="100.0" y="368.0" text-anchor="end" class="vsync-n">−2 ms</text>
-<text x="1140.0" y="218.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold</text>
 <rect class="bar" x="112.15" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="114.29" y="309.0" width="1.55" height="6.1"/>
-<rect class="bar" x="116.44" y="309.0" width="1.55" height="49.1"/>
+<rect class="bar-jitter" x="116.44" y="309.0" width="1.55" height="49.1"/>
 <rect class="bar" x="118.58" y="309.0" width="1.55" height="3.2"/>
 <rect class="bar" x="120.73" y="305.2" width="1.55" height="3.8"/>
 <rect class="bar" x="122.88" y="306.3" width="1.55" height="2.7"/>
 <rect class="bar" x="125.02" y="309.0" width="1.55" height="1.9"/>
-<rect class="bar" x="127.17" y="260.2" width="1.55" height="48.8"/>
-<rect class="bar" x="129.31" y="309.0" width="1.55" height="54.1"/>
-<rect class="bar" x="131.46" y="255.2" width="1.55" height="53.8"/>
+<rect class="bar-jitter" x="127.17" y="260.2" width="1.55" height="48.8"/>
+<rect class="bar-jitter" x="129.31" y="309.0" width="1.55" height="54.1"/>
+<rect class="bar-jitter" x="131.46" y="255.2" width="1.55" height="53.8"/>
 <rect class="bar" x="133.60" y="309.0" width="1.55" height="1.0"/>
-<rect class="bar" x="135.75" y="309.0" width="1.55" height="51.0"/>
-<rect class="bar" x="137.90" y="257.0" width="1.55" height="52.0"/>
+<rect class="bar-jitter" x="135.75" y="309.0" width="1.55" height="51.0"/>
+<rect class="bar-jitter" x="137.90" y="257.0" width="1.55" height="52.0"/>
 <rect class="bar" x="140.04" y="303.0" width="1.55" height="6.0"/>
-<rect class="bar" x="142.19" y="309.0" width="1.55" height="55.5"/>
+<rect class="bar-jitter" x="142.19" y="309.0" width="1.55" height="55.5"/>
 <rect class="bar" x="144.33" y="306.3" width="1.55" height="2.7"/>
 <rect class="bar" x="146.48" y="308.0" width="1.55" height="1.0"/>
-<rect class="bar" x="148.62" y="264.3" width="1.55" height="44.7"/>
+<rect class="bar-jitter" x="148.62" y="264.3" width="1.55" height="44.7"/>
 <rect class="bar" x="150.77" y="301.4" width="1.55" height="7.6"/>
 <rect class="bar" x="152.92" y="309.0" width="1.55" height="5.0"/>
-<rect class="bar" x="155.06" y="309.0" width="1.55" height="54.0"/>
+<rect class="bar-jitter" x="155.06" y="309.0" width="1.55" height="54.0"/>
 <rect class="bar" x="157.21" y="306.4" width="1.55" height="2.6"/>
-<rect class="bar" x="159.35" y="259.9" width="1.55" height="49.1"/>
-<rect class="bar" x="161.50" y="309.0" width="1.55" height="52.7"/>
+<rect class="bar-jitter" x="159.35" y="259.9" width="1.55" height="49.1"/>
+<rect class="bar-jitter" x="161.50" y="309.0" width="1.55" height="52.7"/>
 <rect class="bar" x="163.65" y="301.1" width="1.55" height="7.9"/>
-<rect class="bar" x="165.79" y="260.4" width="1.55" height="48.6"/>
+<rect class="bar-jitter" x="165.79" y="260.4" width="1.55" height="48.6"/>
 <rect class="bar" x="167.94" y="307.5" width="1.55" height="1.5"/>
-<rect class="bar" x="170.08" y="309.0" width="1.55" height="52.3"/>
+<rect class="bar-jitter" x="170.08" y="309.0" width="1.55" height="52.3"/>
 <rect class="bar" x="172.23" y="309.0" width="1.55" height="2.8"/>
-<rect class="bar" x="174.38" y="254.7" width="1.55" height="54.3"/>
-<rect class="bar" x="176.52" y="309.0" width="1.55" height="52.0"/>
+<rect class="bar-jitter" x="174.38" y="254.7" width="1.55" height="54.3"/>
+<rect class="bar-jitter" x="176.52" y="309.0" width="1.55" height="52.0"/>
 <rect class="bar" x="178.67" y="309.0" width="1.55" height="5.7"/>
-<rect class="bar" x="180.81" y="248.4" width="1.55" height="60.6"/>
+<rect class="bar-jitter" x="180.81" y="248.4" width="1.55" height="60.6"/>
 <rect class="bar" x="182.96" y="309.0" width="1.55" height="23.9"/>
 <rect class="bar" x="185.10" y="286.9" width="1.55" height="22.1"/>
-<rect class="bar" x="187.25" y="309.0" width="1.55" height="54.2"/>
+<rect class="bar-jitter" x="187.25" y="309.0" width="1.55" height="54.2"/>
 <rect class="bar" x="189.40" y="309.0" width="1.55" height="4.6"/>
 <rect class="bar" x="191.54" y="301.9" width="1.55" height="7.1"/>
-<rect class="bar" x="193.69" y="253.8" width="1.55" height="55.2"/>
-<rect class="bar" x="195.83" y="309.0" width="1.55" height="59.8"/>
+<rect class="bar-jitter" x="193.69" y="253.8" width="1.55" height="55.2"/>
+<rect class="bar-jitter" x="195.83" y="309.0" width="1.55" height="59.8"/>
 <rect class="bar" x="197.98" y="302.9" width="1.55" height="6.1"/>
-<rect class="bar" x="200.12" y="262.4" width="1.55" height="46.6"/>
-<rect class="bar" x="202.27" y="309.0" width="1.55" height="54.0"/>
+<rect class="bar-jitter" x="200.12" y="262.4" width="1.55" height="46.6"/>
+<rect class="bar-jitter" x="202.27" y="309.0" width="1.55" height="54.0"/>
 <rect class="bar" x="204.42" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="206.56" y="303.3" width="1.55" height="5.7"/>
 <rect class="bar" x="208.71" y="309.0" width="1.55" height="8.3"/>
-<rect class="bar" x="210.85" y="245.9" width="1.55" height="63.1"/>
-<rect class="bar" x="213.00" y="309.0" width="1.55" height="61.6"/>
+<rect class="bar-jitter" x="210.85" y="245.9" width="1.55" height="63.1"/>
+<rect class="bar-jitter" x="213.00" y="309.0" width="1.55" height="61.6"/>
 <rect class="bar" x="215.15" y="307.1" width="1.55" height="1.9"/>
 <rect class="bar" x="217.29" y="304.1" width="1.55" height="4.9"/>
-<rect class="bar" x="219.44" y="257.0" width="1.55" height="52.0"/>
-<rect class="bar" x="221.58" y="309.0" width="1.55" height="58.9"/>
-<rect class="bar" x="223.73" y="250.1" width="1.55" height="58.9"/>
-<rect class="bar" x="225.88" y="309.0" width="1.55" height="56.0"/>
+<rect class="bar-jitter" x="219.44" y="257.0" width="1.55" height="52.0"/>
+<rect class="bar-jitter" x="221.58" y="309.0" width="1.55" height="58.9"/>
+<rect class="bar-jitter" x="223.73" y="250.1" width="1.55" height="58.9"/>
+<rect class="bar-jitter" x="225.88" y="309.0" width="1.55" height="56.0"/>
 <rect class="bar" x="228.02" y="307.0" width="1.55" height="2.0"/>
-<rect class="bar" x="230.17" y="253.3" width="1.55" height="55.7"/>
+<rect class="bar-jitter" x="230.17" y="253.3" width="1.55" height="55.7"/>
 <rect class="bar" x="232.31" y="305.4" width="1.55" height="3.6"/>
-<rect class="bar" x="234.46" y="309.0" width="1.55" height="32.6"/>
+<rect class="bar-jitter" x="234.46" y="309.0" width="1.55" height="32.6"/>
 <rect class="bar" x="236.60" y="309.0" width="1.55" height="27.4"/>
 <rect class="bar" x="238.75" y="309.0" width="1.55" height="4.7"/>
-<rect class="bar" x="240.90" y="245.3" width="1.55" height="63.7"/>
+<rect class="bar-jitter" x="240.90" y="245.3" width="1.55" height="63.7"/>
 <rect class="bar" x="243.04" y="309.0" width="1.55" height="3.0"/>
 <rect class="bar" x="245.19" y="309.0" width="1.55" height="1.8"/>
 <rect class="bar" x="247.33" y="305.8" width="1.55" height="3.2"/>
@@ -208,39 +211,39 @@
 <rect class="bar" x="251.62" y="309.0" width="1.55" height="1.2"/>
 <rect class="bar" x="253.77" y="308.0" width="1.55" height="1.0"/>
 <rect class="bar" x="255.92" y="309.0" width="1.55" height="26.0"/>
-<rect class="bar" x="258.06" y="309.0" width="1.55" height="34.3"/>
-<rect class="bar" x="260.21" y="254.2" width="1.55" height="54.8"/>
-<rect class="bar" x="262.35" y="309.0" width="1.55" height="53.5"/>
+<rect class="bar-jitter" x="258.06" y="309.0" width="1.55" height="34.3"/>
+<rect class="bar-jitter" x="260.21" y="254.2" width="1.55" height="54.8"/>
+<rect class="bar-jitter" x="262.35" y="309.0" width="1.55" height="53.5"/>
 <rect class="bar" x="264.50" y="307.5" width="1.55" height="1.5"/>
 <rect class="bar" x="266.65" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="268.79" y="308.4" width="1.55" height="0.8"/>
 <rect class="bar" x="270.94" y="307.5" width="1.55" height="1.5"/>
 <rect class="bar" x="273.08" y="309.0" width="1.55" height="4.1"/>
-<rect class="bar" x="275.23" y="246.4" width="1.55" height="62.6"/>
+<rect class="bar-jitter" x="275.23" y="246.4" width="1.55" height="62.6"/>
 <rect class="bar" x="277.38" y="308.7" width="1.55" height="0.8"/>
-<rect class="bar" x="279.52" y="309.0" width="1.55" height="58.3"/>
-<rect class="bar" x="281.67" y="250.3" width="1.55" height="58.7"/>
-<rect class="bar" x="283.81" y="309.0" width="1.55" height="60.5"/>
-<rect class="bar" x="285.96" y="254.9" width="1.55" height="54.1"/>
-<rect class="bar" x="288.10" y="309.0" width="1.55" height="53.5"/>
-<rect class="bar" x="290.25" y="249.9" width="1.55" height="59.1"/>
+<rect class="bar-jitter" x="279.52" y="309.0" width="1.55" height="58.3"/>
+<rect class="bar-jitter" x="281.67" y="250.3" width="1.55" height="58.7"/>
+<rect class="bar-jitter" x="283.81" y="309.0" width="1.55" height="60.5"/>
+<rect class="bar-jitter" x="285.96" y="254.9" width="1.55" height="54.1"/>
+<rect class="bar-jitter" x="288.10" y="309.0" width="1.55" height="53.5"/>
+<rect class="bar-jitter" x="290.25" y="249.9" width="1.55" height="59.1"/>
 <rect class="bar" x="292.40" y="309.0" width="1.55" height="5.2"/>
-<rect class="bar" x="294.54" y="309.0" width="1.55" height="57.7"/>
-<rect class="bar" x="296.69" y="251.9" width="1.55" height="57.1"/>
+<rect class="bar-jitter" x="294.54" y="309.0" width="1.55" height="57.7"/>
+<rect class="bar-jitter" x="296.69" y="251.9" width="1.55" height="57.1"/>
 <rect class="bar" x="298.83" y="304.4" width="1.55" height="4.6"/>
-<rect class="bar" x="300.98" y="309.0" width="1.55" height="58.7"/>
-<rect class="bar" x="303.12" y="249.2" width="1.55" height="59.8"/>
+<rect class="bar-jitter" x="300.98" y="309.0" width="1.55" height="58.7"/>
+<rect class="bar-jitter" x="303.12" y="249.2" width="1.55" height="59.8"/>
 <rect class="bar" x="305.27" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="307.42" y="309.0" width="1.55" height="8.1"/>
-<rect class="bar" x="309.56" y="309.0" width="1.55" height="55.2"/>
+<rect class="bar-jitter" x="309.56" y="309.0" width="1.55" height="55.2"/>
 <rect class="bar" x="311.71" y="304.9" width="1.55" height="4.1"/>
-<rect class="bar" x="313.85" y="249.4" width="1.55" height="59.6"/>
+<rect class="bar-jitter" x="313.85" y="249.4" width="1.55" height="59.6"/>
 <rect class="bar" x="316.00" y="309.0" width="1.55" height="9.0"/>
 <rect class="bar" x="318.15" y="302.3" width="1.55" height="6.7"/>
 <rect class="bar" x="322.44" y="305.4" width="1.55" height="3.6"/>
 <rect class="bar" x="324.58" y="309.0" width="1.55" height="9.5"/>
-<rect class="bar" x="326.73" y="309.0" width="1.55" height="53.6"/>
-<rect class="bar" x="328.88" y="254.1" width="1.55" height="54.9"/>
+<rect class="bar-jitter" x="326.73" y="309.0" width="1.55" height="53.6"/>
+<rect class="bar-jitter" x="328.88" y="254.1" width="1.55" height="54.9"/>
 <rect class="bar" x="331.02" y="307.4" width="1.55" height="1.6"/>
 <rect class="bar" x="333.17" y="308.5" width="1.55" height="0.8"/>
 <rect class="bar" x="335.31" y="304.8" width="1.55" height="4.2"/>
@@ -248,15 +251,15 @@
 <rect class="bar" x="339.60" y="282.3" width="1.55" height="26.7"/>
 <rect class="bar" x="341.75" y="309.0" width="1.55" height="7.2"/>
 <rect class="bar" x="343.90" y="303.3" width="1.55" height="5.7"/>
-<rect class="bar" x="346.04" y="309.0" width="1.55" height="61.8"/>
-<rect class="bar" x="348.19" y="250.2" width="1.55" height="58.8"/>
-<rect class="bar" x="350.33" y="309.0" width="1.55" height="54.0"/>
+<rect class="bar-jitter" x="346.04" y="309.0" width="1.55" height="61.8"/>
+<rect class="bar-jitter" x="348.19" y="250.2" width="1.55" height="58.8"/>
+<rect class="bar-jitter" x="350.33" y="309.0" width="1.55" height="54.0"/>
 <rect class="bar" x="352.48" y="308.7" width="1.55" height="0.8"/>
-<rect class="bar" x="354.62" y="257.9" width="1.55" height="51.1"/>
-<rect class="bar" x="356.77" y="309.0" width="1.55" height="51.1"/>
+<rect class="bar-jitter" x="354.62" y="257.9" width="1.55" height="51.1"/>
+<rect class="bar-jitter" x="356.77" y="309.0" width="1.55" height="51.1"/>
 <rect class="bar" x="358.92" y="306.5" width="1.55" height="2.5"/>
 <rect class="bar" x="361.06" y="307.0" width="1.55" height="2.0"/>
-<rect class="bar" x="363.21" y="263.6" width="1.55" height="45.4"/>
+<rect class="bar-jitter" x="363.21" y="263.6" width="1.55" height="45.4"/>
 <rect class="bar" x="365.35" y="308.7" width="1.55" height="0.8"/>
 <rect class="bar" x="367.50" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="369.65" y="299.1" width="1.55" height="9.9"/>
@@ -265,358 +268,359 @@
 <rect class="bar" x="376.08" y="309.0" width="1.55" height="5.7"/>
 <rect class="bar" x="378.23" y="305.2" width="1.55" height="3.8"/>
 <rect class="bar" x="380.38" y="309.0" width="1.55" height="5.5"/>
-<rect class="bar" x="382.52" y="309.0" width="1.55" height="57.1"/>
-<rect class="bar" x="384.67" y="248.4" width="1.55" height="60.6"/>
-<rect class="bar" x="386.81" y="309.0" width="1.55" height="51.6"/>
+<rect class="bar-jitter" x="382.52" y="309.0" width="1.55" height="57.1"/>
+<rect class="bar-jitter" x="384.67" y="248.4" width="1.55" height="60.6"/>
+<rect class="bar-jitter" x="386.81" y="309.0" width="1.55" height="51.6"/>
 <rect class="bar" x="388.96" y="307.7" width="1.55" height="1.3"/>
 <rect class="bar" x="391.10" y="309.0" width="1.55" height="2.6"/>
 <rect class="bar" x="393.25" y="309.0" width="1.55" height="7.2"/>
 <rect class="bar" x="395.40" y="305.6" width="1.55" height="3.4"/>
-<rect class="bar" x="397.54" y="251.1" width="1.55" height="57.9"/>
-<rect class="bar" x="399.69" y="309.0" width="1.55" height="57.8"/>
+<rect class="bar-jitter" x="397.54" y="251.1" width="1.55" height="57.9"/>
+<rect class="bar-jitter" x="399.69" y="309.0" width="1.55" height="57.8"/>
 <rect class="bar" x="401.83" y="306.5" width="1.55" height="2.5"/>
 <rect class="bar" x="403.98" y="305.9" width="1.55" height="3.1"/>
 <rect class="bar" x="406.12" y="309.0" width="1.55" height="6.9"/>
 <rect class="bar" x="408.27" y="309.0" width="1.55" height="1.3"/>
-<rect class="bar" x="410.42" y="245.1" width="1.55" height="63.9"/>
-<rect class="bar" x="412.56" y="309.0" width="1.55" height="54.9"/>
+<rect class="bar-jitter" x="410.42" y="245.1" width="1.55" height="63.9"/>
+<rect class="bar-jitter" x="412.56" y="309.0" width="1.55" height="54.9"/>
 <rect class="bar" x="414.71" y="309.0" width="1.55" height="4.2"/>
-<rect class="bar" x="416.85" y="260.3" width="1.55" height="48.7"/>
+<rect class="bar-jitter" x="416.85" y="260.3" width="1.55" height="48.7"/>
 <rect class="bar" x="419.00" y="308.4" width="1.55" height="0.8"/>
 <rect class="bar" x="421.15" y="303.7" width="1.55" height="5.3"/>
-<rect class="bar" x="423.29" y="309.0" width="1.55" height="59.3"/>
-<rect class="bar" x="425.44" y="252.6" width="1.55" height="56.4"/>
-<rect class="bar" x="427.58" y="309.0" width="1.55" height="53.7"/>
-<rect class="bar" x="429.73" y="249.9" width="1.55" height="59.1"/>
-<rect class="bar" x="431.88" y="309.0" width="1.55" height="59.9"/>
+<rect class="bar-jitter" x="423.29" y="309.0" width="1.55" height="59.3"/>
+<rect class="bar-jitter" x="425.44" y="252.6" width="1.55" height="56.4"/>
+<rect class="bar-jitter" x="427.58" y="309.0" width="1.55" height="53.7"/>
+<rect class="bar-jitter" x="429.73" y="249.9" width="1.55" height="59.1"/>
+<rect class="bar-jitter" x="431.88" y="309.0" width="1.55" height="59.9"/>
 <rect class="bar" x="434.02" y="309.0" width="1.55" height="2.3"/>
-<rect class="bar" x="436.17" y="254.6" width="1.55" height="54.4"/>
-<rect class="bar" x="438.31" y="309.0" width="1.55" height="55.5"/>
+<rect class="bar-jitter" x="436.17" y="254.6" width="1.55" height="54.4"/>
+<rect class="bar-jitter" x="438.31" y="309.0" width="1.55" height="55.5"/>
 <rect class="bar" x="440.46" y="301.7" width="1.55" height="7.3"/>
-<rect class="bar" x="442.60" y="252.1" width="1.55" height="56.9"/>
-<rect class="bar" x="444.75" y="309.0" width="1.55" height="58.5"/>
+<rect class="bar-jitter" x="442.60" y="252.1" width="1.55" height="56.9"/>
+<rect class="bar-jitter" x="444.75" y="309.0" width="1.55" height="58.5"/>
 <rect class="bar" x="446.90" y="309.0" width="1.55" height="4.2"/>
 <rect class="bar" x="449.04" y="304.6" width="1.55" height="4.4"/>
 <rect class="bar" x="451.19" y="306.9" width="1.55" height="2.1"/>
 <rect class="bar" x="453.33" y="307.5" width="1.55" height="1.5"/>
-<rect class="bar" x="455.48" y="255.7" width="1.55" height="53.3"/>
+<rect class="bar-jitter" x="455.48" y="255.7" width="1.55" height="53.3"/>
 <rect class="bar" x="457.62" y="308.6" width="1.55" height="0.8"/>
-<rect class="bar" x="459.77" y="309.0" width="1.55" height="62.2"/>
+<rect class="bar-jitter" x="459.77" y="309.0" width="1.55" height="62.2"/>
 <rect class="bar" x="461.92" y="306.4" width="1.55" height="2.6"/>
-<rect class="bar" x="464.06" y="255.9" width="1.55" height="53.1"/>
+<rect class="bar-jitter" x="464.06" y="255.9" width="1.55" height="53.1"/>
 <rect class="bar" x="466.21" y="300.6" width="1.55" height="8.4"/>
-<rect class="bar" x="468.35" y="309.0" width="1.55" height="58.0"/>
+<rect class="bar-jitter" x="468.35" y="309.0" width="1.55" height="58.0"/>
 <rect class="bar" x="470.50" y="309.0" width="1.55" height="3.2"/>
-<rect class="bar" x="472.65" y="256.0" width="1.55" height="53.0"/>
+<rect class="bar-jitter" x="472.65" y="256.0" width="1.55" height="53.0"/>
 <rect class="bar" x="474.79" y="301.6" width="1.55" height="7.4"/>
 <rect class="bar" x="476.94" y="309.0" width="1.55" height="5.8"/>
 <rect class="bar" x="479.08" y="303.1" width="1.55" height="5.9"/>
 <rect class="bar" x="481.23" y="309.0" width="1.55" height="9.0"/>
 <rect class="bar" x="483.38" y="309.0" width="1.55" height="20.0"/>
 <rect class="bar" x="485.52" y="304.0" width="1.55" height="5.0"/>
-<rect class="bar" x="487.67" y="309.0" width="1.55" height="40.8"/>
-<rect class="bar" x="489.81" y="247.9" width="1.55" height="61.1"/>
-<rect class="bar" x="491.96" y="309.0" width="1.55" height="56.3"/>
+<rect class="bar-jitter" x="487.67" y="309.0" width="1.55" height="40.8"/>
+<rect class="bar-jitter" x="489.81" y="247.9" width="1.55" height="61.1"/>
+<rect class="bar-jitter" x="491.96" y="309.0" width="1.55" height="56.3"/>
 <rect class="bar" x="494.10" y="303.6" width="1.55" height="5.4"/>
-<rect class="bar" x="496.25" y="260.3" width="1.55" height="48.7"/>
+<rect class="bar-jitter" x="496.25" y="260.3" width="1.55" height="48.7"/>
 <rect class="bar" x="498.40" y="303.6" width="1.55" height="5.4"/>
 <rect class="bar" x="500.54" y="309.0" width="1.55" height="7.4"/>
 <rect class="bar" x="502.69" y="308.3" width="1.55" height="0.8"/>
-<rect class="bar" x="504.83" y="309.0" width="1.55" height="47.5"/>
+<rect class="bar-jitter" x="504.83" y="309.0" width="1.55" height="47.5"/>
 <rect class="bar" x="506.98" y="308.4" width="1.55" height="0.8"/>
 <rect class="bar" x="509.12" y="309.0" width="1.55" height="6.5"/>
-<rect class="bar" x="511.27" y="274.0" width="1.55" height="35.0"/>
-<rect class="bar" x="513.42" y="309.0" width="1.55" height="33.6"/>
-<rect class="bar" x="515.56" y="257.7" width="1.55" height="51.3"/>
-<rect class="bar" x="517.71" y="309.0" width="1.55" height="56.9"/>
-<rect class="bar" x="519.85" y="253.0" width="1.55" height="56.0"/>
+<rect class="bar-jitter" x="511.27" y="274.0" width="1.55" height="35.0"/>
+<rect class="bar-jitter" x="513.42" y="309.0" width="1.55" height="33.6"/>
+<rect class="bar-jitter" x="515.56" y="257.7" width="1.55" height="51.3"/>
+<rect class="bar-jitter" x="517.71" y="309.0" width="1.55" height="56.9"/>
+<rect class="bar-jitter" x="519.85" y="253.0" width="1.55" height="56.0"/>
 <rect class="bar" x="522.00" y="305.6" width="1.55" height="3.4"/>
 <rect class="bar" x="524.15" y="308.8" width="1.55" height="0.8"/>
-<rect class="bar" x="528.44" y="309.0" width="1.55" height="58.7"/>
-<rect class="bar" x="530.58" y="269.6" width="1.55" height="39.4"/>
+<rect class="bar-jitter" x="528.44" y="309.0" width="1.55" height="58.7"/>
+<rect class="bar-jitter" x="530.58" y="269.6" width="1.55" height="39.4"/>
 <rect class="bar" x="532.73" y="309.0" width="1.55" height="4.9"/>
 <rect class="bar" x="534.88" y="288.0" width="1.55" height="21.0"/>
 <rect class="bar" x="537.02" y="300.3" width="1.55" height="8.7"/>
 <rect class="bar" x="539.17" y="309.0" width="1.55" height="10.0"/>
-<rect class="bar" x="541.31" y="309.0" width="1.55" height="50.2"/>
-<rect class="bar" x="543.46" y="251.4" width="1.55" height="57.6"/>
-<rect class="bar" x="545.60" y="309.0" width="1.55" height="60.3"/>
-<rect class="bar" x="547.75" y="247.4" width="1.55" height="61.6"/>
-<rect class="bar" x="549.90" y="309.0" width="1.55" height="30.4"/>
-<rect class="bar" x="552.04" y="309.0" width="1.55" height="32.2"/>
-<rect class="bar" x="554.19" y="247.3" width="1.55" height="61.7"/>
+<rect class="bar-jitter" x="541.31" y="309.0" width="1.55" height="50.2"/>
+<rect class="bar-jitter" x="543.46" y="251.4" width="1.55" height="57.6"/>
+<rect class="bar-jitter" x="545.60" y="309.0" width="1.55" height="60.3"/>
+<rect class="bar-jitter" x="547.75" y="247.4" width="1.55" height="61.6"/>
+<rect class="bar-jitter" x="549.90" y="309.0" width="1.55" height="30.4"/>
+<rect class="bar-jitter" x="552.04" y="309.0" width="1.55" height="32.2"/>
+<rect class="bar-jitter" x="554.19" y="247.3" width="1.55" height="61.7"/>
 <rect class="bar" x="556.33" y="308.0" width="1.55" height="1.0"/>
 <rect class="bar" x="558.48" y="309.0" width="1.55" height="5.0"/>
-<rect class="bar" x="560.62" y="309.0" width="1.55" height="49.6"/>
+<rect class="bar-jitter" x="560.62" y="309.0" width="1.55" height="49.6"/>
 <rect class="bar" x="562.77" y="309.0" width="1.55" height="7.5"/>
 <rect class="bar" x="564.92" y="304.7" width="1.55" height="4.3"/>
-<rect class="bar" x="567.06" y="257.1" width="1.55" height="51.9"/>
+<rect class="bar-jitter" x="567.06" y="257.1" width="1.55" height="51.9"/>
 <rect class="bar" x="569.21" y="305.0" width="1.55" height="4.0"/>
 <rect class="bar" x="571.35" y="309.0" width="1.55" height="7.2"/>
 <rect class="bar" x="573.50" y="298.3" width="1.55" height="10.7"/>
-<rect class="bar" x="575.65" y="309.0" width="1.55" height="65.2"/>
-<rect class="bar" x="577.79" y="249.9" width="1.55" height="59.1"/>
-<rect class="bar" x="579.94" y="309.0" width="1.55" height="54.4"/>
-<rect class="bar" x="582.08" y="252.2" width="1.55" height="56.8"/>
-<rect class="bar" x="584.23" y="309.0" width="1.55" height="54.4"/>
+<rect class="bar-jitter" x="575.65" y="309.0" width="1.55" height="65.2"/>
+<rect class="bar-jitter" x="577.79" y="249.9" width="1.55" height="59.1"/>
+<rect class="bar-jitter" x="579.94" y="309.0" width="1.55" height="54.4"/>
+<rect class="bar-jitter" x="582.08" y="252.2" width="1.55" height="56.8"/>
+<rect class="bar-jitter" x="584.23" y="309.0" width="1.55" height="54.4"/>
 <rect class="bar" x="586.38" y="309.0" width="1.55" height="4.5"/>
-<rect class="bar" x="588.52" y="251.9" width="1.55" height="57.1"/>
+<rect class="bar-jitter" x="588.52" y="251.9" width="1.55" height="57.1"/>
 <rect class="bar" x="590.67" y="306.6" width="1.55" height="2.4"/>
 <rect class="bar" x="592.81" y="309.0" width="1.55" height="3.1"/>
-<rect class="bar" x="594.96" y="309.0" width="1.55" height="48.9"/>
+<rect class="bar-jitter" x="594.96" y="309.0" width="1.55" height="48.9"/>
 <rect class="bar" x="597.10" y="309.0" width="1.55" height="9.5"/>
-<rect class="bar" x="599.25" y="245.7" width="1.55" height="63.3"/>
+<rect class="bar-jitter" x="599.25" y="245.7" width="1.55" height="63.3"/>
 <rect class="bar" x="601.40" y="309.0" width="1.55" height="0.8"/>
-<rect class="bar" x="603.54" y="309.0" width="1.55" height="62.2"/>
-<rect class="bar" x="605.69" y="255.2" width="1.55" height="53.8"/>
+<rect class="bar-jitter" x="603.54" y="309.0" width="1.55" height="62.2"/>
+<rect class="bar-jitter" x="605.69" y="255.2" width="1.55" height="53.8"/>
 <rect class="bar" x="607.83" y="309.0" width="1.55" height="15.1"/>
-<rect class="bar" x="609.98" y="309.0" width="1.55" height="30.4"/>
+<rect class="bar-jitter" x="609.98" y="309.0" width="1.55" height="30.4"/>
 <rect class="bar" x="612.12" y="309.0" width="1.55" height="5.8"/>
 <rect class="bar" x="614.27" y="309.0" width="1.55" height="3.5"/>
 <rect class="bar" x="616.42" y="306.4" width="1.55" height="2.6"/>
-<rect class="bar" x="618.56" y="248.6" width="1.55" height="60.4"/>
+<rect class="bar-jitter" x="618.56" y="248.6" width="1.55" height="60.4"/>
 <rect class="bar" x="620.71" y="309.0" width="1.55" height="5.9"/>
-<rect class="bar" x="622.85" y="309.0" width="1.55" height="53.7"/>
+<rect class="bar-jitter" x="622.85" y="309.0" width="1.55" height="53.7"/>
 <rect class="bar" x="625.00" y="309.0" width="1.55" height="1.3"/>
 <rect class="bar" x="627.15" y="307.3" width="1.55" height="1.7"/>
-<rect class="bar" x="629.29" y="249.0" width="1.55" height="60.0"/>
+<rect class="bar-jitter" x="629.29" y="249.0" width="1.55" height="60.0"/>
 <rect class="bar" x="631.44" y="309.0" width="1.55" height="4.1"/>
-<rect class="bar" x="633.58" y="309.0" width="1.55" height="50.8"/>
+<rect class="bar-jitter" x="633.58" y="309.0" width="1.55" height="50.8"/>
 <rect class="bar" x="635.73" y="309.0" width="1.55" height="3.2"/>
-<rect class="bar" x="637.88" y="254.4" width="1.55" height="54.6"/>
+<rect class="bar-jitter" x="637.88" y="254.4" width="1.55" height="54.6"/>
 <rect class="bar" x="640.02" y="309.0" width="1.55" height="24.6"/>
-<rect class="bar" x="642.17" y="309.0" width="1.55" height="34.0"/>
-<rect class="bar" x="644.31" y="248.5" width="1.55" height="60.5"/>
+<rect class="bar-jitter" x="642.17" y="309.0" width="1.55" height="34.0"/>
+<rect class="bar-jitter" x="644.31" y="248.5" width="1.55" height="60.5"/>
 <rect class="bar" x="646.46" y="309.0" width="1.55" height="2.1"/>
 <rect class="bar" x="648.60" y="308.5" width="1.55" height="0.8"/>
 <rect class="bar" x="650.75" y="309.0" width="1.55" height="26.2"/>
-<rect class="bar" x="652.90" y="309.0" width="1.55" height="33.7"/>
-<rect class="bar" x="655.04" y="252.9" width="1.55" height="56.1"/>
+<rect class="bar-jitter" x="652.90" y="309.0" width="1.55" height="33.7"/>
+<rect class="bar-jitter" x="655.04" y="252.9" width="1.55" height="56.1"/>
 <rect class="bar" x="657.19" y="307.4" width="1.55" height="1.6"/>
-<rect class="bar" x="659.33" y="309.0" width="1.55" height="52.1"/>
-<rect class="bar" x="661.48" y="250.8" width="1.55" height="58.2"/>
+<rect class="bar-jitter" x="659.33" y="309.0" width="1.55" height="52.1"/>
+<rect class="bar-jitter" x="661.48" y="250.8" width="1.55" height="58.2"/>
 <rect class="bar" x="663.62" y="309.0" width="1.55" height="2.7"/>
 <rect class="bar" x="665.77" y="309.0" width="1.55" height="6.9"/>
 <rect class="bar" x="667.92" y="303.0" width="1.55" height="6.0"/>
 <rect class="bar" x="670.06" y="309.0" width="1.55" height="5.8"/>
 <rect class="bar" x="672.21" y="300.8" width="1.55" height="8.2"/>
 <rect class="bar" x="674.35" y="309.0" width="1.55" height="1.6"/>
-<rect class="bar" x="676.50" y="309.0" width="1.55" height="53.1"/>
+<rect class="bar-jitter" x="676.50" y="309.0" width="1.55" height="53.1"/>
 <rect class="bar" x="678.65" y="284.0" width="1.55" height="25.0"/>
-<rect class="bar" x="680.79" y="309.0" width="1.55" height="34.0"/>
+<rect class="bar-jitter" x="680.79" y="309.0" width="1.55" height="34.0"/>
 <rect class="bar" x="682.94" y="305.0" width="1.55" height="4.0"/>
-<rect class="bar" x="685.08" y="254.9" width="1.55" height="54.1"/>
+<rect class="bar-jitter" x="685.08" y="254.9" width="1.55" height="54.1"/>
 <rect class="bar" x="687.23" y="302.7" width="1.55" height="6.3"/>
 <rect class="bar" x="689.38" y="309.0" width="1.55" height="7.0"/>
 <rect class="bar" x="691.52" y="309.0" width="1.55" height="20.8"/>
 <rect class="bar" x="693.67" y="289.1" width="1.55" height="19.9"/>
-<rect class="bar" x="695.81" y="309.0" width="1.55" height="53.1"/>
+<rect class="bar-jitter" x="695.81" y="309.0" width="1.55" height="53.1"/>
 <rect class="bar" x="697.96" y="304.9" width="1.55" height="4.1"/>
-<rect class="bar" x="700.10" y="259.9" width="1.55" height="49.1"/>
+<rect class="bar-jitter" x="700.10" y="259.9" width="1.55" height="49.1"/>
 <rect class="bar" x="702.25" y="309.0" width="1.55" height="15.9"/>
-<rect class="bar" x="704.40" y="309.0" width="1.55" height="36.0"/>
+<rect class="bar-jitter" x="704.40" y="309.0" width="1.55" height="36.0"/>
 <rect class="bar" x="706.54" y="309.0" width="1.55" height="3.0"/>
 <rect class="bar" x="708.69" y="306.2" width="1.55" height="2.8"/>
 <rect class="bar" x="710.83" y="303.3" width="1.55" height="5.7"/>
 <rect class="bar" x="712.98" y="309.0" width="1.55" height="2.0"/>
-<rect class="bar" x="715.12" y="256.8" width="1.55" height="52.2"/>
+<rect class="bar-jitter" x="715.12" y="256.8" width="1.55" height="52.2"/>
 <rect class="bar" x="717.27" y="304.1" width="1.55" height="4.9"/>
 <rect class="bar" x="719.42" y="309.0" width="1.55" height="2.1"/>
 <rect class="bar" x="721.56" y="309.0" width="1.55" height="24.3"/>
 <rect class="bar" x="723.71" y="283.6" width="1.55" height="25.4"/>
 <rect class="bar" x="725.85" y="309.0" width="1.55" height="5.4"/>
-<rect class="bar" x="728.00" y="309.0" width="1.55" height="53.2"/>
+<rect class="bar-jitter" x="728.00" y="309.0" width="1.55" height="53.2"/>
 <rect class="bar" x="730.15" y="309.0" width="1.55" height="4.0"/>
-<rect class="bar" x="732.29" y="246.1" width="1.55" height="62.9"/>
-<rect class="bar" x="734.44" y="309.0" width="1.55" height="56.7"/>
-<rect class="bar" x="736.58" y="254.3" width="1.55" height="54.7"/>
-<rect class="bar" x="738.73" y="309.0" width="1.55" height="60.5"/>
-<rect class="bar" x="740.88" y="249.0" width="1.55" height="60.0"/>
+<rect class="bar-jitter" x="732.29" y="246.1" width="1.55" height="62.9"/>
+<rect class="bar-jitter" x="734.44" y="309.0" width="1.55" height="56.7"/>
+<rect class="bar-jitter" x="736.58" y="254.3" width="1.55" height="54.7"/>
+<rect class="bar-jitter" x="738.73" y="309.0" width="1.55" height="60.5"/>
+<rect class="bar-jitter" x="740.88" y="249.0" width="1.55" height="60.0"/>
 <rect class="bar" x="743.02" y="309.0" width="1.55" height="1.7"/>
 <rect class="bar" x="745.17" y="304.6" width="1.55" height="4.4"/>
-<rect class="bar" x="747.31" y="309.0" width="1.55" height="54.8"/>
+<rect class="bar-jitter" x="747.31" y="309.0" width="1.55" height="54.8"/>
 <rect class="bar" x="749.46" y="309.0" width="1.55" height="1.7"/>
-<rect class="bar" x="751.60" y="253.0" width="1.55" height="56.0"/>
+<rect class="bar-jitter" x="751.60" y="253.0" width="1.55" height="56.0"/>
 <rect class="bar" x="753.75" y="309.0" width="1.55" height="8.0"/>
 <rect class="bar" x="755.90" y="301.6" width="1.55" height="7.4"/>
 <rect class="bar" x="758.04" y="309.0" width="1.55" height="0.8"/>
-<rect class="bar" x="760.19" y="309.0" width="1.55" height="57.0"/>
-<rect class="bar" x="762.33" y="252.7" width="1.55" height="56.3"/>
-<rect class="bar" x="764.48" y="309.0" width="1.55" height="62.8"/>
+<rect class="bar-jitter" x="760.19" y="309.0" width="1.55" height="57.0"/>
+<rect class="bar-jitter" x="762.33" y="252.7" width="1.55" height="56.3"/>
+<rect class="bar-jitter" x="764.48" y="309.0" width="1.55" height="62.8"/>
 <rect class="bar" x="766.62" y="302.9" width="1.55" height="6.1"/>
 <rect class="bar" x="768.77" y="309.0" width="1.55" height="2.7"/>
-<rect class="bar" x="770.92" y="249.2" width="1.55" height="59.8"/>
+<rect class="bar-jitter" x="770.92" y="249.2" width="1.55" height="59.8"/>
 <rect class="bar" x="773.06" y="307.3" width="1.55" height="1.7"/>
 <rect class="bar" x="775.21" y="309.0" width="1.55" height="8.2"/>
 <rect class="bar" x="777.35" y="302.2" width="1.55" height="6.8"/>
-<rect class="bar" x="779.50" y="309.0" width="1.55" height="60.2"/>
+<rect class="bar-jitter" x="779.50" y="309.0" width="1.55" height="60.2"/>
 <rect class="bar" x="781.65" y="309.0" width="1.55" height="0.9"/>
-<rect class="bar" x="783.79" y="250.7" width="1.55" height="58.3"/>
+<rect class="bar-jitter" x="783.79" y="250.7" width="1.55" height="58.3"/>
 <rect class="bar" x="785.94" y="309.0" width="1.55" height="23.0"/>
 <rect class="bar" x="788.08" y="284.9" width="1.55" height="24.1"/>
 <rect class="bar" x="790.23" y="307.6" width="1.55" height="1.4"/>
-<rect class="bar" x="792.38" y="309.0" width="1.55" height="53.3"/>
-<rect class="bar" x="794.52" y="257.5" width="1.55" height="51.5"/>
-<rect class="bar" x="796.67" y="309.0" width="1.55" height="56.6"/>
-<rect class="bar" x="798.81" y="259.5" width="1.55" height="49.5"/>
+<rect class="bar-jitter" x="792.38" y="309.0" width="1.55" height="53.3"/>
+<rect class="bar-jitter" x="794.52" y="257.5" width="1.55" height="51.5"/>
+<rect class="bar-jitter" x="796.67" y="309.0" width="1.55" height="56.6"/>
+<rect class="bar-jitter" x="798.81" y="259.5" width="1.55" height="49.5"/>
 <rect class="bar" x="800.96" y="309.0" width="1.55" height="20.0"/>
 <rect class="bar" x="803.10" y="307.5" width="1.55" height="1.5"/>
 <rect class="bar" x="805.25" y="309.0" width="1.55" height="26.7"/>
 <rect class="bar" x="807.40" y="309.0" width="1.55" height="1.8"/>
 <rect class="bar" x="809.54" y="309.0" width="1.55" height="1.5"/>
-<rect class="bar" x="811.69" y="256.9" width="1.55" height="52.1"/>
-<rect class="bar" x="813.83" y="309.0" width="1.55" height="56.5"/>
+<rect class="bar-jitter" x="811.69" y="256.9" width="1.55" height="52.1"/>
+<rect class="bar-jitter" x="813.83" y="309.0" width="1.55" height="56.5"/>
 <rect class="bar" x="815.98" y="306.7" width="1.55" height="2.3"/>
-<rect class="bar" x="818.12" y="255.8" width="1.55" height="53.2"/>
-<rect class="bar" x="820.27" y="309.0" width="1.55" height="56.9"/>
-<rect class="bar" x="822.42" y="244.8" width="1.55" height="64.2"/>
+<rect class="bar-jitter" x="818.12" y="255.8" width="1.55" height="53.2"/>
+<rect class="bar-jitter" x="820.27" y="309.0" width="1.55" height="56.9"/>
+<rect class="bar-jitter" x="822.42" y="244.8" width="1.55" height="64.2"/>
 <rect class="bar" x="824.56" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="826.71" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="828.85" y="309.0" width="1.55" height="5.3"/>
-<rect class="bar" x="831.00" y="309.0" width="1.55" height="52.9"/>
-<rect class="bar" x="833.15" y="252.2" width="1.55" height="56.8"/>
-<rect class="bar" x="835.29" y="309.0" width="1.55" height="57.8"/>
+<rect class="bar-jitter" x="831.00" y="309.0" width="1.55" height="52.9"/>
+<rect class="bar-jitter" x="833.15" y="252.2" width="1.55" height="56.8"/>
+<rect class="bar-jitter" x="835.29" y="309.0" width="1.55" height="57.8"/>
 <rect class="bar" x="837.44" y="303.4" width="1.55" height="5.6"/>
-<rect class="bar" x="839.58" y="253.4" width="1.55" height="55.6"/>
+<rect class="bar-jitter" x="839.58" y="253.4" width="1.55" height="55.6"/>
 <rect class="bar" x="841.73" y="309.0" width="1.55" height="7.0"/>
 <rect class="bar" x="843.88" y="309.0" width="1.55" height="1.8"/>
 <rect class="bar" x="846.02" y="301.6" width="1.55" height="7.4"/>
-<rect class="bar" x="848.17" y="309.0" width="1.55" height="57.7"/>
+<rect class="bar-jitter" x="848.17" y="309.0" width="1.55" height="57.7"/>
 <rect class="bar" x="850.31" y="309.0" width="1.55" height="3.6"/>
-<rect class="bar" x="852.46" y="279.1" width="1.55" height="29.9"/>
+<rect class="bar-jitter" x="852.46" y="279.1" width="1.55" height="29.9"/>
 <rect class="bar" x="854.60" y="309.0" width="1.55" height="22.7"/>
-<rect class="bar" x="856.75" y="257.6" width="1.55" height="51.4"/>
-<rect class="bar" x="858.90" y="309.0" width="1.55" height="60.1"/>
+<rect class="bar-jitter" x="856.75" y="257.6" width="1.55" height="51.4"/>
+<rect class="bar-jitter" x="858.90" y="309.0" width="1.55" height="60.1"/>
 <rect class="bar" x="861.04" y="309.0" width="1.55" height="1.5"/>
-<rect class="bar" x="863.19" y="244.1" width="1.55" height="64.9"/>
-<rect class="bar" x="865.33" y="309.0" width="1.55" height="55.9"/>
-<rect class="bar" x="867.48" y="252.5" width="1.55" height="56.5"/>
+<rect class="bar-jitter" x="863.19" y="244.1" width="1.55" height="64.9"/>
+<rect class="bar-jitter" x="865.33" y="309.0" width="1.55" height="55.9"/>
+<rect class="bar-jitter" x="867.48" y="252.5" width="1.55" height="56.5"/>
 <rect class="bar" x="869.62" y="309.0" width="1.55" height="1.3"/>
-<rect class="bar" x="871.77" y="309.0" width="1.55" height="59.9"/>
-<rect class="bar" x="873.92" y="257.9" width="1.55" height="51.1"/>
+<rect class="bar-jitter" x="871.77" y="309.0" width="1.55" height="59.9"/>
+<rect class="bar-jitter" x="873.92" y="257.9" width="1.55" height="51.1"/>
 <rect class="bar" x="876.06" y="303.1" width="1.55" height="5.9"/>
-<rect class="bar" x="878.21" y="309.0" width="1.55" height="52.2"/>
-<rect class="bar" x="880.35" y="254.2" width="1.55" height="54.8"/>
-<rect class="bar" x="882.50" y="309.0" width="1.55" height="59.5"/>
-<rect class="bar" x="884.65" y="253.6" width="1.55" height="55.4"/>
+<rect class="bar-jitter" x="878.21" y="309.0" width="1.55" height="52.2"/>
+<rect class="bar-jitter" x="880.35" y="254.2" width="1.55" height="54.8"/>
+<rect class="bar-jitter" x="882.50" y="309.0" width="1.55" height="59.5"/>
+<rect class="bar-jitter" x="884.65" y="253.6" width="1.55" height="55.4"/>
 <rect class="bar" x="886.79" y="306.7" width="1.55" height="2.3"/>
 <rect class="bar" x="888.94" y="308.6" width="1.55" height="0.8"/>
-<rect class="bar" x="891.08" y="309.0" width="1.55" height="57.4"/>
-<rect class="bar" x="893.23" y="255.6" width="1.55" height="53.4"/>
-<rect class="bar" x="895.38" y="309.0" width="1.55" height="55.2"/>
+<rect class="bar-jitter" x="891.08" y="309.0" width="1.55" height="57.4"/>
+<rect class="bar-jitter" x="893.23" y="255.6" width="1.55" height="53.4"/>
+<rect class="bar-jitter" x="895.38" y="309.0" width="1.55" height="55.2"/>
 <rect class="bar" x="897.52" y="306.4" width="1.55" height="2.6"/>
 <rect class="bar" x="899.67" y="305.1" width="1.55" height="3.9"/>
 <rect class="bar" x="901.81" y="309.0" width="1.55" height="2.9"/>
-<rect class="bar" x="903.96" y="256.5" width="1.55" height="52.5"/>
-<rect class="bar" x="906.10" y="309.0" width="1.55" height="54.9"/>
-<rect class="bar" x="908.25" y="257.9" width="1.55" height="51.1"/>
-<rect class="bar" x="910.40" y="309.0" width="1.55" height="49.9"/>
-<rect class="bar" x="912.54" y="253.2" width="1.55" height="55.8"/>
-<rect class="bar" x="914.69" y="309.0" width="1.55" height="57.0"/>
-<rect class="bar" x="916.83" y="255.0" width="1.55" height="54.0"/>
+<rect class="bar-jitter" x="903.96" y="256.5" width="1.55" height="52.5"/>
+<rect class="bar-jitter" x="906.10" y="309.0" width="1.55" height="54.9"/>
+<rect class="bar-jitter" x="908.25" y="257.9" width="1.55" height="51.1"/>
+<rect class="bar-jitter" x="910.40" y="309.0" width="1.55" height="49.9"/>
+<rect class="bar-jitter" x="912.54" y="253.2" width="1.55" height="55.8"/>
+<rect class="bar-jitter" x="914.69" y="309.0" width="1.55" height="57.0"/>
+<rect class="bar-jitter" x="916.83" y="255.0" width="1.55" height="54.0"/>
 <rect class="bar" x="918.98" y="301.8" width="1.55" height="7.2"/>
 <rect class="bar" x="921.12" y="309.0" width="1.55" height="7.8"/>
-<rect class="bar" x="923.27" y="309.0" width="1.55" height="53.9"/>
-<rect class="bar" x="925.42" y="257.4" width="1.55" height="51.6"/>
+<rect class="bar-jitter" x="923.27" y="309.0" width="1.55" height="53.9"/>
+<rect class="bar-jitter" x="925.42" y="257.4" width="1.55" height="51.6"/>
 <rect class="bar" x="927.56" y="305.0" width="1.55" height="4.0"/>
-<rect class="bar" x="929.71" y="309.0" width="1.55" height="57.3"/>
-<rect class="bar" x="931.85" y="254.0" width="1.55" height="55.0"/>
+<rect class="bar-jitter" x="929.71" y="309.0" width="1.55" height="57.3"/>
+<rect class="bar-jitter" x="931.85" y="254.0" width="1.55" height="55.0"/>
 <rect class="bar" x="934.00" y="303.9" width="1.55" height="5.1"/>
 <rect class="bar" x="936.15" y="309.0" width="1.55" height="2.9"/>
 <rect class="bar" x="938.29" y="305.2" width="1.55" height="3.8"/>
-<rect class="bar" x="940.44" y="309.0" width="1.55" height="53.9"/>
+<rect class="bar-jitter" x="940.44" y="309.0" width="1.55" height="53.9"/>
 <rect class="bar" x="942.58" y="308.8" width="1.55" height="0.8"/>
-<rect class="bar" x="944.73" y="262.5" width="1.55" height="46.5"/>
+<rect class="bar-jitter" x="944.73" y="262.5" width="1.55" height="46.5"/>
 <rect class="bar" x="946.88" y="299.7" width="1.55" height="9.3"/>
 <rect class="bar" x="949.02" y="309.0" width="1.55" height="1.3"/>
 <rect class="bar" x="951.17" y="309.0" width="1.55" height="9.3"/>
-<rect class="bar" x="953.31" y="309.0" width="1.55" height="53.1"/>
+<rect class="bar-jitter" x="953.31" y="309.0" width="1.55" height="53.1"/>
 <rect class="bar" x="955.46" y="301.5" width="1.55" height="7.5"/>
-<rect class="bar" x="957.60" y="252.8" width="1.55" height="56.2"/>
-<rect class="bar" x="959.75" y="309.0" width="1.55" height="62.6"/>
+<rect class="bar-jitter" x="957.60" y="252.8" width="1.55" height="56.2"/>
+<rect class="bar-jitter" x="959.75" y="309.0" width="1.55" height="62.6"/>
 <rect class="bar" x="961.90" y="309.0" width="1.55" height="1.6"/>
 <rect class="bar" x="964.04" y="305.1" width="1.55" height="3.9"/>
 <rect class="bar" x="966.19" y="305.4" width="1.55" height="3.6"/>
 <rect class="bar" x="968.33" y="307.4" width="1.55" height="1.6"/>
-<rect class="bar" x="970.48" y="281.3" width="1.55" height="27.7"/>
-<rect class="bar" x="972.62" y="309.0" width="1.55" height="27.7"/>
-<rect class="bar" x="974.77" y="263.8" width="1.55" height="45.2"/>
+<rect class="bar-jitter" x="970.48" y="281.3" width="1.55" height="27.7"/>
+<rect class="bar-jitter" x="972.62" y="309.0" width="1.55" height="27.7"/>
+<rect class="bar-jitter" x="974.77" y="263.8" width="1.55" height="45.2"/>
 <rect class="bar" x="976.92" y="309.0" width="1.55" height="16.9"/>
 <rect class="bar" x="979.06" y="290.6" width="1.55" height="18.4"/>
-<rect class="bar" x="981.21" y="309.0" width="1.55" height="53.4"/>
-<rect class="bar" x="983.35" y="256.8" width="1.55" height="52.2"/>
-<rect class="bar" x="985.50" y="309.0" width="1.55" height="47.7"/>
+<rect class="bar-jitter" x="981.21" y="309.0" width="1.55" height="53.4"/>
+<rect class="bar-jitter" x="983.35" y="256.8" width="1.55" height="52.2"/>
+<rect class="bar-jitter" x="985.50" y="309.0" width="1.55" height="47.7"/>
 <rect class="bar" x="987.65" y="308.3" width="1.55" height="0.8"/>
-<rect class="bar" x="989.79" y="261.5" width="1.55" height="47.5"/>
+<rect class="bar-jitter" x="989.79" y="261.5" width="1.55" height="47.5"/>
 <rect class="bar" x="991.94" y="306.0" width="1.55" height="3.0"/>
 <rect class="bar" x="994.08" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="996.23" y="305.7" width="1.55" height="3.3"/>
-<rect class="bar" x="998.38" y="309.0" width="1.55" height="53.1"/>
-<rect class="bar" x="1000.52" y="278.9" width="1.55" height="30.1"/>
-<rect class="bar" x="1002.67" y="309.0" width="1.55" height="27.9"/>
-<rect class="bar" x="1004.81" y="256.6" width="1.55" height="52.4"/>
-<rect class="bar" x="1006.96" y="309.0" width="1.55" height="59.5"/>
-<rect class="bar" x="1009.10" y="254.0" width="1.55" height="55.0"/>
-<rect class="bar" x="1011.25" y="309.0" width="1.55" height="53.8"/>
-<rect class="bar" x="1013.40" y="249.4" width="1.55" height="59.6"/>
+<rect class="bar-jitter" x="998.38" y="309.0" width="1.55" height="53.1"/>
+<rect class="bar-jitter" x="1000.52" y="278.9" width="1.55" height="30.1"/>
+<rect class="bar-jitter" x="1002.67" y="309.0" width="1.55" height="27.9"/>
+<rect class="bar-jitter" x="1004.81" y="256.6" width="1.55" height="52.4"/>
+<rect class="bar-jitter" x="1006.96" y="309.0" width="1.55" height="59.5"/>
+<rect class="bar-jitter" x="1009.10" y="254.0" width="1.55" height="55.0"/>
+<rect class="bar-jitter" x="1011.25" y="309.0" width="1.55" height="53.8"/>
+<rect class="bar-jitter" x="1013.40" y="249.4" width="1.55" height="59.6"/>
 <rect class="bar" x="1015.54" y="309.0" width="1.55" height="5.9"/>
-<rect class="bar" x="1017.69" y="309.0" width="1.55" height="55.7"/>
-<rect class="bar" x="1019.83" y="248.2" width="1.55" height="60.8"/>
+<rect class="bar-jitter" x="1017.69" y="309.0" width="1.55" height="55.7"/>
+<rect class="bar-jitter" x="1019.83" y="248.2" width="1.55" height="60.8"/>
 <rect class="bar" x="1021.98" y="308.0" width="1.55" height="1.0"/>
 <rect class="bar" x="1024.12" y="309.0" width="1.55" height="2.7"/>
-<rect class="bar" x="1026.27" y="309.0" width="1.55" height="59.1"/>
-<rect class="bar" x="1028.42" y="254.7" width="1.55" height="54.3"/>
+<rect class="bar-jitter" x="1026.27" y="309.0" width="1.55" height="59.1"/>
+<rect class="bar-jitter" x="1028.42" y="254.7" width="1.55" height="54.3"/>
 <rect class="bar" x="1030.56" y="308.2" width="1.55" height="0.8"/>
 <rect class="bar" x="1032.71" y="309.0" width="1.55" height="1.3"/>
 <rect class="bar" x="1034.85" y="309.0" width="1.55" height="22.8"/>
 <rect class="bar" x="1037.00" y="285.5" width="1.55" height="23.5"/>
-<rect class="bar" x="1039.15" y="309.0" width="1.55" height="52.1"/>
+<rect class="bar-jitter" x="1039.15" y="309.0" width="1.55" height="52.1"/>
 <rect class="bar" x="1041.29" y="303.9" width="1.55" height="5.1"/>
-<rect class="bar" x="1043.44" y="257.9" width="1.55" height="51.1"/>
-<rect class="bar" x="1045.58" y="309.0" width="1.55" height="54.1"/>
+<rect class="bar-jitter" x="1043.44" y="257.9" width="1.55" height="51.1"/>
+<rect class="bar-jitter" x="1045.58" y="309.0" width="1.55" height="54.1"/>
 <rect class="bar" x="1047.73" y="309.0" width="1.55" height="5.9"/>
-<rect class="bar" x="1049.88" y="249.3" width="1.55" height="59.7"/>
-<rect class="bar" x="1052.02" y="309.0" width="1.55" height="55.9"/>
+<rect class="bar-jitter" x="1049.88" y="249.3" width="1.55" height="59.7"/>
+<rect class="bar-jitter" x="1052.02" y="309.0" width="1.55" height="55.9"/>
 <rect class="bar" x="1054.17" y="303.9" width="1.55" height="5.1"/>
 <rect class="bar" x="1056.31" y="309.0" width="1.55" height="5.4"/>
 <rect class="bar" x="1058.46" y="306.1" width="1.55" height="2.9"/>
 <rect class="bar" x="1060.60" y="309.0" width="1.55" height="0.8"/>
 <rect class="bar" x="1062.75" y="309.0" width="1.55" height="6.6"/>
 <rect class="bar" x="1064.90" y="301.1" width="1.55" height="7.9"/>
-<rect class="bar" x="1067.04" y="255.8" width="1.55" height="53.2"/>
+<rect class="bar-jitter" x="1067.04" y="255.8" width="1.55" height="53.2"/>
 <rect class="bar" x="1069.19" y="308.2" width="1.55" height="0.8"/>
 <rect class="bar" x="1071.33" y="309.0" width="1.55" height="6.7"/>
 <rect class="bar" x="1073.48" y="309.0" width="1.55" height="17.1"/>
-<rect class="bar" x="1075.62" y="309.0" width="1.55" height="28.9"/>
-<rect class="bar" x="1077.77" y="254.3" width="1.55" height="54.7"/>
-<rect class="bar" x="1079.92" y="309.0" width="1.55" height="61.9"/>
+<rect class="bar-jitter" x="1075.62" y="309.0" width="1.55" height="28.9"/>
+<rect class="bar-jitter" x="1077.77" y="254.3" width="1.55" height="54.7"/>
+<rect class="bar-jitter" x="1079.92" y="309.0" width="1.55" height="61.9"/>
 <rect class="bar" x="1082.06" y="309.0" width="1.55" height="1.1"/>
-<rect class="bar" x="1084.21" y="253.9" width="1.55" height="55.1"/>
+<rect class="bar-jitter" x="1084.21" y="253.9" width="1.55" height="55.1"/>
 <rect class="bar" x="1086.35" y="309.0" width="1.55" height="1.6"/>
-<rect class="bar" x="1088.50" y="309.0" width="1.55" height="45.8"/>
+<rect class="bar-jitter" x="1088.50" y="309.0" width="1.55" height="45.8"/>
 <rect class="bar" x="1090.65" y="309.0" width="1.55" height="2.9"/>
-<rect class="bar" x="1092.79" y="253.7" width="1.55" height="55.3"/>
-<rect class="bar" x="1094.94" y="309.0" width="1.55" height="51.5"/>
+<rect class="bar-jitter" x="1092.79" y="253.7" width="1.55" height="55.3"/>
+<rect class="bar-jitter" x="1094.94" y="309.0" width="1.55" height="51.5"/>
 <rect class="bar" x="1097.08" y="309.0" width="1.55" height="0.8"/>
-<rect class="bar" x="1099.23" y="258.6" width="1.55" height="50.4"/>
+<rect class="bar-jitter" x="1099.23" y="258.6" width="1.55" height="50.4"/>
 <rect class="bar" x="1101.38" y="305.6" width="1.55" height="3.4"/>
 <rect class="bar" x="1103.52" y="307.0" width="1.55" height="2.0"/>
 <rect class="bar" x="1105.67" y="309.0" width="1.55" height="1.0"/>
-<rect class="bar" x="1107.81" y="309.0" width="1.55" height="59.5"/>
-<rect class="bar" x="1109.96" y="258.2" width="1.55" height="50.8"/>
-<rect class="bar" x="1112.10" y="309.0" width="1.55" height="45.3"/>
-<rect class="bar" x="1114.25" y="255.4" width="1.55" height="53.6"/>
+<rect class="bar-jitter" x="1107.81" y="309.0" width="1.55" height="59.5"/>
+<rect class="bar-jitter" x="1109.96" y="258.2" width="1.55" height="50.8"/>
+<rect class="bar-jitter" x="1112.10" y="309.0" width="1.55" height="45.3"/>
+<rect class="bar-jitter" x="1114.25" y="255.4" width="1.55" height="53.6"/>
 <rect class="bar" x="1116.40" y="309.0" width="1.55" height="8.8"/>
-<rect class="bar" x="1118.54" y="309.0" width="1.55" height="45.5"/>
+<rect class="bar-jitter" x="1118.54" y="309.0" width="1.55" height="45.5"/>
 <rect class="bar" x="1120.69" y="309.0" width="1.55" height="3.2"/>
-<rect class="bar" x="1122.83" y="259.0" width="1.55" height="50.0"/>
+<rect class="bar-jitter" x="1122.83" y="259.0" width="1.55" height="50.0"/>
 <rect class="bar" x="1124.98" y="302.1" width="1.55" height="6.9"/>
 <rect class="bar" x="1127.12" y="309.0" width="1.55" height="3.8"/>
 <rect class="bar" x="1129.27" y="309.0" width="1.55" height="25.5"/>
-<rect class="bar" x="1131.42" y="277.7" width="1.55" height="31.3"/>
-<rect class="bar" x="1133.56" y="309.0" width="1.55" height="60.4"/>
+<rect class="bar-jitter" x="1131.42" y="277.7" width="1.55" height="31.3"/>
+<rect class="bar-jitter" x="1133.56" y="309.0" width="1.55" height="60.4"/>
 <rect class="bar" x="1135.71" y="309.0" width="1.55" height="3.2"/>
-<rect class="bar" x="1137.85" y="246.1" width="1.55" height="62.9"/>
+<rect class="bar-jitter" x="1137.85" y="246.1" width="1.55" height="62.9"/>
+<text x="1140.0" y="218.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-jitter">■</tspan> jitter: off by less than the intended period</text>
 <line class="zero-line" x1="110" y1="309" x2="1140" y2="309"/>
 <text x="100.0" y="313.0" text-anchor="end" class="vsync-n">0</text>
 <text x="110.0" y="402.0" text-anchor="middle" class="vsync-n">0 s</text>
@@ -649,65 +653,66 @@
 <text x="1011.2" y="602.0" text-anchor="middle" class="vsync-n">7 s</text>
 <text x="1140.0" y="602.0" text-anchor="middle" class="vsync-n">8 s</text>
 <text x="20.0" y="638.0" text-anchor="start" class="label">REFRESH STRIP, FIRST 1 S: ONE CELL PER REFRESH, A NEW SHADE PER FRAME</text>
+<text x="1140.0" y="638.0" text-anchor="end" class="vsync-n"><tspan class="key-jitter">■</tspan> jitter</text>
 <rect class="strip-a" x="110.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="127.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="144.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="162.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="162.0" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="179.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="196.3" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="213.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="230.7" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="247.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="265.0" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="282.2" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="247.8" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="265.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="282.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="299.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="316.5" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="333.7" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="316.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="333.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="350.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="368.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="368.0" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="385.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="402.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="419.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="419.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="436.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="453.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="471.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="471.0" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="488.2" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="505.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="522.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="505.3" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="522.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="539.7" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="556.8" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="556.8" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="574.0" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="591.2" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="591.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="608.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="625.5" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="642.7" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="625.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="642.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="659.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="677.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="677.0" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="694.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="711.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="728.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="728.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="745.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="762.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="780.0" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="797.2" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="780.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="797.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="814.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="831.5" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="848.7" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="831.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="848.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="865.8" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="883.0" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="900.2" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="917.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="934.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="917.3" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="934.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="951.7" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-a" x="968.8" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="986.0" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="1003.2" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-b" x="1020.3" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="1037.5" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="986.0" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="1003.2" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="1020.3" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="1037.5" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="1054.7" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="1071.8" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="1071.8" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="1089.0" y="654" width="16.2" height="28" rx="2"/>
-<rect class="strip-a" x="1106.2" y="654" width="16.2" height="28" rx="2"/>
+<rect class="strip-jitter" x="1106.2" y="654" width="16.2" height="28" rx="2"/>
 <rect class="strip-b" x="1123.3" y="654" width="16.2" height="28" rx="2"/>
 <text x="110.0" y="700.0" text-anchor="middle" class="vsync-n">0 s</text>
 <text x="213.0" y="700.0" text-anchor="middle" class="vsync-n">0.1 s</text>

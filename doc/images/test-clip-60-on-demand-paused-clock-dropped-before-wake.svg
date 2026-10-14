@@ -90,6 +90,10 @@
   .frametime-fill { fill: #58a6ff; }
   .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
   .strip-late { fill: #e5534b; }
+  .bar-jitter { fill: #e3b341; }
+  .bar-range-jitter { fill: #e3b341; fill-opacity: 0.3; }
+  .strip-jitter { fill: #e3b341; }
+  .key-jitter { fill: #e3b341; }
   .hist-bar { fill: #58a6ff; }
   .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
   .clip-mark { fill: #e5534b; }

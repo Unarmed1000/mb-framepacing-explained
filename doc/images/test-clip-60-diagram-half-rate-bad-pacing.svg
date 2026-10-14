@@ -90,6 +90,10 @@
   .frametime-fill { fill: #58a6ff; }
   .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
   .strip-late { fill: #e5534b; }
+  .bar-jitter { fill: #e3b341; }
+  .bar-range-jitter { fill: #e3b341; fill-opacity: 0.3; }
+  .strip-jitter { fill: #e3b341; }
+  .key-jitter { fill: #e3b341; }
   .hist-bar { fill: #58a6ff; }
   .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
   .clip-mark { fill: #e5534b; }
@@ -155,7 +159,6 @@
 <text x="1136.0" y="320.8" text-anchor="end" class="error-refresh-text">+1 refresh (16.7 ms)</text>
 <line class="error-refresh" x1="110" y1="455.2" x2="1140" y2="455.2"/>
 <text x="1136.0" y="467.2" text-anchor="end" class="error-refresh-text">−1 refresh (16.7 ms)</text>
-<text x="1140.0" y="299.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <rect class="bar" x="116.44" y="390.0" width="3.69" height="65.2"/>
 <rect class="bar" x="118.58" y="324.8" width="3.69" height="65.2"/>
 <rect class="bar" x="125.02" y="390.0" width="3.69" height="65.2"/>
@@ -395,6 +398,7 @@
 <rect class="bar" x="1129.27" y="390.0" width="3.69" height="65.2"/>
 <rect class="bar" x="1131.42" y="324.8" width="3.69" height="65.2"/>
 <rect class="bar" x="1137.85" y="390.0" width="3.69" height="65.2"/>
+<text x="1140.0" y="299.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="390" x2="1140" y2="390"/>
 <text x="100.0" y="394.0" text-anchor="end" class="vsync-n">0</text>
 <text x="110.0" y="483.0" text-anchor="middle" class="vsync-n">0 s</text>
@@ -458,7 +462,7 @@
 <text x="100.0" y="939.0" text-anchor="end" class="vsync-n">100 %</text>
 <path class="late-line-none" d="M110.0 1015.0"/>
 <path class="late-line" d="M110.0 1015.0L116.4 935.0L118.6 975.0L125.0 961.7L127.2 975.0L133.6 967.0L135.8 975.0L142.2 969.3L144.3 975.0L150.8 970.6L152.9 975.0L159.4 971.4L161.5 975.0L167.9 971.9L170.1 975.0L176.5 972.3L178.7 975.0L185.1 972.6L187.2 975.0L193.7 972.9L195.8 975.0L202.3 973.1L204.4 975.0L210.9 973.3L213.0 975.0L219.4 973.4L221.6 975.0L228.0 973.5L230.2 975.0L236.6 973.6L238.8 975.0L245.2 973.7L247.3 975.0L253.8 973.8L255.9 975.0L262.4 973.9L264.5 975.0L270.9 973.9L273.1 975.0L279.5 974.0L281.7 975.0L288.1 974.0L290.2 975.0L296.7 974.1L298.8 975.0L305.3 974.1L307.4 975.0L313.9 974.1L316.0 975.0L322.4 974.2L324.6 975.0L331.0 974.2L333.2 975.0L339.6 974.2L341.8 975.0L348.2 974.3L350.3 975.0L356.8 974.3L358.9 975.0L365.4 974.3L367.5 975.0L373.9 975.0L376.1 975.0L382.5 975.0L384.7 975.0L391.1 975.0L393.2 975.0L399.7 975.0L401.8 975.0L408.3 975.0L410.4 975.0L416.9 975.0L419.0 975.0L425.4 975.0L427.6 975.0L434.0 975.0L436.2 975.0L442.6 975.0L444.8 975.0L451.2 975.0L453.3 975.0L459.8 975.0L461.9 975.0L468.4 975.0L470.5 975.0L476.9 975.0L479.1 975.0L485.5 975.0L487.7 975.0L494.1 975.0L496.2 975.0L502.7 975.0L504.8 975.0L511.3 975.0L513.4 975.0L519.9 975.0L522.0 975.0L528.4 975.0L530.6 975.0L537.0 975.0L539.2 975.0L545.6 975.0L547.8 975.0L554.2 975.0L556.3 975.0L562.8 975.0L564.9 975.0L571.4 975.0L573.5 975.0L579.9 975.0L582.1 975.0L588.5 975.0L590.7 975.0L597.1 975.0L599.2 975.0L605.7 975.0L607.8 975.0L614.3 975.0L616.4 975.0L622.9 975.0L625.0 975.0L631.4 975.0L633.6 975.0L640.0 975.0L642.2 975.0L648.6 975.0L650.8 975.0L657.2 975.0L659.3 975.0L665.8 975.0L667.9 975.0L674.4 975.0L676.5 975.0L682.9 975.0L685.1 975.0L691.5 975.0L693.7 975.0L700.1 975.0L702.2 975.0L708.7 975.0L710.8 975.0L717.3 975.0L719.4 975.0L725.9 975.0L728.0 975.0L734.4 975.0L736.6 975.0L743.0 975.0L745.2 975.0L751.6 975.0L753.8 975.0L760.2 975.0L762.3 975.0L768.8 975.0L770.9 975.0L777.4 975.0L779.5 975.0L785.9 975.0L788.1 975.0L794.5 975.0L796.7 975.0L803.1 975.0L805.2 975.0L811.7 975.0L813.8 975.0L820.3 975.0L822.4 975.0L828.9 975.0L831.0 975.0L837.4 975.0L839.6 975.0L846.0 975.0L848.2 975.0L854.6 975.0L856.8 975.0L863.2 975.0L865.3 975.0L871.8 975.0L873.9 975.0L880.4 975.0L882.5 975.0L888.9 975.0L891.1 975.0L897.5 975.0L899.7 975.0L906.1 975.0L908.2 975.0L914.7 975.0L916.8 975.0L923.3 975.0L925.4 975.0L931.9 975.0L934.0 975.0L940.4 975.0L942.6 975.0L949.0 975.0L951.2 975.0L957.6 975.0L959.8 975.0L966.2 975.0L968.3 975.0L974.8 975.0L976.9 975.0L983.4 975.0L985.5 975.0L991.9 975.0L994.1 975.0L1000.5 975.0L1002.7 975.0L1009.1 975.0L1011.2 975.0L1017.7 975.0L1019.8 975.0L1026.3 975.0L1028.4 975.0L1034.9 975.0L1037.0 975.0L1043.4 975.0L1045.6 975.0L1052.0 975.0L1054.2 975.0L1060.6 975.0L1062.8 975.0L1069.2 975.0L1071.3 975.0L1077.8 975.0L1079.9 975.0L1086.4 975.0L1088.5 975.0L1094.9 975.0L1097.1 975.0L1103.5 975.0L1105.7 975.0L1112.1 975.0L1114.2 975.0L1120.7 975.0L1122.8 975.0L1129.3 975.0L1131.4 975.0L1137.9 975.0"/>
-<text x="1140.0" y="919.0" text-anchor="end" class="vsync-n"><tspan class="key-green">━</tspan> none late  <tspan class="key-red">━</tspan> late: shown later than its animation time step</text>
+<text x="1140.0" y="919.0" text-anchor="end" class="vsync-n"><tspan class="key-green">━</tspan> none late  <tspan class="key-red">━</tspan> late: longer than animated for and than intended</text>
 <text x="110.0" y="1033.0" text-anchor="middle" class="vsync-n">0 s</text>
 <text x="238.8" y="1033.0" text-anchor="middle" class="vsync-n">1 s</text>
 <text x="367.5" y="1033.0" text-anchor="middle" class="vsync-n">2 s</text>
