@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The blind test's result: anonymised (the day only, no identifiers) and versioned, kept in the browser and exportable as JSON.
 

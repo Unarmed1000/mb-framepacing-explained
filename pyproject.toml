@@ -15,7 +15,7 @@ description = "Frame pacing and animation error, explained: generated comparison
 requires-python = ">=3.14"
 license = "CC-BY-NC-SA-4.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Mana Battery ApS" }]
+authors = [{ name = "Rene Thrane" }]
 dependencies = [
     "Pillow>=12",
     "moderngl>=5.12",

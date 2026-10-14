@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Tests of presentation_faults.py: dropped frames and frames out of order, only in what reaches the screen. Run from the repository
 root (in the .venv): python -m unittest discover -s tools/frame_pacing_video -v

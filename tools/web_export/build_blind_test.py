@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate exactly the clips the web page needs, web-encoded, into web/public/videos: the blind test's and the explanation slides'.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the render scale diagram (render-scale.svg): what a lower render resolution renders and what the display gets, as
 boxes drawn to scale. On the left the render resolution at 100, 75 and 50 % of the output per axis, inside the output size; on the

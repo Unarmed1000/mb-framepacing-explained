@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Puts mb-framepacing's Python SDK (mb_framepacing, its sdk/python; the tools use its marker module, mb_framepacing.marker) on the
 import path: it comes from the submodule external/mb-framepacing, pinned to a commit of mb-framepacing (CONTRIBUTING.md says how to

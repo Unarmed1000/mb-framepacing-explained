@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """The rest of the setup, after uv made .venv: setup.cmd (Windows) or ./setup.sh (Linux, macOS) run this script with uv run, which
 first creates or updates .venv (the Python of .python-version, pyproject.toml's dependencies and dev group, as uv.lock pins them).

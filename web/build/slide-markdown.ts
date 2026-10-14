@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // Turns a slide's Markdown file (web/content/slides/*.md) into a module when the page is built: its front matter as `meta`, and
 // its body as the slide's HTML with the page's classes, so the published page needs no Markdown code. A slide is plain Markdown

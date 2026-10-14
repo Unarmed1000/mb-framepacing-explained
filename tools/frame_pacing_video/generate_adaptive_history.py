@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the adaptive rate history video: the moving box of a game adapting its rate like Swappy through a busy stretch, and
 under it the history the rule keeps (the frames of the last 2 s) as it sees it at each moment, and the target pace it sets from

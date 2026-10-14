@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Tests of idle_behaviour.py: what a game renders while nothing moves, and what its markers say. Run from the repository root (in
 the .venv): python -m unittest discover -s tools/frame_pacing_video -v

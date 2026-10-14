@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the upscaler artifact videos: the render scale videos' scene (generate_render_scale_video.py) scaled up by a simple
 temporal upscaler of our own, set up to show the artifacts temporal upscalers are known for. It is not DLSS or FSR: it shows how

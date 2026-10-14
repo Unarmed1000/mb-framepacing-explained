@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the comparisons of averages of the slides, in the style of the timing diagrams: modes with the same average frame rate, at
 the display's own rate, their display time steps against the average and their refresh strips (chart-average-half-rate.svg: 30 fps

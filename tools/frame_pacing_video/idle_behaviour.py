@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """What a game does while nothing moves (modes ending in -static-rests, -static-rests-paused-clock, -on-demand,
 -on-demand-paused-clock, -on-demand-paused-clock-hindsight or -idle-1fps, e.g. 60-on-demand): the frames it renders while the box

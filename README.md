@@ -156,10 +156,10 @@ ideally with a source: open an [issue](https://github.com/Unarmed1000/mb-framepa
 
 ## License
 
-(c) 2026 Mana Battery ApS. Everything here (documentation, diagrams, videos and tools) is licensed under
+(c) 2026 Rene Thrane. Everything here (documentation, diagrams, videos and tools) is licensed under
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) ([full text](LICENSE)): you may share and adapt it for
 non-commercial purposes, with credit; adapted versions must say what was changed and be shared under the same license.
-Commercial use needs written permission from Mana Battery ApS.
+Commercial use needs written permission from Rene Thrane.
 It is provided as is, without warranty or liability. Quotations from third-party articles and videos remain their owners'.
 The exceptions are AMD's FSR 1 headers in [`tools/frame_pacing_video/fsr1`](tools/frame_pacing_video/fsr1), under their own MIT
 licence ([text](tools/frame_pacing_video/fsr1/LICENSE.txt)). The frame marker library comes from mb-framepacing itself, the

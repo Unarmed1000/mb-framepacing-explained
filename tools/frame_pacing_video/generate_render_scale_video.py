@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the dynamic resolution example video: rotating 3D objects rendered at a resolution that changes with the load, scaled
 up to a fixed output, with a HUD drawn on top at the output resolution.

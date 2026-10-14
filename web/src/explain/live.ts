@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // A live comparison on an explanation slide: one clip at 1:1 device pixels and its animation error chart, whose playhead follows it.
 

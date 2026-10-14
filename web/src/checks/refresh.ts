@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The display's refresh rate, estimated from requestAnimationFrame intervals, and whether it suits the 60 fps clips.
 

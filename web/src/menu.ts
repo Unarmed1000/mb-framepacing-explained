@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+// SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 // SPDX-License-Identifier: CC-BY-NC-SA-4.0
 // The menu after the viewing guide: take the blind test first (its picker, with the previous results), then start the
 // explanation (its first slide), or go straight to measuring animation error.

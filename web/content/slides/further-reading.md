@@ -46,5 +46,5 @@ fetched and quotes checked, but check the linked source before relying on a deta
 
 :::
 
-© 2026 Mana Battery ApS · [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) ·
+© 2026 Rene Thrane · [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) ·
 [mb-framepacing-explained on GitHub](https://github.com/Unarmed1000/mb-framepacing-explained) {.note}

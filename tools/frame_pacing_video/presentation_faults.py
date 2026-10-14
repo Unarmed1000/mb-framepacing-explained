@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Presentation faults (modes ending in -dropped-frames, -out-of-order, -dropped-before-wake, -dropped-wake or -dropped-after-stall, e.g.
 60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames): the game renders every frame as its mode simulates it, but not every

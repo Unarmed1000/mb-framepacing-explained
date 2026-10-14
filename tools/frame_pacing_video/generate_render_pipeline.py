@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the render pipeline diagram (render-pipeline.svg): how a frame with a lower render resolution is made, in three steps
 from real frames of the render scale video's scene (generate_render_scale_video.py). 1: the 3D scene rendered at the render

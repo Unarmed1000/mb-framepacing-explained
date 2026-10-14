@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Generate the frame pacing comparison videos.
 
@@ -115,7 +115,7 @@ WEB_PIXEL_FORMAT = "yuv420p"
 WEB_CRF = 12
 MANIFEST_NAME = "manifest.json"
 # The videos are this repository's, under its license (README.md, LICENSE)
-VIDEO_LICENSE = "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), (c) 2026 Mana Battery ApS; made by mb-framepacing-explained"
+VIDEO_LICENSE = "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), (c) 2026 Rene Thrane; made by mb-framepacing-explained"
 # --marker: refreshes of start marker before the clip and of end marker after it (mb-framepacing needs each on at least one captured
 # frame; about 50 ms at 60 fps is its recommendation), the run id, and the smallest module the analysis reads (2 video pixels)
 MARKER_LEAD_REFRESHES = 3

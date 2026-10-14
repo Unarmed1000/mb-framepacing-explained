@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (C) 2026 Mana Battery ApS
+# SPDX-FileCopyrightText: Copyright (C) 2026 Rene Thrane
 # SPDX-License-Identifier: CC-BY-NC-SA-4.0
 """Replay a timing diagram in the videos (modes like 60-diagram-slow-frames): the frames of one of tools/timing_diagrams' diagrams,
 when each is shown and which animation time it shows, with one diagram refresh per frame of the mode's rate, repeated to fill the
