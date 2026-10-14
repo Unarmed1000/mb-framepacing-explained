@@ -22,8 +22,8 @@ a 2D shape panning across the screen to "observe effect on animation error metri
 ## mb-framepacing
 
 The Analyze page of mb-framepacing charts measured captures. Its Timeline puts four charts on one time axis: the animation
-error per frame as signed bars, with a band for the error threshold (±1 ms); the display time step as held steps, red where a
-frame was held too long; the share of late frames in the last 2 s; and a refresh strip. The other tabs show the error
+error per frame as signed bars, with a band for the error threshold (±1 ms); the display time step as held steps, red where the
+next frame was late (shown later than it was animated for); the share of late frames in the last 2 s; and a refresh strip. The other tabs show the error
 distribution, the error by percentile (p95, p99, the same idea as an L-shape), the display time step distribution and the drift.
 Headline tiles give Gamers Nexus's error per frame and percent error, the typical (p95) and worst error, the frames visibly off
 and the late frames. See its [README](https://github.com/Unarmed1000/mb-framepacing#reading-the-results).

@@ -12,8 +12,8 @@ reports it, its default report card for a capture of the video.
 **The cards need the app's help:** these clips fill every field the marker has. Besides the frame index and animation time, that is
 the pacer's plan (when it meant each frame to be shown, and the frame time it aims for and would prefer), when the CPU started each
 frame and how long it worked on it, and the static flags, for frames on screen while nothing moves. An app has to put these in its
-marker itself; each one it leaves out, mb-framepacing does without. Lateness is then judged against a frame rate given to the tool,
-the frametime panel stays empty, and the step after a frame where nothing moves is judged like any other. {.note}
+marker itself; each one it leaves out, mb-framepacing does without. The display time steps are then measured against a frame rate
+given to the tool, the frametime panel stays empty, and the step after a frame where nothing moves is judged like any other. {.note}
 
 ## On time: the ideal timer, and delta time jitter
 
@@ -26,7 +26,8 @@ the frametime panel stays empty, and the step after a frame where nothing moves 
 ![mb-framepacing's report of the 30 clip](../../../doc/images/test-clip-30.svg)
 
 **60-naive-5ms:** a naive timer up to 5 ms off. The display time step stays flat while the animation error is everywhere: delta time
-jitter.
+jitter. Where the timer stepped half a refresh short, the frame counts as late (64 of them): shown later than it was animated for,
+though the display ran evenly.
 
 ![mb-framepacing's report of the 60-naive-5ms clip](../../../doc/images/test-clip-60-naive-5ms.svg)
 
