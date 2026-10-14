@@ -81,7 +81,10 @@ git -C external/mb-framepacing checkout <commit>
 git add external/mb-framepacing
 ```
 
-Run the tests, regenerate the measured charts (`generate_measured_charts.py`, and with `--test-clips` the test clips' cards), and
-when its playback page changed the web page's live playback report (`--playback-example`, into `web/public/playback`), commit the
-new pin, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's
+Everything this repository takes from mb-framepacing is made in one place, `tools/timing_diagrams/generate_measured_charts.py`
+(a new chart or export goes there too): the report cards, the test clips' cards (`--test-clips`), the web page's live playback
+report (`--playback-example`), the timing diagrams as its frame timeline card (`--timelines`) and each frame's verdict for the
+web page's live charts (`--web-verdicts`, into `web/src/charts/verdicts.json`: which frame is late and which is delta time jitter
+is mb-framepacing's rule, never this repository's). The deploy has no .NET, so its results are committed. Run the tests, then
+`generate_measured_charts.py --all`, commit the new pin with what changed, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's
 `measure/test-data/videos`; committing them there is mb-framepacing's work.

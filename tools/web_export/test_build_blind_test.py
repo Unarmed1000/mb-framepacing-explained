@@ -17,6 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "frame_pacing_video
 import export_test_clips  # noqa: E402
 import generate_videos as gv  # noqa: E402
 
+# The web page's charts' verdicts, measured by mb-framepacing (tools/timing_diagrams/generate_measured_charts.py --web-verdicts)
+VERDICTS = export.REPO_ROOT / "web" / "src" / "charts" / "verdicts.json"
+
 
 class PairTests(unittest.TestCase):
     def test_pairs_of_the_real_definitions(self) -> None:
@@ -101,6 +104,21 @@ class PairTests(unittest.TestCase):
         # The test clip mb-framepacing imported for the report: the same mode at the same speed (so the same frames and timestamps)
         speeds = {clip.top.name: clip.speed.name for _, clip in export_test_clips.planned()}
         self.assertEqual((job.top.name, job.speed.name), (export.PLAYBACK_MODE, speeds[export.PLAYBACK_MODE]))
+
+    def test_every_clip_the_page_charts_has_mb_framepacings_verdicts(self) -> None:
+        # web/src/charts/verdicts.json (generate_measured_charts.py --web-verdicts): a letter per frame of each clip, in its motion
+        verdicts = cast(dict[str, dict[str, str]], json.loads(VERDICTS.read_text(encoding="utf-8")))
+        definitions = cast(dict[str, object], json.loads(export.TRIALS.read_text(encoding="utf-8")))
+        clips = cast(dict[str, object], json.loads(export.EXPLANATION_CLIPS.read_text(encoding="utf-8")))
+        arguments = cast(list[str], cast(dict[str, object], definitions["clip"])["arguments"])
+        for motion, pairs in export.with_explanation_clips(export.required_pairs(definitions), clips).items():
+            for mode in sorted({mode for pair in pairs for mode in pair}):
+                with self.subTest(motion=motion, mode=mode):
+                    self.assertIn(mode, verdicts.get(motion, {}), "run generate_measured_charts.py --web-verdicts")
+                    _, settings = gv.parse_arguments([*arguments, "--single", mode, "--speed", motion])
+                    (job,) = gv.plan_videos(settings)
+                    self.assertEqual(len(verdicts[motion][mode]), len(gv.simulated_frames(settings, job.top, job.speed).flips))
+                    self.assertLessEqual(set(verdicts[motion][mode]), set(verdicts["key"]))
 
 
 if __name__ == "__main__":

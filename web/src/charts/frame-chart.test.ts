@@ -16,13 +16,17 @@ describe("refreshesOnScreen", () => {
 });
 
 describe("heldTooLong", () => {
-  it("is the frame before a later one: the display holds it", () => {
-    // A frame on time, the next one a refresh late, then on time again: the first is held
-    expect(heldTooLong([0, 1, 0, 0])).toEqual([true, false, false, false]);
+  it("is the frame before a late one: the display holds it", () => {
+    // A frame on time, the next one late, its catch-up another error: only the first is held
+    expect(heldTooLong("-lo-")).toEqual([true, false, false, false]);
   });
 
   it("is every frame before a late one, in a run of misses too, and wraps to the next loop", () => {
-    expect(heldTooLong([0, 1, 1, 0])).toEqual([true, true, false, false]);
-    expect(heldTooLong([1, 0, 0])).toEqual([false, false, true]);
+    expect(heldTooLong("-ll-")).toEqual([true, true, false, false]);
+    expect(heldTooLong("l--")).toEqual([false, false, true]);
+  });
+
+  it("is not a frame before delta time jitter or another error", () => {
+    expect(heldTooLong("-jow")).toEqual([false, false, false, false]);
   });
 });

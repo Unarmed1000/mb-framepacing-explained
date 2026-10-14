@@ -46,6 +46,11 @@ the topics interactively. Notes: [the web page](web-page.md).
 
 Sample first each time.
 
+- [ ] The timing diagrams as mb-framepacing's frame timeline card (`generate_measured_charts.py --timelines`, each diagram's replay
+      clip), so their delta time jitter is yellow and their late frames red by its rule, not drawn here: once its timeline card takes
+      a title, description lines and frame labels (A, B, ...), the slides and docs show `timeline-*.svg` for `timing-*.svg`. The VRR
+      diagram cannot be replayed and stays this repository's; perfect-vs-jitter becomes two cards.
+- [x] The web page's live animation error and display time step charts by mb-framepacing's verdicts (`--web-verdicts`).
 - [x] The vsync timer rounding (`timing-vsync-timer.svg`, on the strategies page and the web page's vsync timer slide).
 - [ ] The vsync timer's failure: a wake-up late by more than half a refresh.
 - [ ] Finish the web page's draft slides (frame pacing, VRR, input latency, further reading), then remove their work-in-progress
@@ -93,6 +98,8 @@ Ideas for the sister project, from [charts](charts.md#ideas-for-mb-framepacing).
 - [ ] The same classification as the web page's, on measured captures: from the animation error, how much of a run has stutter and
       the other categories (jitter, hitches, ...), which can overlap; as shares in the report and marked stretches on its charts.
       Build it once and share the rules, so both projects label a sequence the same way.
+- [ ] Its frame timeline card (`render --timeline`) with a title, description lines and frame labels, for our timing diagrams; and
+      a late frame red on it (today red is any error above the threshold, and a late frame shows as amber on the frame before it).
 - [x] Display time steps and animation error on one time axis, late frames marked (shown after the refresh they were rendered
       for, as the web page's charts do): error with a flat display time step is delta time jitter, error where it jumps is bad pacing,
       so the report can name the cause.

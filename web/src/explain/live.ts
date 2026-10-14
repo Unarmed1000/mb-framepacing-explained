@@ -46,8 +46,8 @@ export function liveComparison(
       text.className = "live-caption";
       text.textContent = caption;
       const lanes = [
-        { title: "Top", mode: video.top, hideMode: !modes },
-        { title: "Bottom", mode: video.bottom, hideMode: !modes },
+        { title: "Top", motion, mode: video.top, hideMode: !modes },
+        { title: "Bottom", motion, mode: video.bottom, hideMode: !modes },
       ];
       const charts = [
         ...(chart ? [errorChart(lanes, video.frameCount, video.fps)] : []),
@@ -132,7 +132,7 @@ export function singleBox(
       holder.replaceChildren(player.element, text);
       if (chart) {
         // A lower lane than the pairs' charts: one box's chart under its video
-        const lane = { title: "This box", mode: half === "top" ? video.top : video.bottom };
+        const lane = { title: "This box", motion, mode: half === "top" ? video.top : video.bottom };
         const errors = errorChart([lane], video.frameCount, video.fps, SINGLE_LANE_HEIGHT);
         player.onFrame = (mediaTime) => errors.setTime(mediaTime);
         const card = document.createElement("div");

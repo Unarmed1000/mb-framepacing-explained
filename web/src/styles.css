@@ -10,6 +10,8 @@
   --faint: #6e7681;
   --green: #2ea043;
   --amber: #d29922;
+  /* Delta time jitter, as mb-framepacing draws it */
+  --yellow: #e3b341;
   --red: #e5534b;
   --accent: #58a6ff;
   --radius: 14px;
@@ -440,6 +442,15 @@ kbd {
 
 .chart-bar {
   fill: var(--red);
+}
+
+/* As mb-framepacing judges each frame (verdicts.ts): delta time jitter, and within its error threshold */
+.chart-bar.jitter {
+  fill: var(--yellow);
+}
+
+.chart-bar.within {
+  fill: var(--faint);
 }
 
 .chart-playhead {

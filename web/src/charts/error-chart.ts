@@ -4,6 +4,7 @@
 // Same design as the SVG diagrams of tools/timing_diagrams (the dark grey card, the colours).
 
 import type { ModeEntry } from "../manifest";
+import { verdictsFor } from "./verdicts";
 
 const SVG = "http://www.w3.org/2000/svg";
 const WIDTH = 1200;
@@ -15,6 +16,8 @@ const GAP = 52;
 
 export interface Lane {
   title: string;
+  /** The motion of the clip, for its verdicts (verdicts.ts). */
+  motion: string;
   mode: ModeEntry;
   /** Leave the mode's name out of the lane's heading, where it would give away what the slide has not explained yet. */
   hideMode?: boolean;
@@ -35,6 +38,14 @@ function label(x: number, y: number, content: string, className: string, anchor 
   return node;
 }
 
+/** A frame's bar as mb-framepacing judges it (verdicts.ts): yellow for delta time jitter, grey within the error threshold or
+ * without a measured step (the run's first frame), red for a late frame and any other error. */
+export function barClass(verdict: string | undefined): string {
+  if (verdict === "j") return "chart-bar jitter";
+  if (verdict === "w" || verdict === "-" || verdict === undefined) return "chart-bar within";
+  return "chart-bar";
+}
+
 export interface ErrorChart {
   svg: SVGSVGElement;
   /** Move the playhead to the video's media time (s). */
@@ -53,7 +64,13 @@ export function errorChart(lanes: readonly Lane[], refreshes: number, fps: numbe
   const limit = Math.ceil(largest * 1.15);
   svg.append(
     label(LEFT, 20, "ANIMATION ERROR PER FRAME", "chart-label"),
-    label(WIDTH - RIGHT, 20, "+ shown too soon, − shown too late", "chart-note", "end"),
+    label(
+      WIDTH - RIGHT,
+      20,
+      "+ too soon, − too late · yellow delta time jitter, red late, grey within 1 ms",
+      "chart-note",
+      "end",
+    ),
   );
 
   lanes.forEach((lane, index) => {
@@ -74,12 +91,15 @@ export function errorChart(lanes: readonly Lane[], refreshes: number, fps: numbe
       svg.append(label(LEFT - 8, y(value) + 4, `${value > 0 ? "+" : "−"}${Math.abs(value)} ms`, "chart-note", "end"));
     }
     const { refresh, animationErrorMs } = lane.mode.frames;
+    const verdicts = verdictsFor(lane.motion, lane.mode.mode);
     const barWidth = Math.max(1, plotWidth / refreshes - 0.4);
     animationErrorMs.forEach((value, frame) => {
       if (Math.abs(value) < 1e-9) return;
       const at = refresh[frame] ?? 0;
       const [y0, y1] = [zero, y(value)].sort((a, b) => a - b) as [number, number];
-      svg.append(element("rect", { x: x(at), y: y0, width: barWidth, height: Math.max(0.8, y1 - y0), class: "chart-bar" }));
+      svg.append(
+        element("rect", { x: x(at), y: y0, width: barWidth, height: Math.max(0.8, y1 - y0), class: barClass(verdicts[frame]) }),
+      );
     });
     svg.append(element("line", { x1: LEFT, x2: WIDTH - RIGHT, y1: zero, y2: zero, class: "chart-zero" }));
   });

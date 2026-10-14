@@ -77,7 +77,10 @@ Light load: smaller errors, all around 1–2 ms.
 
 Made by [`tools/timing_diagrams/generate_measured_charts.py`](../tools/timing_diagrams/generate_measured_charts.py), with the
 mb-framepacing of the submodule `external/mb-framepacing` (it builds it with `dotnet build`, so it needs the .NET SDK). Any mode can
-be measured: `python tools/timing_diagrams/generate_measured_charts.py 30-naive-typical 60-naive-4ms` (`--png` for bitmaps).
+be measured: `python tools/timing_diagrams/generate_measured_charts.py 30-naive-typical 60-naive-4ms` (`--png` for bitmaps). The
+same script makes everything else this repository takes from mb-framepacing (`--all`), among it each frame's verdict for the web
+page's live animation error charts: yellow where mb-framepacing finds delta time jitter, red where a frame is late or off otherwise,
+grey within its error threshold.
 
 ## Ideas for mb-framepacing
 

@@ -111,17 +111,10 @@ def title(name: str) -> str:
 SPREAD = Fraction(2, 5)
 
 
-def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> Replay:
-    """The frames of a clip of `refreshes` output refreshes replaying the diagram: the refresh each is flipped on, its animation
-    time, when it starts and its render time (s). One diagram refresh is `interval` output refreshes. A frame starts when the
-    previous one is flipped (the clip's first when the last one is, one clip earlier), or, in a diagram with a cap, when the
-    diagram starts it; the on-time frames around the diagram's have no known render time (0). The unit repeats every `every` seconds, or, without, every
-    whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest. With
-    `every`, `times` copies play per period, spread over its middle SPREAD. Raises ValueError when the unit does not fit, the
-    copies overlap or the repetition does not divide the clip."""
-    # Back to back the smallest unit repeats; once per period the whole diagram plays (slow frames: both late frames)
-    unit = pattern(name, whole=every is not None)
-    length = unit.length * interval
+def placement(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> tuple[int, int, list[int]]:
+    """Where a clip of `refreshes` output refreshes plays the diagram (see schedule), in output refreshes: the period the unit
+    repeats in, the unit's length, and where each copy starts in its period. Raises ValueError as schedule does."""
+    length = pattern(name, whole=every is not None).length * interval
     if every is None:
         period = next(size for size in range(length, refreshes + 1) if refreshes % size == 0 and size % interval == 0)
     else:
@@ -137,6 +130,20 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
     offsets = [int(centre * period - Fraction(length, 2)) // interval * interval for centre in centres]
     if offsets[0] < 0 or offsets[-1] + length > period or any(b < a + length for a, b in zip(offsets, offsets[1:], strict=False)):
         raise ValueError(f"{times} copies of the {name} diagram ({length} refreshes) do not fit apart in {period} refreshes")
+    return period, length, offsets
+
+
+def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, fps: Fraction, times: int = 1) -> Replay:
+    """The frames of a clip of `refreshes` output refreshes replaying the diagram: the refresh each is flipped on, its animation
+    time, when it starts and its render time (s). One diagram refresh is `interval` output refreshes. A frame starts when the
+    previous one is flipped (the clip's first when the last one is, one clip earlier), or, in a diagram with a cap, when the
+    diagram starts it; the on-time frames around the diagram's have no known render time (0). The unit repeats every `every` seconds, or, without, every
+    whole number of refreshes that divides the clip, starting at its own length; on-time frames at full rate fill the rest. With
+    `every`, `times` copies play per period, spread over its middle SPREAD. Raises ValueError when the unit does not fit, the
+    copies overlap or the repetition does not divide the clip."""
+    # Back to back the smallest unit repeats; once per period the whole diagram plays (slow frames: both late frames)
+    unit = pattern(name, whole=every is not None)
+    period, length, offsets = placement(name, every, refreshes, interval, fps, times)
     flips: list[int] = []
     moments: list[Fraction] = []
     # Per frame, in output refreshes: when the diagram starts it (None: when the previous frame is flipped) and its render time

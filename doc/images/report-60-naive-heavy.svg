@@ -22,11 +22,14 @@
   .hold { fill: #2ea043; fill-opacity: 0.45; }
   .again { fill: #d29922; }
   .off { fill: #e5534b; }
+  .off-jitter { fill: #e3b341; }
   .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
   .dark-text { fill: #1c1f24; }
   .zero { fill: #6e7681; }
   .err { fill: #ff7b72; font-weight: 600; }
   .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .err-jitter { fill: #e3b341; font-weight: 600; }
+  .err-pill-jitter { fill: #e3b341; fill-opacity: 0.16; }
   .neutral { fill: #3d444d; }
   .lane { font-size: 15px; font-weight: 600; }
   .same { fill: #7ee787; font-weight: 600; }

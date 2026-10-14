@@ -151,8 +151,8 @@ export function revealCard(
   const { video } = trial.clip;
   const chart = errorChart(
     [
-      { title: "Top", mode: video.top },
-      { title: "Bottom", mode: video.bottom },
+      { title: "Top", motion: trial.motion, mode: video.top },
+      { title: "Bottom", motion: trial.motion, mode: video.bottom },
     ],
     video.frameCount,
     video.fps,
