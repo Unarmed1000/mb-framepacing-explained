@@ -23,6 +23,11 @@ on a dark page (--background adds an opaque page colour behind the card, for pre
 GitHub shows them sharp at any size. --png also saves each as a PNG at 2x, through a headless Edge or Chrome (MB_BROWSER, or the
 usual install locations and PATH).
 
+The diagrams' models (DIAGRAMS) are also what the videos replay (tools/frame_pacing_video/diagram_replay.py). Only the vsync timer's
+and the VRR diagram are drawn here (RENDERERS): every other one is mb-framepacing's frame timeline card of its replay clip, with the
+diagram's title, lines and frame names, so that its animation error is coloured by mb-framepacing's rule (yellow delta time
+jitter, red late): tools/timing_diagrams/generate_measured_charts.py --timelines, into the same timing-<name>.svg.
+
 Run from the repository's .venv:
   python tools/timing_diagrams/generate_diagrams.py [--output-dir DIR] [--png] [NAME ...]
 """
@@ -419,51 +424,6 @@ def render(diagram: Diagram, background: str | None) -> str:
     return "\n".join(parts) + "\n"
 
 
-@dataclass(frozen=True)
-class Comparison:
-    """Diagrams one above the other, each with its full timeline (render, display and the values), on one time axis: the frame
-    rate, frametimes and display time steps are the same in each, and what differs is only in the animation error."""
-
-    name: str
-    title: str
-    description: tuple[str, ...]
-    lanes: tuple[tuple[str, str], ...]  # (lane title, diagram name)
-    footer: str
-
-
-# Room for a lane's title above its timeline
-LANE_TITLE_H = 36
-
-
-def render_comparison(comparison: Comparison, background: str | None) -> str:
-    lanes = [(title, DIAGRAMS_BY_NAME[name]) for title, name in comparison.lanes]
-    first = lanes[0][1]
-    origin = -first.frames[0].interval * PERIOD
-    end = cells(first, simulate(first))[-1].end
-
-    def x_of(t: float) -> float:
-        return LEFT + (t - origin) * first.scale
-
-    width = x_of(end) + RIGHT
-    # Each lane: its title, then a single diagram's timeline from its refresh labels down to its last value row
-    lane_h = LANE_TITLE_H + (ROWS_Y + ROW_STEP * (len(ROW_LABELS) - 1) + 14 - (VSYNC_Y - 14))
-    legend_y = VSYNC_Y + LANE_TITLE_H + lane_h * len(lanes) + 6
-    height = legend_y + 96 + 24
-    parts = _svg_start(comparison.title, width, height, background, comparison.description)
-    used: set[str] = set()
-    for lane, (title, diagram) in enumerate(lanes):
-        shift = LANE_TITLE_H + lane * lane_h
-        parts.append(text(20, VSYNC_Y + shift - 30, title, "lane", "start"))
-        parts.append(text(20 + len(title) * 8.4 + 12, VSYNC_Y + shift - 30, f"{1000 / REFRESH_MS:.0f} fps, {ms(REFRESH_MS)} ms frametimes", "vsync-n", "start"))
-        timeline, kinds = _timeline(diagram, x_of, shift)
-        parts += timeline
-        used |= kinds
-    parts += _key(first.vrr, used, legend_y)
-    parts.append(text(20, height - 18, comparison.footer, "sub", "start"))
-    parts.append("</svg>")
-    return "\n".join(parts) + "\n"
-
-
 def switching(renders: tuple[tuple[str, float], ...], fast_needed: int) -> tuple[Frame, ...]:
     """Frames whose swap interval an engine chooses as it goes: half rate (interval 2) after a frame that did not fit one refresh,
     back to full rate (interval 1) after `fast_needed` frames in a row that did. With 1, it switches back after the first fast
@@ -614,22 +574,11 @@ DIAGRAMS = (
 )
 DIAGRAMS_BY_NAME = {diagram.name: diagram for diagram in DIAGRAMS}
 
-COMPARISONS = (
-    Comparison(
-        "perfect-vs-jitter",
-        "Same frame rate, same frametimes, different motion",
-        (
-            "A perfect timer and a jittery one, measured the usual way: 60 fps, every frame on screen for exactly 16.7 ms, a flat frame-time",
-            "graph. Every one of those numbers is identical. Only the animation time inside each frame differs, and only animation error shows it.",
-        ),
-        (("Perfect timer", "perfect-timer"), ("Delta time jitter", "timer-jitter")),
-        "The eye sees the jittered frames as slightly uneven motion; frame rate and frametime cannot explain why, animation error does.",
-    ),
-)
-# Every output by name, as a function of the background: the diagrams and the comparisons
+# The diagrams drawn here, as a function of the background: the vsync timer's (its clock reading rows) and the VRR one (a fixed rate
+# video cannot replay it). The others are mb-framepacing's frame timeline card of each diagram's replay clip, drawn by
+# generate_measured_charts.py --timelines, so that their animation error is coloured by its rule; their models stay here
 RENDERERS: dict[str, Callable[[str | None], str]] = {
-    **{diagram.name: functools.partial(render, diagram) for diagram in DIAGRAMS},
-    **{comparison.name: functools.partial(render_comparison, comparison) for comparison in COMPARISONS},
+    diagram.name: functools.partial(render, diagram) for diagram in DIAGRAMS if diagram.vrr or diagram.vsync_timer
 }
 
 
@@ -681,7 +630,7 @@ class Arguments(argparse.Namespace):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the timing diagrams (SVG, optionally PNG).")
-    _ = parser.add_argument("names", nargs="*", metavar="NAME", help=f"diagrams to generate (default: all): {', '.join(RENDERERS)}")
+    _ = parser.add_argument("names", nargs="*", metavar="NAME", help=f"diagrams to generate (default: all drawn here): {', '.join(RENDERERS)}")
     _ = parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="where the files go (default: doc/images)")
     _ = parser.add_argument("--png", action="store_true", help="also save a PNG at 2x of each, through a headless Edge or Chrome")
     _ = parser.add_argument("--background", default=None, help="a page colour behind the card, such as #ffffff, for previews (default: transparent)")

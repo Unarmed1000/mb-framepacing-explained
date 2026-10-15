@@ -102,6 +102,22 @@ TIMELINE_EVERY = "every-1s"
 # The diagrams drawn as the timeline card: every replayable one but the vsync timer, whose rows of clock readings the card has
 # not (generate_diagrams.py draws it, and the VRR one, which a fixed rate video cannot replay)
 TIMELINE_DIAGRAMS = tuple(name for name in diagram_replay.replayable() if not DIAGRAMS_BY_NAME[name].vsync_timer)
+# How a diagram's card is drawn as the diagrams are: a refresh 120 px wide (generate_diagrams.py: SCALE x PERIOD), the render row's
+# words, no section after the title, and every error the card shows coloured: an error threshold of 1 µs (the clips' times are
+# rounded to the nanosecond, so an on-time frame's error is up to 1 ns), left out of the key
+TIMELINE_STYLE = (
+    "--refresh-pixels",
+    "120",
+    "--no-title-range",
+    "--cpu-row-label",
+    "RENDER",
+    "--cpu-row-sublabel",
+    "predicted display time",
+    "--cpu-key",
+    "render: as wide as the frame takes, labelled with its predicted display time (its animation time)",
+    "--no-threshold-in-key",
+)
+TIMELINE_ERROR_THRESHOLD_MS = "0.001"
 # The web page's charts' verdicts, and the letter of each (one per frame of a clip)
 WEB_VERDICTS = gv.REPO_ROOT / "web" / "src" / "charts" / "verdicts.json"
 VERDICTS = {
@@ -309,7 +325,8 @@ def seconds(value: Fraction) -> str:
 
 def measure_timelines(names: list[str], tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
     """Draw each diagram named (default: TIMELINE_DIAGRAMS) as mb-framepacing's frame timeline card of its replay clip, with the
-    diagram's title, lines and frame names: timing-<name>.svg in output_dir."""
+    diagram's title, lines and frame names and drawn as the diagrams are (TIMELINE_STYLE, the clip analysed with
+    TIMELINE_ERROR_THRESHOLD_MS): timing-<name>.svg in output_dir."""
     written: list[Path] = []
     selected = names or list(TIMELINE_DIAGRAMS)
     for index, name in enumerate(selected, start=1):
@@ -320,8 +337,12 @@ def measure_timelines(names: list[str], tool: Path, ffmpeg: Path, output_dir: Pa
         diagram = DIAGRAMS_BY_NAME[name]
         words = ["--title", diagram.title, *(part for line in diagram.description for part in ("--description", line))]
         labels = ["--frame-labels", ",".join(frame.name for frame in diagram.frames)]
-        options = ["--timeline", "--from", seconds(start), "--to", seconds(end), *words, *labels, *(["--png"] if png else [])]
-        rendered = measure_clip(settings, job, tool, ffmpeg, options)
+        options = ["--timeline", "--from", seconds(start), "--to", seconds(end), *words, *labels, *TIMELINE_STYLE, *(["--png"] if png else [])]
+        work = WORK_DIR / job.top.name
+        capture = import_clip(settings, job, tool, ffmpeg, work)
+        run([str(tool), "analyze", str(capture), "--error-threshold-ms", TIMELINE_ERROR_THRESHOLD_MS])
+        rendered = work / "render"
+        run([str(tool), "render", str(capture), "-o", str(rendered), *options])
         for suffix in (".svg", ".png") if png else (".svg",):
             (source,) = rendered.glob(f"run-1-timeline-*{suffix}")
             path = output_dir / f"timing-{name}{suffix}"
@@ -421,8 +442,8 @@ EXPORTS = (
     ),
     Export(
         "timelines",
-        "draw the timing diagrams (NAME: some of them; default all but the vsync timer's and VRR's) as mb-framepacing's frame timeline card, timing-<name>.svg (not in --all: the docs and slides show the reviewed diagrams until they are switched)",
-        False,
+        "draw the timing diagrams (NAME: some of them; default all but the vsync timer's and VRR's) as mb-framepacing's frame timeline card, timing-<name>.svg",
+        True,
         lambda names, tool, ffmpeg, output_dir, png: measure_timelines(names, tool, ffmpeg, output_dir, png),
     ),
     Export(

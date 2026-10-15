@@ -17,4 +17,6 @@ exactly one refresh; the animation error is 0 for the top box and off in every f
 
 :::
 
-![Same frame rate, same frame times, different motion: only the animation error differs.](../../../doc/images/timing-perfect-vs-jitter.svg)
+![Same frame rate, same frame times, different motion: the perfect timer, no animation error.](../../../doc/images/timing-perfect-timer.svg)
+
+![Same frame rate, same frame times, different motion: delta time jitter, only the animation error differs.](../../../doc/images/timing-timer-jitter.svg)

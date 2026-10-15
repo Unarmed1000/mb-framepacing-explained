@@ -56,7 +56,8 @@ both sides next to each other are in [charts](charts.md).
 identical to the perfect timer's: every frame is on screen for exactly one refresh. The eye still sees slightly uneven motion,
 and only animation error shows why, because only it looks at the moment each frame shows:
 
-![Same frame rate, same frametimes, different motion: only the animation error differs](images/timing-perfect-vs-jitter.svg)
+![Same frame rate, same frametimes, different motion: the perfect timer, no animation error](images/timing-perfect-timer.svg)
+![Same frame rate, same frametimes, different motion: delta time jitter, only the animation error differs](images/timing-timer-jitter.svg)
 
 ![Slow frames: the previous frame is held, the late frame shows a past moment and the next one jumps ahead](images/timing-slow-frames.svg)
 
