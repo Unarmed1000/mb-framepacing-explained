@@ -114,6 +114,24 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(ft.describe(ft.parse_mode("60-diagram-half-rate-bad-pacing"), PARAMETERS), "60 Hz, half rate, bad frame pacing (as the diagram)")
         self.assertEqual(ft.describe(mode, PARAMETERS), "60 Hz, slow frames (as the diagram, every 1.5 s)")
 
+    def test_every_frame_is_done_by_its_own_flip(self) -> None:
+        # The half rate diagram's first frame follows full rate frames: it starts early enough, as the diagram gives it its swap
+        # interval, instead of at the previous flip
+        for name in ("60-diagram-half-rate-even-every-1s", "60-diagram-half-rate-even", "60-diagram-slow-frames-every-1s"):
+            with self.subTest(name):
+                simulated = frames(name)
+                for start, took, flip in zip(simulated.starts, simulated.cpu, simulated.flips, strict=True):
+                    self.assertLessEqual(start + took, flip * REFRESH)
+
+    def test_each_frame_carries_its_swap_interval_and_a_cap_is_preferred(self) -> None:
+        # Half rate: the diagram's frames at 2, the on-time frames around them at 1; bad frame pacing has no swap interval of 2: it
+        # prefers 30 fps by its own clock instead
+        self.assertEqual(set(frames("60-diagram-half-rate-even").intervals), {2})
+        self.assertEqual(set(frames("60-diagram-half-rate-even-every-1s").intervals), {1, 2})
+        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing").intervals), {1})
+        self.assertEqual(replay.preferred_interval("half-rate-bad-pacing"), 2)
+        self.assertIsNone(replay.preferred_interval("half-rate-even"))
+
 
 if __name__ == "__main__":
     _ = unittest.main()

@@ -83,7 +83,7 @@ from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 import idle_behaviour as idle
 import marker_path  # noqa: F401  # pyright: ignore[reportUnusedImport]  (mb_framepacing from the submodule)
 import presentation_faults as faults
-from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate
+from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate, swap_interval
 from frame_timing import validate as validate_timing
 from mb_framepacing.marker import (
     NS_PER_SECOND,
@@ -728,6 +728,15 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
         return Pacing((None,) * count, (None,) * count, after, before)
     target: tuple[int | None, ...] = tuple(frames.intervals)
     preferred: tuple[int | None, ...] = target if mode.idle == idle.IDLE_1FPS else (min(frames.intervals),) * count
+    if mode.diagram is not None:
+        from diagram_replay import preferred_interval  # noqa: PLC0415  (as frame_timing replays a diagram)
+
+        cap = preferred_interval(mode.diagram)
+    else:
+        cap = None
+    if cap is not None:
+        # A diagram's game that caps itself by its own clock prefers its cap (bad frame pacing: 30 fps), while its swap interval is 1
+        preferred = (int(cap * swap_interval(mode, settings.fps)),) * count
     return Pacing(target, preferred, after, before)
 
 

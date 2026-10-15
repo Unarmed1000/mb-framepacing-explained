@@ -36,9 +36,11 @@ plays the clip's web-encoded copy, which build_blind_test.py makes into web/publ
 frames and timestamps): it names it by a path relative to itself (--playback-video-url), so no video goes into the folder. The
 folder's playback.json is left out: the page does not read it.
 
-With --timelines (NAME ...: some diagrams; default every replayable one, diagram_replay.replayable(); a VRR diagram cannot be
-replayed) it renders each diagram's marked clip 60-diagram-<name>-every-1s, which plays the whole diagram once a second, and draws
-the first copy's refreshes with render --timeline: doc/images/timeline-<name>.svg.
+With --timelines (NAME ...: some diagrams; default TIMELINE_DIAGRAMS, every diagram but the vsync timer's, whose clock reading
+rows the card has not, and the VRR one, which a fixed rate video cannot replay: generate_diagrams.py draws those two) it renders
+each diagram's marked clip 60-diagram-<name>-every-1s, which plays the whole diagram once a second, and draws the first copy's
+refreshes with render --timeline, titled, described and its frames named as the diagram (generate_diagrams.DIAGRAMS):
+doc/images/timing-<name>.svg, the image the docs and slides show.
 
 With --web-verdicts it measures, for every clip the web page charts (trials.json and clips.json, as build_blind_test.py collects
 them: a mode in a motion), the marked single-box clip of the same frames (the page's timing arguments, TIMING_ARGUMENTS; the clips
@@ -84,7 +86,7 @@ import diagram_replay  # noqa: E402
 import export_test_clips  # noqa: E402
 import generate_videos as gv  # noqa: E402
 from frame_timing import TimingParameters, describe, parse_mode, swap_interval  # noqa: E402
-from generate_diagrams import DEFAULT_OUTPUT_DIR  # noqa: E402
+from generate_diagrams import DEFAULT_OUTPUT_DIR, DIAGRAMS_BY_NAME  # noqa: E402
 
 DEFAULT_MODES = ("60-naive-light", "60-naive-heavy", "60-naive-heavy-realistic")
 # The modes that also get their animation error histogram
@@ -97,6 +99,9 @@ PLAYBACK_MODE = build_blind_test.PLAYBACK_MODE
 PLAYBACK_DIR = gv.REPO_ROOT / "web" / "public" / "playback" / PLAYBACK_MODE
 # The timing diagrams' replay clips: the whole diagram once every second, at 60 Hz
 TIMELINE_EVERY = "every-1s"
+# The diagrams drawn as the timeline card: every replayable one but the vsync timer, whose rows of clock readings the card has
+# not (generate_diagrams.py draws it, and the VRR one, which a fixed rate video cannot replay)
+TIMELINE_DIAGRAMS = tuple(name for name in diagram_replay.replayable() if not DIAGRAMS_BY_NAME[name].vsync_timer)
 # The web page's charts' verdicts, and the letter of each (one per frame of a clip)
 WEB_VERDICTS = gv.REPO_ROOT / "web" / "src" / "charts" / "verdicts.json"
 VERDICTS = {
@@ -286,14 +291,15 @@ def timeline_mode(name: str) -> str:
 
 
 def timeline_section(settings: gv.Settings, job: gv.VideoJob) -> tuple[Fraction, Fraction]:
-    """The seconds of the replay clip `job` (since the run's first frame) the diagram's first copy is shown in: from its first
-    refresh to half a refresh before the next copy's frames begin (render --timeline takes a frame shown at the section's end)."""
+    """The seconds of the replay clip `job` (since the run's first frame) the diagram's first copy is shown in: from half a
+    refresh before its first refresh to half a refresh before the refresh after it, so no frame sits on an edge the rounding of
+    --from/--to could move it over."""
     mode = job.top
     assert mode.diagram is not None, mode.name
     refreshes = settings.frame_count(job.speed)
     interval = swap_interval(mode, settings.fps)
     _, length, offsets = diagram_replay.placement(mode.diagram, mode.every, refreshes, interval, settings.fps, mode.times)
-    return offsets[0] / settings.fps, (offsets[0] + length - Fraction(1, 2)) / settings.fps
+    return (offsets[0] - Fraction(1, 2)) / settings.fps, (offsets[0] + length - Fraction(1, 2)) / settings.fps
 
 
 def seconds(value: Fraction) -> str:
@@ -302,20 +308,23 @@ def seconds(value: Fraction) -> str:
 
 
 def measure_timelines(names: list[str], tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
-    """Draw each diagram named (default: every replayable one) as mb-framepacing's frame timeline card of its replay clip:
-    timeline-<name>.svg in output_dir."""
+    """Draw each diagram named (default: TIMELINE_DIAGRAMS) as mb-framepacing's frame timeline card of its replay clip, with the
+    diagram's title, lines and frame names: timing-<name>.svg in output_dir."""
     written: list[Path] = []
-    selected = names or list(diagram_replay.replayable())
+    selected = names or list(TIMELINE_DIAGRAMS)
     for index, name in enumerate(selected, start=1):
         print(f"[{index}/{len(selected)}] {name}", flush=True)
         _, settings = gv.parse_arguments(["--single", timeline_mode(name), "--marker", "--speed", "fast"])
         (job,) = gv.plan_videos(settings)
         start, end = timeline_section(settings, job)
-        options = ["--timeline", "--from", seconds(start), "--to", seconds(end), *(["--png"] if png else [])]
+        diagram = DIAGRAMS_BY_NAME[name]
+        words = ["--title", diagram.title, *(part for line in diagram.description for part in ("--description", line))]
+        labels = ["--frame-labels", ",".join(frame.name for frame in diagram.frames)]
+        options = ["--timeline", "--from", seconds(start), "--to", seconds(end), *words, *labels, *(["--png"] if png else [])]
         rendered = measure_clip(settings, job, tool, ffmpeg, options)
         for suffix in (".svg", ".png") if png else (".svg",):
             (source,) = rendered.glob(f"run-1-timeline-*{suffix}")
-            path = output_dir / f"timeline-{name}{suffix}"
+            path = output_dir / f"timing-{name}{suffix}"
             _ = shutil.copyfile(source, path)
             print(path)
             written.append(path)
@@ -412,7 +421,7 @@ EXPORTS = (
     ),
     Export(
         "timelines",
-        "draw the timing diagrams (NAME: some of them; default every replayable one) as mb-framepacing's frame timeline card, timeline-<name>.svg",
+        "draw the timing diagrams (NAME: some of them; default all but the vsync timer's and VRR's) as mb-framepacing's frame timeline card, timing-<name>.svg (not in --all: the docs and slides show the reviewed diagrams until they are switched)",
         False,
         lambda names, tool, ffmpeg, output_dir, png: measure_timelines(names, tool, ffmpeg, output_dir, png),
     ),
@@ -465,9 +474,9 @@ def main(argv: list[str] | None = None) -> int:
         if unknown:
             parser.error(f"not a test clip: {', '.join(unknown)} (the test clips are export_test_clips.SCENARIOS)")
     elif any(export.flag == "timelines" for export in named):
-        unknown = [name for name in args.modes if name not in diagram_replay.replayable()]
+        unknown = [name for name in args.modes if name not in TIMELINE_DIAGRAMS]
         if unknown:
-            parser.error(f"not a replayable diagram: {', '.join(unknown)} (use one of {', '.join(diagram_replay.replayable())})")
+            parser.error(f"not a timeline diagram: {', '.join(unknown)} (use one of {', '.join(TIMELINE_DIAGRAMS)})")
     else:
         for mode in args.modes:
             try:
