@@ -7,9 +7,9 @@ eyebrow: Measure it yourself
 
 A static flag travels in one frame's marker. When that frame is dropped, the flag never reaches the display, or it arrives about a
 frame nobody saw. mb-framepacing then guesses: where a dropped frame follows a long hold across which the animation clock stood
-still, it assumes the held frame was static and does not judge the step. The card says how many it assumed. The first three clips
-lose the flag each way; the last two look like a lost rest and are not one. Without the guess (`analyze --no-static-guess`), each of
-the first three shows one step of −100 ms.
+still, it assumes the held frame was static and does not judge the step. The notes at the end of the card say how many it assumed.
+The first three clips lose the flag each way; the last two look like a lost rest and are not one. Without the guess
+(`analyze --no-static-guess`), each of the first three shows one step of −100 ms.
 
 **The rest's frame dropped, flagged in hindsight:** the first rest's frame is rendered and never shown. The frame that wakes up says
 static before about a frame nobody saw. mb-framepacing takes the frame that held the rest as the static one: assumed, not judged.

@@ -102,6 +102,10 @@
   .clip-mark { fill: #e5534b; }
   .clip-text { font-size: 11px; fill: #e6edf3; }
   .warn { fill: #d29922; }
+  .warn-band { fill: #d29922; fill-opacity: 0.1; stroke: #d29922; stroke-opacity: 0.9; stroke-width: 1.5; }
+  .warn-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; fill: #d29922; }
+  .warn-title { font-size: 14px; font-weight: 600; }
+  .warn-text { fill: #e6edf3; }
   .event-track { fill: #ffffff; fill-opacity: 0.05; }
   .event-dropped { fill: #f0883e; }
   .event-older { fill: #db61a2; }
