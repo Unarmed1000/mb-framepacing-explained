@@ -1060,9 +1060,9 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
     """What the marker carries in output frame `frame` (negative in the lead-in, past the clip in the lead-out): the index of the
     frame on screen, counted on across loops so it never repeats (the clip's first frame is the clip's frame count), the animation
     time it shows, and the frame pacer's plan for it: when it was meant to be shown (the refresh it was rendered for, on a clock whose
-    0 is the clip's first refresh) and the frame time the pacer aims for (its swap interval, or on demand); then its CPU start time (on
-    the same clock) and CPU busy (until it was presented; 0 when unknown), all in nanoseconds, the frame time the game prefers, and the static
-    flags (static after: nothing animates while it is on screen; static before: nothing animated while the frame before it was). A held
+    0 is the clip's first refresh), the frame time the pacer aims for (its swap interval, or on demand) and the display's refresh period
+    (one refresh of the clip's rate); then its CPU start time (on the same clock) and CPU busy (until it was presented; 0 when unknown),
+    all in nanoseconds, the frame time the game prefers, and the static flags (static after: nothing animates while it is on screen; static before: nothing animated while the frame before it was). A held
     frame keeps its index, so mb-framepacing sees one presented frame. Start marker in the
     lead-in, end marker in the lead-out: they carry the values of the frame they show."""
     index, loops = frame_on_screen(settings, job.top, job.speed, frame)
@@ -1088,6 +1088,7 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
         animation_ns=animation,
         preferred_frame_ns=_frame_ns(settings, pacing.preferred[index]),
         target_frame_ns=target,
+        refresh_period_ns=round(refresh_ns),
         intended_display_ns=intended,
         cpu_start_ns=started,
         cpu_busy_ns=busy,

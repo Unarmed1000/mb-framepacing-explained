@@ -818,6 +818,8 @@ class SingleAndMarkerTests(unittest.TestCase):
         self.assertEqual([round(ms * 1_000_000) for ms in animation_ms], entry["animationNs"])
         # The pacer's plan: 30 fps, each frame meant for its own refresh (every second one), counted from the clip's first refresh
         self.assertEqual({payload.target_frame_ns for payload in payloads}, {33_333_333})
+        # The display's refresh period, one refresh of 60 Hz, on every start, frame and end marker
+        self.assertEqual({payload.refresh_period_ns for payload in payloads}, {16_666_667})
         self.assertEqual([payload.intended_display_ns for payload in payloads[lead : lead + 3]], [0, 0, 33_333_333])
         # The lead-in shows the previous loop's last frame, meant for 2 refreshes before the clip's first
         self.assertEqual(payloads[lead - 1].intended_display_ns, -33_333_333)
