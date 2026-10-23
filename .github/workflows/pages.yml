@@ -1,18 +1,21 @@
 # Build the web page and publish it on GitHub Pages: generate the blind test's clips (web-encoded, never committed), test and
-# build the page, deploy web/dist. Needs Pages enabled with "GitHub Actions" as the source (Settings > Pages).
+# build the page, deploy web/dist. Needs Pages enabled with "GitHub Actions" as the source (Settings > Pages). A pull request (such
+# as a Dependabot security update) runs the same build and tests, and deploys nothing.
 name: pages
 
 on:
   push:
     branches: [master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Deploys one at a time, never cancelled; a pull request's run has a group of its own, and a newer push to it cancels the older run
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pages-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -86,13 +89,16 @@ jobs:
           npm run build
 
       - uses: actions/configure-pages@v6
+        if: github.event_name != 'pull_request'
 
       - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
         with:
           path: web/dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-26.04
     permissions:
       pages: write
