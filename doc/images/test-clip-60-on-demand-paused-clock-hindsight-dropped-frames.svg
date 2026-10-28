@@ -125,7 +125,7 @@
 <rect class="tile" x="860.0" y="14" width="300" height="84" rx="10"/>
 <text x="874.0" y="33.0" text-anchor="start" class="label">DISPLAY</text>
 <text x="874.0" y="56.0" text-anchor="start"><tspan class="tile-value">60 Hz</tspan><tspan class="vsync-n">  fixed refresh (vsync)</tspan></text>
-<text x="874.0" y="74.0" text-anchor="start" class="vsync-n">16.7 ms per refresh, target 1–7 refreshes</text>
+<text x="874.0" y="74.0" text-anchor="start" class="vsync-n">16.7 ms per refresh</text>
 <text x="874.0" y="90.0" text-anchor="start" class="vsync-n">on demand</text>
 <rect class="tile" x="20.0" y="118" width="218.4" height="64" rx="10"/>
 <text x="34.0" y="138.0" text-anchor="start" class="label">AVERAGE FPS</text>
