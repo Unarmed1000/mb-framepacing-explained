@@ -24,8 +24,8 @@ dependencies = [
 [dependency-groups]
 # The lint and type check tools, pinned so every machine agrees; uv sync installs them with the dependencies above
 dev = [
-    "basedpyright==1.40.1",
-    "ruff==0.16.8",
+    "basedpyright==1.40.2",
+    "ruff==0.17.3",
 ]
 
 [tool.uv]

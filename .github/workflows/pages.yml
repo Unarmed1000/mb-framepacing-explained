@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       # With the mb-framepacing submodule (external/mb-framepacing): the frame marker library of the marked clips
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -57,7 +57,7 @@ jobs:
 
       # uv: Python from .python-version, the packages from uv.lock (its cache keeps the wheels it downloads and builds)
       - name: uv
-        uses: astral-sh/setup-uv@v10.2.0
+        uses: astral-sh/setup-uv@v10.3.3
       - name: Python packages (pyproject.toml, uv.lock)
         run: |
           uv sync --locked
@@ -74,7 +74,7 @@ jobs:
       - name: Generate the blind test's clips
         run: python tools/web_export/build_blind_test.py
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
