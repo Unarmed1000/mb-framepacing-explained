@@ -27,14 +27,14 @@ jobs:
           submodules: true
 
       # FFmpeg encodes the clips; Mesa's EGL renders the slides' 3D videos without a display or GPU (moderngl). moderngl's
-      # glcontext has no wheel for this Python yet, so uv builds it: it needs the X11 and EGL headers.
-      # The packages (about 80 with their dependencies) are kept between runs: the runner's package mirror stalls for minutes on
+      # glcontext comes as a wheel and finds libEGL.so.1 and libGL.so.1 (libegl1, libgl1) by name, so no headers are needed.
+      # The packages (with their dependencies) are kept between runs: the runner's package mirror stalls for minutes on
       # some downloads. The key is the list of package files apt would download, so an unchanged list downloads nothing, and after
       # an update of Ubuntu's packages only the changed ones are fetched (the older cache is the starting point)
       - name: The apt packages to install
         id: apt
         env:
-          PACKAGES: ffmpeg libegl1 libgl1-mesa-dri libx11-dev libegl-dev
+          PACKAGES: ffmpeg libegl1 libgl1 libgl1-mesa-dri
         run: |
           sudo apt-get update
           files=$(sudo apt-get install --yes --no-install-recommends --print-uris $PACKAGES | { grep "^'" || true; } | cut -d' ' -f2 | sort)
