@@ -58,17 +58,22 @@
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
   .held-older { stroke: #db61a2; stroke-width: 2.5; fill: none; }
   .held-dropped { stroke: #f0883e; stroke-width: 2.5; fill: none; }
+  .held-failed { stroke: #c69c6d; stroke-width: 2.5; fill: none; }
   .held-unknown { stroke: #768390; stroke-width: 2.5; stroke-dasharray: 4 3; fill: none; }
   .held-range-older { fill: #db61a2; fill-opacity: 0.3; }
   .held-range-dropped { fill: #f0883e; fill-opacity: 0.3; }
+  .held-range-failed { fill: #c69c6d; fill-opacity: 0.3; }
   .held-range-unknown { fill: #768390; fill-opacity: 0.3; }
   .held-fill-older { fill: #db61a2; }
   .held-fill-dropped { fill: #f0883e; }
+  .held-fill-failed { fill: #c69c6d; }
   .held-fill-unknown { fill: #768390; }
   .strip-older { fill: #db61a2; }
   .strip-dropped { fill: #f0883e; }
+  .strip-failed { fill: #c69c6d; }
   .key-pink { fill: #db61a2; }
   .key-orange { fill: #f0883e; }
+  .key-tan { fill: #c69c6d; }
   .key-unknown { fill: #768390; }
   .key-faint { fill: #ffffff; fill-opacity: 0.3; }
   .key-amber { fill: #d29922; }
@@ -103,11 +108,13 @@
   .clip-text { font-size: 11px; fill: #e6edf3; }
   .warn { fill: #d29922; }
   .warn-band { fill: #d29922; fill-opacity: 0.1; stroke: #d29922; stroke-opacity: 0.9; stroke-width: 1.5; }
+  .pacing-band { fill-opacity: 0.03; }
   .warn-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; fill: #d29922; }
   .warn-title { font-size: 14px; font-weight: 600; }
   .warn-text { fill: #e6edf3; }
   .event-track { fill: #ffffff; fill-opacity: 0.05; }
   .event-dropped { fill: #f0883e; }
+  .event-failed { fill: #c69c6d; }
   .event-older { fill: #db61a2; }
   .event-torn { fill: #39c5cf; }
   .event-gap { fill: #768390; }

@@ -35,6 +35,10 @@ the topics interactively. Notes: [the web page](web-page.md).
       (only what reaches the screen changes).
 - [x] Idle frames for the marker's static flag and preferred frame time: `-static-rests`, `-on-demand`,
       `-on-demand-paused-clock` and `-idle-1fps` (at the `idle` speed) after any mode.
+- [ ] The marker's Paced flag (bit 3: a pacer or frame limiter held the frame's start, not vsync alone) in the marked clips: set on
+      the frames a pacer holds, left off on the naive ones (which modes count as paced, e.g. busy, on-demand, half rate, to decide), so mb-framepacing's pacer band tells
+      them apart. Why: the clips are mb-framepacing's test of every marker field, and the test clips slide says they fill every
+      field the marker has; without the flag that is no longer true. Since mb-framepacing 7a06f25f a frame without the flag is not paced (there is no "not said"), so until the clips set it every band reads "no", the paced clips' too.
 - [ ] Not simulated yet: random late frames and long hitches, runt frames, tearing, VRR (also its frame times that are not whole
       refreshes, which the marker's frame times allow), input lag.
 - [ ] VRR on video: frames between refreshes need a finer video (about 240 fps) and a display that shows it.

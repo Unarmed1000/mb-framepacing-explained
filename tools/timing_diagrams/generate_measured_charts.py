@@ -152,6 +152,10 @@ REPORT_ITEMS = (
     "refresh-strip",
 )
 REPORT_LAYOUT = ("--show", "animation-time-step", "--strip-seconds", "1", "--tiles-per-row", "5")
+# What the test clips' cards and the live playback report's card leave out of the default card: the pacer band (the clips set no
+# Paced flag yet), the notes the card took over from the GUI (its cause line, the captures' counts, the run's warnings, the frame
+# record note) and the present timing notes (the time from present to screen, why late frames were late)
+REPORT_HIDDEN = ("pacing", "cause", "counts", "run-warnings", "frame-record-note", "present-latency", "late-reasons")
 
 
 class Arguments(argparse.Namespace):
@@ -229,7 +233,8 @@ def playback_example(tool: Path, ffmpeg: Path, output_dir: Path) -> Path:
     video = work / "video.mp4"
     gv.encode_video(ffmpeg, settings, job, video)
     capture = work / "capture"
-    run([str(tool), "import", str(video), "-o", str(capture), "--analyze", "--playback", "--playback-video-url", playback_url(output_dir)])
+    playback = ["--playback", "--playback-video-url", playback_url(output_dir), "--playback-hide", ",".join(REPORT_HIDDEN)]
+    run([str(tool), "import", str(video), "-o", str(capture), "--analyze", *playback])
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
@@ -276,8 +281,8 @@ def measure(mode: str, tool: Path, ffmpeg: Path, output_dir: Path, png: bool) ->
 def test_clip_render(mode: str, png: bool) -> list[str]:
     """The render options of a test clip's card: mb-framepacing's default report card, titled with the clip's mode (its folder in
     mb-framepacing's measure/test-data/videos; a title with the mode's description would run under the card's display box), without
-    distribution cards."""
-    return ["--cards", "none", "--title", mode, *(["--png"] if png else [])]
+    distribution cards and without REPORT_HIDDEN."""
+    return ["--cards", "none", "--title", mode, "--hide", ",".join(REPORT_HIDDEN), *(["--png"] if png else [])]
 
 
 def test_clip_name(mode: str) -> str:
