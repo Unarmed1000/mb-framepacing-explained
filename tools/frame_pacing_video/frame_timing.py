@@ -475,7 +475,7 @@ def simulate(mode: FrameMode, parameters: TimingParameters, refreshes: int) -> S
         replay = schedule(mode.diagram, mode.every, refreshes, interval, parameters.fps, mode.times)
         flips, animation = replay.flips, replay.animation
         targets = tuple(round(moment * parameters.fps) for moment in animation)
-        # The rate the diagram aims for, frame by frame: each frame's swap interval (half rate: 2; bad frame pacing: 1, it caps
+        # The rate the diagram aims for, frame by frame: each frame's swap interval (half rate: 2) or its cap (bad frame pacing: 2, it caps
         # itself by its own clock instead), the frames around the diagram's at full rate
         paced = tuple(replay.intervals)
         starts, cpu = tuple(replay.starts), tuple(replay.render)

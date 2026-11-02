@@ -123,12 +123,13 @@ class ReplayTests(unittest.TestCase):
                 for start, took, flip in zip(simulated.starts, simulated.cpu, simulated.flips, strict=True):
                     self.assertLessEqual(start + took, flip * REFRESH)
 
-    def test_each_frame_carries_its_swap_interval_and_a_cap_is_preferred(self) -> None:
-        # Half rate: the diagram's frames at 2, the on-time frames around them at 1; bad frame pacing has no swap interval of 2: it
-        # prefers 30 fps by its own clock instead
+    def test_each_frame_carries_its_target_and_a_cap_is_preferred(self) -> None:
+        # Half rate: the diagram's frames at 2, the on-time frames around them at 1; bad frame pacing has no swap interval of 2, but
+        # aims for 30 fps by its own clock: the same target, and the frame time it prefers
         self.assertEqual(set(frames("60-diagram-half-rate-even").intervals), {2})
         self.assertEqual(set(frames("60-diagram-half-rate-even-every-1s").intervals), {1, 2})
-        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing").intervals), {1})
+        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing").intervals), {2})
+        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing-every-1s").intervals), {1, 2})
         self.assertEqual(replay.preferred_interval("half-rate-bad-pacing"), 2)
         self.assertIsNone(replay.preferred_interval("half-rate-even"))
 

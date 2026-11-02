@@ -843,7 +843,7 @@ class SingleAndMarkerTests(unittest.TestCase):
     def test_the_manifest_has_the_rate_the_game_aims_for(self) -> None:
         settings = plain_settings("--single", "60", "--speed", "fast")
         speed = settings.speeds[0]
-        for name, expected in (("60", {60}), ("30", {30}), ("60-naive-5ms", {60}), ("60-diagram-half-rate-bad-pacing", {60}), ("60-busy-adaptive", {30, 60})):
+        for name, expected in (("60", {60}), ("30", {30}), ("60-naive-5ms", {60}), ("60-diagram-half-rate-bad-pacing", {30}), ("60-busy-adaptive", {30, 60})):
             with self.subTest(name):
                 entry = gv._mode_entry(settings, MODE(name), speed)  # pyright: ignore[reportPrivateUsage]
                 self.assertEqual(set(cast(dict[str, list[int]], entry["frames"])["targetFps"]), expected)
@@ -993,7 +993,7 @@ class SingleAndMarkerTests(unittest.TestCase):
         for mode, preferred, targets in (
             ("60", {16_666_667}, {16_666_667}),
             ("30", {33_333_333}, {33_333_333}),
-            ("60-diagram-half-rate-bad-pacing", {33_333_333}, {16_666_667}),
+            ("60-diagram-half-rate-bad-pacing", {33_333_333}, {33_333_333}),
             ("60-busy-adaptive", {16_666_667}, {16_666_667, 33_333_333}),
         ):
             with self.subTest(mode):

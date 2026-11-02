@@ -748,7 +748,7 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
     else:
         cap = None
     if cap is not None:
-        # A diagram's game that caps itself by its own clock prefers its cap (bad frame pacing: 30 fps), while its swap interval is 1
+        # A diagram's game that caps itself by its own clock prefers its cap (bad frame pacing: 30 fps), the frames around it included
         preferred = (int(cap * swap_interval(mode, settings.fps)),) * count
     return Pacing(target, preferred, after, before)
 
