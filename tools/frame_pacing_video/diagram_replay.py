@@ -174,12 +174,17 @@ def schedule(name: str, every: Fraction | None, refreshes: int, interval: int, f
                 clocked.append(None)
                 renders.append(Fraction(0))
                 swaps.append(interval)
+            first = len(swaps)
             for shown, moment, took, begin, swap in zip(unit.shown, unit.animation, unit.render, unit_starts, unit.intervals, strict=True):
                 flips.append(start + offset + shown * interval)
                 moments.append(start + offset + moment * interval)
                 clocked.append(None if begin is None else start + offset + begin * interval)
                 renders.append(took * interval)
                 swaps.append(swap * interval)
+            if at < start + offset:
+                # A target is the interval from the frame before: the unit's first frame comes one full-rate interval after the frames
+                # around it, whatever the unit aims for from then on
+                swaps[first] = interval
             at = start + offset + length
         for filler in range(at, start + period, interval):
             flips.append(filler)

@@ -134,6 +134,16 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(replay.preferred_interval("half-rate-bad-pacing"), 2)
         self.assertIsNone(replay.preferred_interval("half-rate-even"))
 
+    def test_a_target_is_the_interval_from_the_frame_before_at_the_start_of_a_replay(self) -> None:
+        # Among frames at full rate the diagram's first frame comes one refresh after the frame before it, and aims for no more;
+        # the frames after it aim for the diagram's 2. Back to back there are no such frames
+        simulated = frames("60-diagram-half-rate-even-every-1s")
+        first = next(index for index, target in enumerate(simulated.intervals) if target == 2) - 1
+        self.assertEqual(simulated.flips[first] - simulated.flips[first - 1], 1)
+        self.assertEqual((simulated.intervals[first], simulated.intervals[first + 1]), (1, 2))
+        self.assertEqual(simulated.flips[first + 1] - simulated.flips[first], 2)
+        self.assertEqual(set(frames("60-diagram-half-rate-even").intervals), {2})
+
 
 if __name__ == "__main__":
     _ = unittest.main()
