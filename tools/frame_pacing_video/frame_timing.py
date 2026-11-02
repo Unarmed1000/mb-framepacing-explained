@@ -144,7 +144,7 @@ MODE_PATTERN = re.compile(
     + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-busy-(?P<busy>full-rate|adaptive)"
-    + r"|-(?P<stress>stress))?"
+    + r"|-(?P<stress>stress(?:-edges|-uneven)?))?"
     + r"(?:-(?P<idle>static-rests-paused-clock|static-rests|on-demand-paused-clock-hindsight|on-demand-paused-clock|on-demand|idle-1fps))?"
     + r"(?:-(?P<fault>dropped-frames|out-of-order|dropped-before-wake|dropped-wake|dropped-after-stall))?"
 )
@@ -157,7 +157,7 @@ def parse_mode(name: str) -> FrameMode:
     60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
     frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
     full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-adaptive), or RATE-stress (a fixed script of lost
-    frames, at 60 or 30: stress_script). Any of them but the last may then say what the game does while the
+    frames: stress_script.CLIPS). Any of them but the last may then say what the game does while the
     box rests, -static-rests, -on-demand, -on-demand-paused-clock or -idle-1fps (60-on-demand), and end in a presentation fault,
     -dropped-frames or -out-of-order (60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames)."""
     mode = _parse_timing(name)
@@ -266,6 +266,11 @@ def swap_interval(mode: FrameMode, fps: Fraction) -> int:
 
 def validate(mode: FrameMode, parameters: TimingParameters) -> None:
     """Raise ValueError unless every frame of this mode makes its vsync and its animation time never runs backwards."""
+    if mode.stress:
+        # Its script says when each frame is shown, also at a period that is no whole number of refreshes
+        if mode.idle is not None or mode.fault is not None:
+            raise ValueError(f"{mode.name}: a stress clip's script says what was rendered and shown, so it takes no idle behaviour or fault")
+        return
     frame_time = Fraction(swap_interval(mode, parameters.fps)) / parameters.fps
     low, high = parameters.noise
     if not 0 <= low <= high:
@@ -279,8 +284,6 @@ def validate(mode: FrameMode, parameters: TimingParameters) -> None:
             raise ValueError(f"unknown jitter pattern {parameters.synthetic_pattern!r}: use {' or '.join(JITTER_PATTERNS)}")
         if not 0 <= 2 * parameters.synthetic < 1 / Fraction(mode.rate):
             raise ValueError(f"the synthetic jitter of {format_ms(parameters.synthetic)} must be less than half the {mode.rate} Hz frame time")
-    if mode.stress and (mode.idle is not None or mode.fault is not None):
-        raise ValueError(f"{mode.name}: a stress clip's script says what was rendered and shown, so it takes no idle behaviour or fault")
     if mode.diagram is not None:
         from diagram_replay import pattern  # noqa: PLC0415  (only diagram modes need the diagrams)
 

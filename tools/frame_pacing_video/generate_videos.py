@@ -632,7 +632,7 @@ def simulated_frames(settings: Settings, mode: FrameMode, speed: Speed) -> Simul
     """The frame loop over one clip (frame_timing.simulate): when each frame is flipped, when the loop read the clock, and the
     animation time each frame shows; a stress clip's script says all of that instead."""
     if mode.stress:
-        script = stress.clip(mode.rate, settings.timing)
+        script = stress.clip(mode.name, settings.timing)
         if settings.frame_count(speed) != len(script.screen):
             raise ValueError(f"{mode.name}: its script fills {len(script.screen)} refreshes, not {settings.frame_count(speed)} (--seconds)")
         return script.frames
@@ -666,7 +666,7 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     events: tuple[faults.Block, ...] = ()
     rendered = idle_frames(settings, mode, speed)
     if mode.stress:
-        script = stress.clip(mode.rate, settings.timing)
+        script = stress.clip(mode.name, settings.timing)
         screen, events = script.screen, script.events
     elif mode.fault is None:
         screen = faults.base_screen(frames.flips, refreshes)
@@ -734,7 +734,7 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
     rendered = idle_frames(settings, mode, speed)
     count = len(frames.flips)
     if mode.stress:
-        script = stress.clip(mode.rate, settings.timing)
+        script = stress.clip(mode.name, settings.timing)
         return Pacing(frames.intervals, script.preferred, script.static_after, (False,) * count, script.present_failed)
     after, before = ((False,) * count,) * 2 if rendered is None else (rendered.static_after, rendered.static_before)
     if rendered is not None and rendered.on_demand:
@@ -1380,7 +1380,7 @@ def encode_video(ffmpeg: Path, settings: Settings, job: VideoJob, output: Path) 
 # Manifest
 
 
-def _json_number(value: Fraction) -> int | float:
+def _json_number(value: Refreshes) -> int | float:
     return value.numerator if value.denominator == 1 else float(value)
 
 
@@ -1426,7 +1426,7 @@ def _rates(settings: Settings, intervals: Sequence[Refreshes | None]) -> list[in
 def _stress_entry(settings: Settings, mode: FrameMode) -> dict[str, object]:
     """A stress clip's scenarios for a mode's manifest entry: each a name and its rendered frames (firstFrame, an index into the frame
     lists, and frameCount)."""
-    scenarios = stress.clip(mode.rate, settings.timing).scenarios
+    scenarios = stress.clip(mode.name, settings.timing).scenarios
     return {"scenarios": [{"name": scenario.name, "firstFrame": scenario.first, "frameCount": scenario.count} for scenario in scenarios]}
 
 
@@ -1469,7 +1469,8 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
             "animationNs": animation_ns,
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
             **errors,
-            "late": refreshes_late(settings, mode, speed),
+            # (whole refreshes, but for a frame rendered for a moment between two: a stress clip's)
+            "late": [None if late is None else _json_number(late) for late in refreshes_late(settings, mode, speed)],
             "targetFps": _rates(settings, pacing.target),
             # The rate the game would aim for if nothing held it back (Swappy lowered to 30 fps still prefers 60; null: on demand)
             "preferredFps": _rates(settings, pacing.preferred),

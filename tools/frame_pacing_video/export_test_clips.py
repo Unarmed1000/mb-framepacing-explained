@@ -25,10 +25,10 @@ Three more are for mb-framepacing's guess of such a lost rest (it assumes the fr
 rest, frames dropped in the middle of the motion, and a stall of a rest's length (the clock running on) with the frame after it
 dropped. Their manifests give each frame's staticAfter and staticBefore, and with a fault the steps static by those flags
 (expected.staticSteps).
-Two stress clips (STRESS_CLIPS: 60-stress and 30-stress, stress_script.py) are a fixed script of lost frames instead of a scenario each,
-paced at 60 and 30 Hz on the 60 Hz display, as long as their scripts. Their manifests hold what was rendered and what was on screen:
-screen, presented, fault and expected as above, the scenarios (a name, the first frame and the frame count of each) and no animation
-error, which stays in mb-framepacing's tests. --only exports the clips named.
+The stress clips (STRESS_CLIPS, stress_script.py) are fixed scripts of lost frames instead of a scenario each, on the display and at the
+pace of each one, as long as their scripts. Their manifests hold what was rendered and what was on screen: screen, presented, fault
+and expected as above, the scenarios (a name, the first frame and the frame count of each) and no animation error, which stays in
+mb-framepacing's tests. --only exports the clips named.
 The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
 data (the manifest's "license"); this repository's own videos stay CC BY-NC-SA 4.0.
 """
@@ -44,8 +44,7 @@ from pathlib import Path
 from typing import cast
 
 import generate_videos as gv
-from frame_timing import parse_mode
-from stress_script import ROUND_TRIP_REFRESHES, clip_seconds
+import stress_script as stress
 
 # The web page's scenarios: the perfect timer at full and half rate, delta time jitter, late frames, half rate evenly and badly
 # paced, a busy stretch at full rate and adapting like the Swappy frame pacer, and the perfect storm (jitter and late frames at once); then the
@@ -77,9 +76,9 @@ SCENARIOS = (
     "60-on-demand-paused-clock-hindsight-dropped-frames",
     "60-on-demand-paused-clock-hindsight-dropped-after-stall",
 )
-# The stress clips: a fixed script of lost frames (stress_script), each as long as its script. Not among SCENARIOS, which the test
+# The stress clips: fixed scripts of lost frames (stress_script), each as long as its script. Not among SCENARIOS, which the test
 # clips' report cards go through: nothing in this repository shows them
-STRESS_CLIPS = ("60-stress", "30-stress")
+STRESS_CLIPS = tuple(stress.CLIPS)
 # The speed of each scenario: fast, unless it needs the idle speed's long rests
 DEFAULT_SPEED = "fast"
 SCENARIO_SPEEDS = {"60-idle-1fps": "idle"}
@@ -118,12 +117,22 @@ def planned() -> list[tuple[gv.Settings, gv.VideoJob]]:
 
 
 def planned_stress() -> list[tuple[gv.Settings, gv.VideoJob]]:
-    """The stress clips, marked single-box clips like the others: as many of the fast speed's round trips as fill each one's script."""
+    """The stress clips, marked single-box clips like the others: on the display of each one's script, and as many of the fast speed's
+    round trips as fill it."""
     clips: list[tuple[gv.Settings, gv.VideoJob]] = []
-    for mode in STRESS_CLIPS:
-        seconds = clip_seconds(parse_mode(mode).rate)
-        round_trips = seconds * gv.Settings().fps / ROUND_TRIP_REFRESHES
-        _, settings = gv.parse_arguments(["--single", mode, "--marker", "--speed", "fast", "--seconds", str(seconds), "--fast-round-trips", str(round_trips)])
+    for mode, spec in stress.CLIPS.items():
+        seconds = stress.clip_seconds(mode)
+        options = [
+            "--fps",
+            str(spec.fps),
+            "--settle",
+            str(spec.settle),
+            "--seconds",
+            str(seconds),
+            "--fast-round-trips",
+            str(seconds / stress.ROUND_TRIP_SECONDS),
+        ]
+        _, settings = gv.parse_arguments(["--single", mode, "--marker", "--speed", "fast", *options])
         clips.extend((settings, job) for job in gv.plan_videos(settings))
     return clips
 

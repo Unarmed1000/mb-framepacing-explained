@@ -7,6 +7,7 @@ from typing import cast
 
 import export_test_clips as export
 import generate_videos as gv
+import stress_script as stress
 
 
 class ClipManifestTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class ClipManifestTests(unittest.TestCase):
         self.assertFalse(set(export.STRESS_CLIPS) & set(export.SCENARIOS))
         for settings, job in clips:
             self.assertTrue(job.single and job.marker)
-            self.assertEqual((settings.width, settings.height, settings.fps), (1280, 720, 60))
+            self.assertEqual((settings.width, settings.height, settings.fps), (1280, 720, stress.CLIPS[job.top.name].fps))
             self.assertEqual(job.speed.name, "fast")
             # As long as a fast clip's round trip, however long the clip
             self.assertEqual(settings.period(job.speed), 2)

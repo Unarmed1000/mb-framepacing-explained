@@ -35,8 +35,9 @@ the topics interactively. Notes: [the web page](web-page.md).
       (only what reaches the screen changes).
 - [x] Idle frames for the marker's static flag and preferred frame time: `-static-rests`, `-on-demand`,
       `-on-demand-paused-clock` and `-idle-1fps` (at the `idle` speed) after any mode.
-- [x] Lost frames as a fixed script, in mb-framepacing's test clips: `60-stress` and `30-stress` (`stress_script.py`), where a frame's
-      animation time can lose time too, which a presentation fault never does.
+- [x] Lost frames as fixed scripts, in mb-framepacing's test clips (`stress_script.py`: targets of 1, 2 and 4 refreshes, the ways back
+      from a late frame, periods of no whole refreshes, displays of 50, 120 and 144 Hz), where a frame's animation time can lose time
+      too, which a presentation fault never does.
 - [ ] The marker's Paced flag (bit 3: a pacer or frame limiter held the frame's start, not vsync alone) in the marked clips: set on
       the frames a pacer holds, left off on the naive ones (which modes count as paced, e.g. busy, on-demand, half rate, to decide), so mb-framepacing's pacer band tells
       them apart. Why: the clips are mb-framepacing's test of every marker field, and the test clips slide says they fill every
