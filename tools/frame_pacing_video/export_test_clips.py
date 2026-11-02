@@ -25,6 +25,10 @@ Three more are for mb-framepacing's guess of such a lost rest (it assumes the fr
 rest, frames dropped in the middle of the motion, and a stall of a rest's length (the clock running on) with the frame after it
 dropped. Their manifests give each frame's staticAfter and staticBefore, and with a fault the steps static by those flags
 (expected.staticSteps).
+Two stress clips (STRESS_CLIPS: 60-stress and 30-stress, stress_script.py) are a fixed script of lost frames instead of a scenario each,
+paced at 60 and 30 Hz on the 60 Hz display, as long as their scripts. Their manifests hold what was rendered and what was on screen:
+screen, presented, fault and expected as above, the scenarios (a name, the first frame and the frame count of each) and no animation
+error, which stays in mb-framepacing's tests. --only exports the clips named.
 The copies made for mb-framepacing are licensed for it under its PolyForm Perimeter License 1.0.1, like the rest of its tools' test
 data (the manifest's "license"); this repository's own videos stay CC BY-NC-SA 4.0.
 """
@@ -40,6 +44,8 @@ from pathlib import Path
 from typing import cast
 
 import generate_videos as gv
+from frame_timing import parse_mode
+from stress_script import ROUND_TRIP_REFRESHES, clip_seconds
 
 # The web page's scenarios: the perfect timer at full and half rate, delta time jitter, late frames, half rate evenly and badly
 # paced, a busy stretch at full rate and adapting like the Swappy frame pacer, and the perfect storm (jitter and late frames at once); then the
@@ -71,6 +77,9 @@ SCENARIOS = (
     "60-on-demand-paused-clock-hindsight-dropped-frames",
     "60-on-demand-paused-clock-hindsight-dropped-after-stall",
 )
+# The stress clips: a fixed script of lost frames (stress_script), each as long as its script. Not among SCENARIOS, which the test
+# clips' report cards go through: nothing in this repository shows them
+STRESS_CLIPS = ("60-stress", "30-stress")
 # The speed of each scenario: fast, unless it needs the idle speed's long rests
 DEFAULT_SPEED = "fast"
 SCENARIO_SPEEDS = {"60-idle-1fps": "idle"}
@@ -81,6 +90,7 @@ TEST_DATA_LICENSE = "PolyForm Perimeter License 1.0.1 (mb-framepacing LICENSE), 
 
 class Arguments(argparse.Namespace):
     output_dir: Path
+    only: list[str] | None
     ffmpeg: str | None
     config: Path | None
 
@@ -107,13 +117,25 @@ def planned() -> list[tuple[gv.Settings, gv.VideoJob]]:
     return [clips[mode] for mode in SCENARIOS]
 
 
+def planned_stress() -> list[tuple[gv.Settings, gv.VideoJob]]:
+    """The stress clips, marked single-box clips like the others: as many of the fast speed's round trips as fill each one's script."""
+    clips: list[tuple[gv.Settings, gv.VideoJob]] = []
+    for mode in STRESS_CLIPS:
+        seconds = clip_seconds(parse_mode(mode).rate)
+        round_trips = seconds * gv.Settings().fps / ROUND_TRIP_REFRESHES
+        _, settings = gv.parse_arguments(["--single", mode, "--marker", "--speed", "fast", "--seconds", str(seconds), "--fast-round-trips", str(round_trips)])
+        clips.extend((settings, job) for job in gv.plan_videos(settings))
+    return clips
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Export the scenarios as marked single-box clips, a folder each, for mb-framepacing's tests.")
     _ = parser.add_argument("--output-dir", type=Path, required=True, help="folder to write a folder per scenario into")
+    _ = parser.add_argument("--only", nargs="+", choices=(*SCENARIOS, *STRESS_CLIPS), metavar="CLIP", help="export only these clips (default: all)")
     _ = parser.add_argument("--ffmpeg", metavar="PATH", help="FFmpeg executable or its folder (default: MB_FFMPEG, local.toml, then PATH)")
     _ = parser.add_argument("--config", type=Path, metavar="FILE", help="machine-local settings file (default: local.toml in the repository root)")
     args = parser.parse_args(argv, namespace=Arguments())
-    clips = planned()
+    clips = [clip for clip in (*planned(), *planned_stress()) if args.only is None or clip[1].top.name in args.only]
     try:
         location = gv.find_ffmpeg(args.ffmpeg, args.config)
         gv.require_lossless_encoder(gv.list_encoders(location.path), location.path)

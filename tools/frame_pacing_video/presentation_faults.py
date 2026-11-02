@@ -35,10 +35,11 @@ rule): a dropped frame is never presented, and a frame shown only after a later 
 """
 
 import bisect
+from collections.abc import Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 
-from frame_timing import FrameMode
+from frame_timing import FrameMode, Refreshes
 from pcg32 import Pcg32
 
 DROPPED = "dropped-frames"
@@ -90,7 +91,7 @@ def base_screen(flips: tuple[int, ...], refreshes: int) -> tuple[int, ...]:
     return tuple(bisect.bisect_right(flips, refresh) - 1 for refresh in range(refreshes))
 
 
-def blocks(mode: FrameMode, flips: tuple[int, ...], late: list[int], intervals: tuple[int, ...], fps: Fraction, refreshes: int) -> list[Block]:
+def blocks(mode: FrameMode, flips: tuple[int, ...], late: Sequence[Refreshes], intervals: Sequence[Refreshes], fps: Fraction, refreshes: int) -> list[Block]:
     """The mode's fault events: two a second, at FAULT_POINTS, each starting with the frame on screen there. Raises ValueError when
     a block's frames, or the frame before or after it, are not on time and shown for exactly one swap interval (a late or held
     frame of a replayed diagram, e.g. -3x-every-1s, whose copies sit at 30, 50 and 70 %)."""

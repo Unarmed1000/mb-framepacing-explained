@@ -51,6 +51,9 @@ from pcg32 import Pcg32
 
 MICROSECOND = Fraction(1, 1_000_000)
 
+# A time in refreshes: whole, but for a frame faster than the display (a stress clip's)
+type Refreshes = int | Fraction
+
 # Synthetic noise: consecutive errors differ by at least this share of the amount, so no animation time step is exactly the frame
 # time; the patterns: mixed (the clip's quarters alternate between the two others), alternating +1, -1, ... (the largest animation
 # error), or random
@@ -132,13 +135,16 @@ class FrameMode:
     # A presentation fault (presentation_faults), only in what reaches the screen: dropped-frames (rendered frames never shown) or
     # out-of-order (frames shown in another order than rendered)
     fault: str | None = None
+    # A fixed script of what was rendered and what was shown (stress_script), instead of all of the above
+    stress: bool = False
 
 
 MODE_PATTERN = re.compile(
     r"(?P<rate>[1-9][0-9]*)(?:-naive-(?P<storm_ms>[0-9]+(?:\.[0-9]+)?)ms-diagram-(?P<storm_diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<storm_times>[1-9])x)?-every-(?P<storm_every>[0-9]+(?:\.[0-9]+)?)s)?"
     + r"|-naive-(?:(?P<load>light|typical|heavy)(?P<realistic>-realistic)?|(?P<synthetic>synthetic)|(?P<ms>[0-9]+(?:\.[0-9]+)?)ms(?:(?:-(?P<burst>[1-9][0-9]*)f)?-every-(?P<burst_every>[0-9]+(?:\.[0-9]+)?)s)?)"
     + r"|-diagram-(?P<diagram>[a-z]+(?:-[a-z]+)*?)(?:(?:-(?P<times>[1-9])x)?-every-(?P<every>[0-9]+(?:\.[0-9]+)?)s)?"
-    + r"|-busy-(?P<busy>full-rate|adaptive))?"
+    + r"|-busy-(?P<busy>full-rate|adaptive)"
+    + r"|-(?P<stress>stress))?"
     + r"(?:-(?P<idle>static-rests-paused-clock|static-rests|on-demand-paused-clock-hindsight|on-demand-paused-clock|on-demand|idle-1fps))?"
     + r"(?:-(?P<fault>dropped-frames|out-of-order|dropped-before-wake|dropped-wake|dropped-after-stall))?"
 )
@@ -150,7 +156,8 @@ def parse_mode(name: str) -> FrameMode:
     bursts: 60-naive-5ms-every-1s, 60-naive-5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a replayed timing diagram, e.g.
     60-diagram-slow-frames), both at once, RATE-naive-Nms-diagram-NAME[[-Kx]-every-Ns] (the perfect storm: the diagram's late
     frames and the naive timer's jitter, e.g. 60-naive-5ms-diagram-slow-frames-every-1s) or RATE-busy-POLICY (a busy stretch at
-    full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-adaptive). Any of them may then say what the game does while the
+    full rate or adapting like the Swappy frame pacer: 60-busy-full-rate, 60-busy-adaptive), or RATE-stress (a fixed script of lost
+    frames, at 60 or 30: stress_script). Any of them but the last may then say what the game does while the
     box rests, -static-rests, -on-demand, -on-demand-paused-clock or -idle-1fps (60-on-demand), and end in a presentation fault,
     -dropped-frames or -out-of-order (60-naive-5ms-diagram-slow-frames-every-1s-dropped-frames)."""
     mode = _parse_timing(name)
@@ -166,7 +173,7 @@ def _parse_timing(name: str) -> FrameMode:
         raise ValueError(
             f"'{name}' is not a mode: use RATE (ideal timer, e.g. 60), RATE-naive-NOISE with NOISE {NOISE_NAMES} (a window in "
             + "bursts: 5ms-every-1s or 5ms-24f-every-1s), RATE-diagram-NAME[[-Kx]-every-Ns] (a timing diagram, e.g. 60-diagram-slow-frames) "
-            + "or RATE-busy-POLICY (60-busy-full-rate, 60-busy-adaptive), each optionally followed by -static-rests, "
+            + "RATE-busy-POLICY (60-busy-full-rate, 60-busy-adaptive) or RATE-stress (60-stress, 30-stress), each optionally followed by -static-rests, "
             + "-static-rests-paused-clock, -on-demand, -on-demand-paused-clock, -on-demand-paused-clock-hindsight or -idle-1fps and by "
             + "-dropped-frames, -out-of-order, -dropped-before-wake, -dropped-wake or -dropped-after-stall"
         )
@@ -178,6 +185,8 @@ def _parse_timing(name: str) -> FrameMode:
         return FrameMode(name, rate, Timer.NAIVE, Noise.WINDOW, window, diagram=match["storm_diagram"], every=every, times=times)
     if match["busy"] is not None:
         return FrameMode(name, rate, busy=match["busy"])
+    if match["stress"] is not None:
+        return FrameMode(name, rate, stress=True)
     if match["diagram"] is not None:
         every = None if match["every"] is None else Fraction(match["every"])
         return FrameMode(name, rate, diagram=match["diagram"], every=every, times=1 if match["times"] is None else int(match["times"]))
@@ -241,8 +250,8 @@ class SimulatedFrames:
     flips: tuple[int, ...]
     samples: tuple[Fraction, ...]
     animation: tuple[Fraction, ...]
-    targets: tuple[int, ...]
-    intervals: tuple[int, ...]
+    targets: tuple[Refreshes, ...]
+    intervals: tuple[Refreshes, ...]
     starts: tuple[Fraction, ...]
     cpu: tuple[Fraction, ...]
 
@@ -270,6 +279,8 @@ def validate(mode: FrameMode, parameters: TimingParameters) -> None:
             raise ValueError(f"unknown jitter pattern {parameters.synthetic_pattern!r}: use {' or '.join(JITTER_PATTERNS)}")
         if not 0 <= 2 * parameters.synthetic < 1 / Fraction(mode.rate):
             raise ValueError(f"the synthetic jitter of {format_ms(parameters.synthetic)} must be less than half the {mode.rate} Hz frame time")
+    if mode.stress and (mode.idle is not None or mode.fault is not None):
+        raise ValueError(f"{mode.name}: a stress clip's script says what was rendered and shown, so it takes no idle behaviour or fault")
     if mode.diagram is not None:
         from diagram_replay import pattern  # noqa: PLC0415  (only diagram modes need the diagrams)
 
@@ -523,6 +534,8 @@ def describe(mode: FrameMode, parameters: TimingParameters) -> str:
 
 
 def _describe_timing(mode: FrameMode, parameters: TimingParameters) -> str:
+    if mode.stress:
+        return f"{mode.rate} Hz, scripted stress test"
     if mode.busy is not None:
         from adaptive_rate import title as busy_title  # noqa: PLC0415
 

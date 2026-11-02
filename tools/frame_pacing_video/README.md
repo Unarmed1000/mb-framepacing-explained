@@ -125,6 +125,16 @@ How much sooner or later than usual the naive loop reads the clock:
 
   The game renders fewer frames, but their indices stay consecutive, and the clip's first frame is always rendered.
 
+- **Stress clips** (`60-stress`, `30-stress`; `stress_script.py`): for how mb-framepacing's animation error handles lost frames, a
+  fixed script of scenarios on a 60 Hz display, paced at 60 or 30 Hz, with no noise and no random numbers. Unlike a presentation
+  fault, which keeps every frame's animation time, a script says frame by frame what was rendered, when it was shown and which
+  moment it shows, so its clock can also lose time: a dropped frame whose time was never counted (b and c show one moment), a late
+  frame whose step stays, a hitch with the clock stopped. Each scenario is a picture of the screen, one letter per target (`a a c`:
+  b rendered, never shown), with at least 12 frames on time between two scenarios. The run's edges are the seam of the clip's loop:
+  frame 0 is rendered for the last target before the clip and never shown, so the clip's first refresh shows frame 1, and the
+  same frame of the next loop is the one lost before the end marker. The clip's length follows from the script (`--seconds`, whole
+  round trips of the fast speed: `export_test_clips.py` sets them).
+
 - **Demo and realistic loads:** realistically only 4, 9 and 20 % of the frames have a timing error, too rare to find in a short
   video. So by default the loads are a **demo profile**: a timing error in **95 % of the frames** (`--demo-load-share`). A load is
   really about how bad the errors get, so the loads differ in size rather than in how often: light only about 1 ms, typical also
@@ -290,7 +300,8 @@ what mb-framepacing measures.
 perfect storm with dropped frames and with frames out of order, the idle behaviours, and the static flags set each way (both inside a
 rest with a paused clock, in hindsight, with a rest's frame or its wake-up frame dropped, and the drops that are no lost rest: in the motion, and after a
 stall): a folder per scenario, named after its mode,
-with `video.mp4` and its own `manifest.json`. These copies are licensed for
+with `video.mp4` and its own `manifest.json`; and the two stress clips (10 s and 20 s, as long as their scripts), which nothing in this
+repository shows. `--only CLIP…` exports the clips named. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
 
@@ -456,6 +467,12 @@ Settings that would break the loop or the pacing are rejected with an error; not
     frame's static flags as its marker carries them, and with a presentation fault `expected.staticSteps` lists the presented frames
     whose step from the presented frame before them is static by those flags (`animationErrorMs` still gives the raw error of the step from a static frame
     to the next, which mb-framepacing leaves unjudged).
+  - a stress clip holds what was rendered and what was on screen: `screen`, `presented`, `fault` (kind `scripted`, the runs dropped
+    and the pairs shown out of order) and `expected` as with a presentation fault, `frames.staticAfter`, `frames.staticBefore`,
+    `frames.presentFailedBefore` (the frames whose marker says the present of the frame before failed), and `scenarios` (each scenario's
+    `name`, `firstFrame`, an index into the frame lists, and `frameCount`, up to its last letter). It has no `frames.animationErrorMs`:
+    what to expect of a step is mb-framepacing's test, so `check_marker_run.py` does not apply. A frame may be rendered for the moment
+    between two refreshes (`15-faster-than-display`, 120 fps: `frames.targetFps` is 120).
   - the licence of the videos (`license`): this repository's, CC BY-NC-SA 4.0.
 - **Encoding**: lossless H.264 (`libx264 -qp 0`, High 4:4:4 Predictive profile) in YUV 4:4:4, tagged BT.709. Standard YUV rather
   than `libx264rgb`, because players that ignore the RGB tag show RGB streams in false colours. H.264 itself is lossless; the
@@ -504,5 +521,7 @@ uv run python -m unittest discover -s tools/frame_pacing_video -v
 - `test_export_test_clips.py`: the scenarios as marked single-box clips, each with its own manifest.
 - `test_presentation_faults.py`: dropped frames and frames out of order: where the events go, drop runs of 1 to 4, swapped pairs
   and derangements, a rest's frame or its wake-up frame dropped, a stall and the frame dropped after it, the frame on screen, and what a measurement counts as presented.
+- `test_stress_script.py`: the stress clips: every scenario's picture on screen at both paces, the frames on time between them, each
+  scenario's animation times and plan, the run's edges, every marker field, and a manifest without animation errors.
 - `test_idle_behaviour.py`: the frames a game renders at rest (static, on demand, a paused clock, 1 fps), their pacing and their
   static flags (in advance, both inside a rest, in hindsight).

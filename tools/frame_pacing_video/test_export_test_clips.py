@@ -26,6 +26,19 @@ class ClipManifestTests(unittest.TestCase):
         self.assertEqual(len(set(tags)), len(tags))
         self.assertEqual(set(gv.SEQUENCE_TAGS), {job.top.name for _, job in clips if len(job.top.name) > 16})
 
+    def test_the_stress_clips_are_marked_single_box_clips_of_whole_round_trips(self) -> None:
+        clips = export.planned_stress()
+        self.assertEqual([job.top.name for _, job in clips], list(export.STRESS_CLIPS))
+        self.assertFalse(set(export.STRESS_CLIPS) & set(export.SCENARIOS))
+        for settings, job in clips:
+            self.assertTrue(job.single and job.marker)
+            self.assertEqual((settings.width, settings.height, settings.fps), (1280, 720, 60))
+            self.assertEqual(job.speed.name, "fast")
+            # As long as a fast clip's round trip, however long the clip
+            self.assertEqual(settings.period(job.speed), 2)
+            self.assertEqual(settings.seconds % 2, 0)
+            self.assertLessEqual(len(str(gv.marker_sequence_id(job.top))), 16)
+
     def test_the_manifest_is_the_clips_own_named_after_the_folders_video(self) -> None:
         _, settings = gv.parse_arguments(["--single", "60-busy-adaptive", "--marker", "--speed", "fast"])
         manifest = export.clip_manifest(settings, gv.plan_videos(settings)[0])

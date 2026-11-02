@@ -83,7 +83,8 @@ from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont
 import idle_behaviour as idle
 import marker_path  # noqa: F401  # pyright: ignore[reportUnusedImport]  (mb_framepacing from the submodule)
 import presentation_faults as faults
-from frame_timing import JITTER_PATTERNS, FrameMode, SimulatedFrames, TimingParameters, describe, parse_mode, simulate, swap_interval
+import stress_script as stress
+from frame_timing import JITTER_PATTERNS, FrameMode, Refreshes, SimulatedFrames, TimingParameters, describe, parse_mode, simulate, swap_interval
 from frame_timing import validate as validate_timing
 from mb_framepacing.marker import (
     NS_PER_SECOND,
@@ -629,7 +630,12 @@ class FrameSchedule:
 @functools.cache
 def simulated_frames(settings: Settings, mode: FrameMode, speed: Speed) -> SimulatedFrames:
     """The frame loop over one clip (frame_timing.simulate): when each frame is flipped, when the loop read the clock, and the
-    animation time each frame shows."""
+    animation time each frame shows; a stress clip's script says all of that instead."""
+    if mode.stress:
+        script = stress.clip(mode.rate, settings.timing)
+        if settings.frame_count(speed) != len(script.screen):
+            raise ValueError(f"{mode.name}: its script fills {len(script.screen)} refreshes, not {settings.frame_count(speed)} (--seconds)")
+        return script.frames
     rendered = idle_frames(settings, mode, speed)
     return simulate(mode, settings.timing, settings.frame_count(speed)) if rendered is None else rendered.frames
 
@@ -659,7 +665,10 @@ def frame_schedule(settings: Settings, mode: FrameMode, speed: Speed) -> FrameSc
     refreshes = settings.frame_count(speed)
     events: tuple[faults.Block, ...] = ()
     rendered = idle_frames(settings, mode, speed)
-    if mode.fault is None:
+    if mode.stress:
+        script = stress.clip(mode.rate, settings.timing)
+        screen, events = script.screen, script.events
+    elif mode.fault is None:
         screen = faults.base_screen(frames.flips, refreshes)
     elif mode.fault in faults.ON_DEMAND_FAULTS:
         if rendered is None or not rendered.on_demand:
@@ -706,13 +715,14 @@ def animation_time(settings: Settings, mode: FrameMode, speed: Speed, frame: int
 @dataclass(frozen=True)
 class Pacing:
     """What each frame's marker says about the game's pacing beyond its timing: the target and the preferred frame time in
-    refreshes (None: on demand, no interval to aim for) and its static flags (static after: nothing animates while it is on screen;
-    static before: nothing animated while the frame before it was)."""
+    refreshes (None: on demand, no interval to aim for), its static flags (static after: nothing animates while it is on screen;
+    static before: nothing animated while the frame before it was) and the frames that say the present of the frame before failed."""
 
-    target: tuple[int | None, ...]
-    preferred: tuple[int | None, ...]
+    target: tuple[Refreshes | None, ...]
+    preferred: tuple[Refreshes | None, ...]
     static_after: tuple[bool, ...]
     static_before: tuple[bool, ...]
+    present_failed: frozenset[int] = frozenset()
 
 
 @functools.cache
@@ -723,11 +733,14 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
     frames = simulated_frames(settings, mode, speed)
     rendered = idle_frames(settings, mode, speed)
     count = len(frames.flips)
+    if mode.stress:
+        script = stress.clip(mode.rate, settings.timing)
+        return Pacing(frames.intervals, script.preferred, script.static_after, (False,) * count, script.present_failed)
     after, before = ((False,) * count,) * 2 if rendered is None else (rendered.static_after, rendered.static_before)
     if rendered is not None and rendered.on_demand:
         return Pacing((None,) * count, (None,) * count, after, before)
-    target: tuple[int | None, ...] = tuple(frames.intervals)
-    preferred: tuple[int | None, ...] = target if mode.idle == idle.IDLE_1FPS else (min(frames.intervals),) * count
+    target: tuple[Refreshes | None, ...] = tuple(frames.intervals)
+    preferred: tuple[Refreshes | None, ...] = target if mode.idle == idle.IDLE_1FPS else (min(frames.intervals),) * count
     if mode.diagram is not None:
         from diagram_replay import preferred_interval  # noqa: PLC0415  (as frame_timing replays a diagram)
 
@@ -740,7 +753,7 @@ def frame_pacing(settings: Settings, mode: FrameMode, speed: Speed) -> Pacing:
     return Pacing(target, preferred, after, before)
 
 
-def _frame_ns(settings: Settings, refreshes: int | None) -> int:
+def _frame_ns(settings: Settings, refreshes: Refreshes | None) -> int:
     """A frame time in refreshes as the marker's nanoseconds, or on demand."""
     return ON_DEMAND_FRAME_NS if refreshes is None else round(refreshes * NS_PER_SECOND / settings.fps)
 
@@ -767,7 +780,7 @@ def animation_errors(settings: Settings, mode: FrameMode, speed: Speed) -> list[
     return errors
 
 
-def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[int | None]:
+def refreshes_late(settings: Settings, mode: FrameMode, speed: Speed) -> list[Refreshes | None]:
     """How many refreshes after the one it was rendered for each frame of the clip first appears: 0 on time, negative when early
     (a frame shown out of order before the one rendered before it), None when it never appears (dropped). A naive timer's frame is
     on time however far off the moment it shows, unless it is also late (the perfect storm)."""
@@ -1080,6 +1093,8 @@ def marker_payload(settings: Settings, job: VideoJob, frame: int) -> Payload:
         flags |= MarkerFlags.STATIC_AFTER
     if pacing.static_before[index]:
         flags |= MarkerFlags.STATIC_BEFORE
+    if index in pacing.present_failed:
+        flags |= MarkerFlags.PRESENT_FAILED_BEFORE
     return Payload(
         kind=kind,
         run_id=MARKER_RUN_ID,
@@ -1381,18 +1396,18 @@ def _fault_entry(schedule: FrameSchedule, mode: FrameMode, pacing: Pacing) -> di
     """A presentation fault's part of a mode's manifest entry: the frame on screen in every refresh of the clip, the frames a
     measurement counts as presented, the fault events, and what a measurement should count; with an idle behaviour also the
     presented frames whose step from the presented frame before them is static by the flags alone (staticSteps: the step is not
-    judged; the clip's first presented frame follows its last one)."""
+    judged; the clip's first presented frame follows its last one). A stress clip's kind is its script."""
     presented = {index: _first_shown(schedule, index) for index in schedule.presented}
     order = schedule.presented
     static_steps: dict[str, object] = {}
-    if mode.idle is not None:
+    if mode.idle is not None or mode.stress:
         steps = [index for position, index in enumerate(order) if idle.static_step(pacing.static_after, pacing.static_before, order[position - 1], index)]
         static_steps = {"staticSteps": steps}
     return {
         "screen": list(schedule.screen),
         "presented": list(schedule.presented),
         "fault": {
-            "kind": mode.fault,
+            "kind": stress.SCRIPTED if mode.stress else mode.fault,
             "blocks": [{"first": block.first, "count": block.count, **({"order": list(block.order)} if block.order else {})} for block in schedule.events],
         },
         "expected": {
@@ -1403,9 +1418,16 @@ def _fault_entry(schedule: FrameSchedule, mode: FrameMode, pacing: Pacing) -> di
     }
 
 
-def _rates(settings: Settings, intervals: Sequence[int | None]) -> list[int | float | None]:
+def _rates(settings: Settings, intervals: Sequence[Refreshes | None]) -> list[int | float | None]:
     """Frame times in refreshes as rates (fps); None (on demand) stays None."""
     return [None if interval is None else _json_number(settings.fps / interval) for interval in intervals]
+
+
+def _stress_entry(settings: Settings, mode: FrameMode) -> dict[str, object]:
+    """A stress clip's scenarios for a mode's manifest entry: each a name and its rendered frames (firstFrame, an index into the frame
+    lists, and frameCount)."""
+    scenarios = stress.clip(mode.rate, settings.timing).scenarios
+    return {"scenarios": [{"name": scenario.name, "firstFrame": scenario.first, "frameCount": scenario.count} for scenario in scenarios]}
 
 
 def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, object]:
@@ -1415,11 +1437,15 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
     animation_ns = [round(time * NS_PER_SECOND) for time in animation]
     duration = settings.duration(speed)
     pacing = frame_pacing(settings, mode, speed)
-    fault = {} if mode.fault is None else _fault_entry(schedule, mode, pacing)
+    fault = {} if mode.fault is None and not mode.stress else _fault_entry(schedule, mode, pacing)
     # An idle behaviour only: each frame's static flags, as its marker carries them. Static after: nothing animates while it is on
     # screen; static before: nothing animated while the frame before it (frame index - 1) was, marking nothing when that frame was
     # never shown. mb-framepacing does not judge the animation error of the step from a static frame to the next
-    static = {} if mode.idle is None else {"staticAfter": list(pacing.static_after), "staticBefore": list(pacing.static_before)}
+    static = {} if mode.idle is None and not mode.stress else {"staticAfter": list(pacing.static_after), "staticBefore": list(pacing.static_before)}
+    # A stress clip only: the frames that say the present of the frame before them failed, as their markers do. Its manifest holds what
+    # was rendered and what was on screen, so it has no animation error: what to expect of a step is mb-framepacing's test
+    failed = {"presentFailedBefore": [index in pacing.present_failed for index in range(len(frames.flips))]} if mode.stress else {}
+    errors = {} if mode.stress else {"animationErrorMs": _milliseconds(animation_errors(settings, mode, speed))}
     return {
         "mode": mode.name,
         "rate": mode.rate,
@@ -1428,7 +1454,7 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
         "noiseWindowMs": None if mode.window is None else _json_number(mode.window * 1000),
         "label": settings.label(mode),
         # The rate the game aims for: at full speed (Swappy's adaptive rule aims lower through its busy stretch, frames.targetFps)
-        "targetFps": None if pacing.target[0] is None else _json_number(settings.fps / min(frames.intervals)),
+        "targetFps": mode.rate if mode.stress else None if pacing.target[0] is None else _json_number(settings.fps / min(frames.intervals)),
         # Every frame of the clip: the output refresh it first appears on (null: never, a dropped frame), when the naive loop read
         # the clock (ms, the first frame is shown at 0), the animation time it shows (ms, the clip's first refresh is 0; the marker
         # carries it in nanoseconds), the dt its animation advanced by, its animation error (PresentMon's MsAnimationError; null when it
@@ -1442,7 +1468,7 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
             "animationMs": [ns / 1_000_000 for ns in animation_ns],
             "animationNs": animation_ns,
             "dtMs": _milliseconds([animation[0] - (animation[-1] - duration)] + [b - a for a, b in itertools.pairwise(animation)]),
-            "animationErrorMs": _milliseconds(animation_errors(settings, mode, speed)),
+            **errors,
             "late": refreshes_late(settings, mode, speed),
             "targetFps": _rates(settings, pacing.target),
             # The rate the game would aim for if nothing held it back (Swappy lowered to 30 fps still prefers 60; null: on demand)
@@ -1453,11 +1479,13 @@ def _mode_entry(settings: Settings, mode: FrameMode, speed: Speed) -> dict[str, 
             "cpuStartNs": [cpu_start_ns(settings, mode, speed, index, 0) for index in range(len(frames.starts))],
             "cpuBusyNs": [cpu_busy_ns(settings, mode, speed, index) for index in range(len(frames.cpu))],
             **static,
+            **failed,
         },
         # A presentation fault only: screen (the frame on screen in each refresh of the clip), presented (the frames a measurement
         # counts: each first appears with an index above every frame before it), fault (its kind and events) and expected (frame
         # indices never presented, and refreshes that show a frame below one shown before)
         **fault,
+        **(_stress_entry(settings, mode) if mode.stress else {}),
     }
 
 
