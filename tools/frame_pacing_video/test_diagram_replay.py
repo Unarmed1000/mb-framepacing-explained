@@ -125,11 +125,12 @@ class ReplayTests(unittest.TestCase):
 
     def test_each_frame_carries_its_target_and_a_cap_is_preferred(self) -> None:
         # Half rate: the diagram's frames at 2, the on-time frames around them at 1; bad frame pacing has no swap interval of 2, but
-        # aims for 30 fps by its own clock: the same target, and the frame time it prefers
+        # aims for 30 fps by its own clock: the same target when that fills the clip, and the frame time it prefers. Once a
+        # period, among frames at full rate, it keeps its swap interval: the diagram's own timeline card is drawn from that
         self.assertEqual(set(frames("60-diagram-half-rate-even").intervals), {2})
         self.assertEqual(set(frames("60-diagram-half-rate-even-every-1s").intervals), {1, 2})
         self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing").intervals), {2})
-        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing-every-1s").intervals), {1, 2})
+        self.assertEqual(set(frames("60-diagram-half-rate-bad-pacing-every-1s").intervals), {1})
         self.assertEqual(replay.preferred_interval("half-rate-bad-pacing"), 2)
         self.assertIsNone(replay.preferred_interval("half-rate-even"))
 

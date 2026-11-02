@@ -29,7 +29,7 @@ class Pattern:
     the unit's length (the next unit's first frame is shown then), how long each frame takes until it is presented (its render
     time), and, when the game starts its frames by its own clock (a cap: half rate, bad frame pacing), when each starts; without,
     None: a frame starts when the previous one is shown. And each frame's target: how many refreshes after the frame before it the
-    game means it to appear (the target frame time its marker carries), its cap where it has one, else its swap interval."""
+    game means it to appear (the target frame time its marker carries), its swap interval, or its cap when the unit fills the clip."""
 
     shown: tuple[int, ...]
     animation: tuple[Fraction, ...]
@@ -81,7 +81,8 @@ def pattern(name: str, whole: bool = False) -> Pattern:
         raise ValueError(f"the {name} diagram shows a frame between refreshes")
     last = timed[-1]
     length = int(shown[-1]) + last.frame.interval
-    intervals = [frame.frame.interval if diagram.cpu_cap is None else int(_refreshes(diagram.cpu_cap)) for frame in timed]
+    # Back to back the game holds its cap for the whole clip; once in a period, among frames at full rate, it has no such target
+    intervals = [frame.frame.interval if diagram.cpu_cap is None or whole else int(_refreshes(diagram.cpu_cap)) for frame in timed]
     frames = list(zip(shown, animation, render, starts, intervals, strict=True))
     if not whole:
         for period in range(1, length + 1):

@@ -269,8 +269,8 @@ import them and measure their animation error, and its numbers can be checked ag
 
 - **What it carries:** at every refresh, the index of the frame on screen (a held frame keeps its index, so mb-framepacing sees one
   presented frame), the animation time it shows, and the frame pacer's plan for it: its intended display time (the refresh it was
-  rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval: 16 666 667 ns at
-  60 fps, 33 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
+  rendered for, on a clock whose 0 is the clip's first refresh) and the target frame time (its swap interval, or a game's own cap
+  when that fills the clip: 16 666 667 ns at 60 fps, 33 333 333 at 30), and on the same clock its CPU start time (when the CPU started working on the frame) and CPU busy (how
   long the CPU worked on it before presenting it); all in nanoseconds, 0 = unknown (the diagram modes' filler frames have no CPU
   busy); run id 1. It also carries the frame time the game prefers (what it would aim for if nothing held it back: Swappy lowered
   to 30 fps still prefers 60, a 30 fps lock and the half-rate diagrams prefer 30, on demand has none) and the static flags of an
