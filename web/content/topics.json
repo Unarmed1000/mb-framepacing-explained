@@ -27,7 +27,12 @@
         "test-clips-faults",
         "test-clips-idle",
         "test-clips-static",
-        "test-clips-static-lost"
+        "test-clips-static-lost",
+        "test-clips-lost-frames",
+        "test-clips-recovery",
+        "test-clips-periods",
+        "test-clips-out-of-order",
+        "test-clips-displays"
       ]
     },
     {

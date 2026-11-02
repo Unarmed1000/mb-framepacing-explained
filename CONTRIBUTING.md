@@ -83,7 +83,8 @@ git add external/mb-framepacing
 
 Everything this repository takes from mb-framepacing is made in one place, `tools/timing_diagrams/generate_measured_charts.py`
 (a new chart or export goes there too): the report cards, the test clips' cards (`--test-clips`), the web page's live playback
-report (`--playback-example`), the timing diagrams as its frame timeline card (`--timelines`) and each frame's verdict for the
+report (`--playback-example`), the timing diagrams as its frame timeline card (`--timelines`), single scenarios of the stress clips as
+that card, compact (`--stress-windows`), and each frame's verdict for the
 web page's live charts (`--web-verdicts`, into `web/src/charts/verdicts.json`: which frame is late and which is delta time jitter
 is mb-framepacing's rule, never this repository's). The deploy has no .NET, so its results are committed. Run the tests, then
 `generate_measured_charts.py --all`, commit the new pin with what changed, then export the test clips again (`tools/frame_pacing_video/export_test_clips.py`) for mb-framepacing's

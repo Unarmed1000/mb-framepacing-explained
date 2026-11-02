@@ -1,0 +1,256 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1516" height="338" viewBox="0 0 1516 338" role="img" aria-label="The grid moves">
+<title>The grid moves</title>
+<style>
+  text { font-family: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+         font-size: 13px; fill: #e6edf3; font-variant-numeric: tabular-nums; }
+  .card { fill: #1f242b; fill-opacity: 0.94; stroke: #8b949e; stroke-opacity: 0.25; stroke-width: 1; }
+  .title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { fill: #8b949e; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: #8b949e; }
+  .vsync-n { font-size: 11px; fill: #6e7681; letter-spacing: 0.04em; }
+  .axis { font-size: 12px; fill: #c9d1d9; }
+  .vsync { stroke: #ffffff; stroke-opacity: 0.34; stroke-width: 1; stroke-dasharray: 3 4; }
+  .vsync-skip { stroke: #ffffff; stroke-opacity: 0.09; stroke-width: 1; stroke-dasharray: 2 6; }
+  .vsync-target { font-size: 11px; font-weight: 600; fill: #c9d1d9; letter-spacing: 0.04em; }
+  .vsync-n-skip { font-size: 11px; fill: #545b64; letter-spacing: 0.04em; }
+  .box { fill: #ffffff; fill-opacity: 0.06; stroke: #ffffff; stroke-opacity: 0.22; stroke-width: 1; }
+  .frame { font-size: 14px; font-weight: 700; }
+  .box-time { fill: #b1bac4; font-size: 12px; }
+  .arrow { stroke: #8b949e; stroke-width: 1.2; }
+  .arrowhead { fill: #8b949e; }
+  .ok { fill: #2ea043; }
+  .hold { fill: #2ea043; fill-opacity: 0.45; }
+  .again { fill: #d29922; }
+  .off { fill: #e5534b; }
+  .off-jitter { fill: #e3b341; }
+  .cell-text { font-size: 14px; font-weight: 700; fill: #ffffff; }
+  .dark-text { fill: #1c1f24; }
+  .zero { fill: #6e7681; }
+  .err { fill: #ff7b72; font-weight: 600; }
+  .err-pill { fill: #e5534b; fill-opacity: 0.16; }
+  .err-jitter { fill: #e3b341; font-weight: 600; }
+  .err-pill-jitter { fill: #e3b341; fill-opacity: 0.16; }
+  .neutral { fill: #3d444d; }
+  .lane { font-size: 15px; font-weight: 600; }
+  .same { fill: #7ee787; font-weight: 600; }
+
+  .tile { fill: #ffffff; fill-opacity: 0.05; stroke: #ffffff; stroke-opacity: 0.12; stroke-width: 1; }
+  .tile-value { font-size: 20px; font-weight: 600; }
+  .grid { stroke: #ffffff; stroke-opacity: 0.1; stroke-width: 1; }
+  .zero-line { stroke: #ffffff; stroke-opacity: 0.45; stroke-width: 1; }
+  .bar { fill: #e5534b; }
+  .display-line { stroke: #2ea043; stroke-width: 2; fill: none; }
+  .step-line { stroke: #58a6ff; stroke-width: 1.2; fill: none; stroke-linejoin: round; }
+  .strip-a { fill: #6e7681; }
+  .strip-b { fill: #adbac7; }
+  .average-line { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .average-text { fill: #d29922; font-size: 12px; }
+
+  .band { fill: #ffffff; fill-opacity: 0.06; }
+  .error-refresh { stroke: #d29922; stroke-opacity: 0.8; stroke-width: 1; stroke-dasharray: 3 4; }
+  .error-refresh-text { font-size: 11px; fill: #d29922; letter-spacing: 0.04em; }
+  .held { stroke: #2ea043; stroke-width: 2.5; fill: none; }
+  .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
+  .bar-range { fill: #e5534b; fill-opacity: 0.3; }
+  .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
+  .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
+  .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
+  .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
+  .held-older { stroke: #db61a2; stroke-width: 2.5; fill: none; }
+  .held-dropped { stroke: #f0883e; stroke-width: 2.5; fill: none; }
+  .held-failed { stroke: #c69c6d; stroke-width: 2.5; fill: none; }
+  .held-unknown { stroke: #768390; stroke-width: 2.5; stroke-dasharray: 4 3; fill: none; }
+  .held-range-older { fill: #db61a2; fill-opacity: 0.3; }
+  .held-range-dropped { fill: #f0883e; fill-opacity: 0.3; }
+  .held-range-failed { fill: #c69c6d; fill-opacity: 0.3; }
+  .held-range-unknown { fill: #768390; fill-opacity: 0.3; }
+  .held-fill-older { fill: #db61a2; }
+  .held-fill-dropped { fill: #f0883e; }
+  .held-fill-failed { fill: #c69c6d; }
+  .held-fill-unknown { fill: #768390; }
+  .strip-older { fill: #db61a2; }
+  .strip-dropped { fill: #f0883e; }
+  .strip-failed { fill: #c69c6d; }
+  .key-pink { fill: #db61a2; }
+  .key-orange { fill: #f0883e; }
+  .key-tan { fill: #c69c6d; }
+  .key-unknown { fill: #768390; }
+  .key-faint { fill: #ffffff; fill-opacity: 0.3; }
+  .key-amber { fill: #d29922; }
+  .key-green { fill: #2ea043; }
+  .key-red { fill: #e5534b; }
+  .key-blue { fill: #58a6ff; }
+  .key-blue-faint { fill: #58a6ff; fill-opacity: 0.45; }
+  .key-violet-a { fill: #a371f7; fill-opacity: 0.55; }
+  .key-violet-b { fill: #a371f7; fill-opacity: 0.85; }
+  .key-grey { fill: #3d444d; }
+  .held-fill { fill: #2ea043; }
+  .held-fill-late { fill: #e5534b; }
+  .held-range { fill: #2ea043; fill-opacity: 0.3; }
+  .held-range-late { fill: #e5534b; fill-opacity: 0.3; }
+  .riser { stroke: #ffffff; stroke-opacity: 0.3; stroke-width: 1; fill: none; }
+  .late-line { stroke: #e5534b; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .late-line-adapted { stroke: #d29922; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .late-line-none { stroke: #2ea043; stroke-width: 1.5; fill: none; stroke-linejoin: round; }
+  .frametime { stroke: #58a6ff; stroke-width: 2.5; fill: none; }
+  .frametime-range { fill: #58a6ff; fill-opacity: 0.3; }
+  .step-range { fill: #58a6ff; fill-opacity: 0.25; }
+  .frametime-fill { fill: #58a6ff; }
+  .cpu-busy { fill: #58a6ff; fill-opacity: 0.22; }
+  .strip-late { fill: #e5534b; }
+  .bar-jitter { fill: #e3b341; }
+  .bar-range-jitter { fill: #e3b341; fill-opacity: 0.3; }
+  .strip-jitter { fill: #e3b341; }
+  .key-jitter { fill: #e3b341; }
+  .hist-bar { fill: #58a6ff; }
+  .curve { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linejoin: round; }
+  .clip-mark { fill: #e5534b; }
+  .clip-text { font-size: 11px; fill: #e6edf3; }
+  .warn { fill: #d29922; }
+  .warn-band { fill: #d29922; fill-opacity: 0.1; stroke: #d29922; stroke-opacity: 0.9; stroke-width: 1.5; }
+  .pacing-band { fill-opacity: 0.03; }
+  .warn-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; fill: #d29922; }
+  .warn-title { font-size: 14px; font-weight: 600; }
+  .warn-text { fill: #e6edf3; }
+  .event-track { fill: #ffffff; fill-opacity: 0.05; }
+  .event-dropped { fill: #f0883e; }
+  .event-failed { fill: #c69c6d; }
+  .event-older { fill: #db61a2; }
+  .event-torn { fill: #39c5cf; }
+  .event-gap { fill: #768390; }
+  .event-undecoded { fill: #545d68; }
+  .key-cyan { fill: #39c5cf; }
+  .key-undecoded { fill: #545d68; }
+  .ref-target { stroke: #adbac7; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .ref-preferred { stroke: #d29922; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .key-light { fill: #adbac7; }
+</style>
+<rect class="card" x="0.5" y="0.5" width="1515" height="337" rx="14"/>
+<text x="20.0" y="30.0" text-anchor="start" class="title">The grid moves</text>
+<text x="20.0" y="54.0" text-anchor="start" class="sub">b is a refresh late, and every frame after it follows b.</text>
+<g transform="translate(0 0)">
+<line class="vsync-skip" x1="180.0" y1="104" x2="180.0" y2="157.0"/>
+<text x="180.0" y="172.0" text-anchor="middle" class="axis">−16.7 ms</text>
+<line class="vsync" x1="252.0" y1="104" x2="252.0" y2="157.0"/>
+<text x="252.0" y="172.0" text-anchor="middle" class="axis">0 ms</text>
+<text x="252.0" y="98.0" text-anchor="middle" class="vsync-target">vsync 1</text>
+<line class="vsync-skip" x1="324.0" y1="104" x2="324.0" y2="157.0"/>
+<text x="324.0" y="172.0" text-anchor="middle" class="vsync-n-skip">16.7 ms</text>
+<text x="324.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 2</text>
+<line class="vsync-skip" x1="396.0" y1="104" x2="396.0" y2="157.0"/>
+<text x="396.0" y="172.0" text-anchor="middle" class="vsync-n-skip">33.3 ms</text>
+<text x="396.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 3</text>
+<line class="vsync-skip" x1="468.0" y1="104" x2="468.0" y2="157.0"/>
+<text x="468.0" y="172.0" text-anchor="middle" class="vsync-n-skip">50 ms</text>
+<text x="468.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 4</text>
+<line class="vsync" x1="540.0" y1="104" x2="540.0" y2="157.0"/>
+<text x="540.0" y="172.0" text-anchor="middle" class="axis">66.7 ms</text>
+<text x="540.0" y="98.0" text-anchor="middle" class="vsync-target">vsync 5</text>
+<line class="vsync" x1="612.0" y1="104" x2="612.0" y2="157.0"/>
+<text x="612.0" y="172.0" text-anchor="middle" class="axis">83.3 ms</text>
+<text x="612.0" y="98.0" text-anchor="middle" class="vsync-target">vsync 6</text>
+<line class="vsync-skip" x1="684.0" y1="104" x2="684.0" y2="157.0"/>
+<text x="684.0" y="172.0" text-anchor="middle" class="vsync-n-skip">100 ms</text>
+<text x="684.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 7</text>
+<line class="vsync-skip" x1="756.0" y1="104" x2="756.0" y2="157.0"/>
+<text x="756.0" y="172.0" text-anchor="middle" class="vsync-n-skip">116.7 ms</text>
+<text x="756.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 8</text>
+<line class="vsync-skip" x1="828.0" y1="104" x2="828.0" y2="157.0"/>
+<text x="828.0" y="172.0" text-anchor="middle" class="vsync-n-skip">133.3 ms</text>
+<text x="828.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 9</text>
+<line class="vsync" x1="900.0" y1="104" x2="900.0" y2="157.0"/>
+<text x="900.0" y="172.0" text-anchor="middle" class="axis">150 ms</text>
+<text x="900.0" y="98.0" text-anchor="middle" class="vsync-target">vsync 10</text>
+<line class="vsync-skip" x1="972.0" y1="104" x2="972.0" y2="157.0"/>
+<text x="972.0" y="172.0" text-anchor="middle" class="vsync-n-skip">166.7 ms</text>
+<text x="972.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 11</text>
+<line class="vsync-skip" x1="1044.0" y1="104" x2="1044.0" y2="157.0"/>
+<text x="1044.0" y="172.0" text-anchor="middle" class="vsync-n-skip">183.3 ms</text>
+<text x="1044.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 12</text>
+<line class="vsync-skip" x1="1116.0" y1="104" x2="1116.0" y2="157.0"/>
+<text x="1116.0" y="172.0" text-anchor="middle" class="vsync-n-skip">200 ms</text>
+<text x="1116.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 13</text>
+<line class="vsync" x1="1188.0" y1="104" x2="1188.0" y2="157.0"/>
+<text x="1188.0" y="172.0" text-anchor="middle" class="axis">216.7 ms</text>
+<text x="1188.0" y="98.0" text-anchor="middle" class="vsync-target">vsync 14</text>
+<line class="vsync-skip" x1="1260.0" y1="104" x2="1260.0" y2="157.0"/>
+<text x="1260.0" y="172.0" text-anchor="middle" class="vsync-n-skip">233.3 ms</text>
+<text x="1260.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 15</text>
+<line class="vsync-skip" x1="1332.0" y1="104" x2="1332.0" y2="157.0"/>
+<text x="1332.0" y="172.0" text-anchor="middle" class="vsync-n-skip">250 ms</text>
+<text x="1332.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 16</text>
+<line class="vsync-skip" x1="1404.0" y1="104" x2="1404.0" y2="157.0"/>
+<text x="1404.0" y="172.0" text-anchor="middle" class="vsync-n-skip">266.7 ms</text>
+<text x="1404.0" y="98.0" text-anchor="middle" class="vsync-n-skip">vsync 17</text>
+<line class="vsync-skip" x1="1476.0" y1="104" x2="1476.0" y2="157.0"/>
+<text x="1476.0" y="172.0" text-anchor="middle" class="vsync-n-skip">283.3 ms</text>
+<text x="20.0" y="136.0" text-anchor="start" class="label">DISPLAY</text>
+<text x="20.0" y="208.0" text-anchor="start" class="label">ANIMATION TIME STEP</text>
+<text x="20.0" y="234.0" text-anchor="start" class="label">DISPLAY TIME STEP</text>
+<text x="20.0" y="260.0" text-anchor="start" class="label">STOP OR RUSH</text>
+<text x="20.0" y="286.0" text-anchor="start" class="label">STEP</text>
+<text x="20.0" y="312.0" text-anchor="start" class="label">ANIMATION ERROR</text>
+<rect class="ok" x="254.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="288.0" y="137.0" text-anchor="middle" class="cell-text">a</text>
+<rect class="hold" x="326.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="360.0" y="137.0" text-anchor="middle" class="cell-text">a</text>
+<rect class="hold" x="398.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="432.0" y="137.0" text-anchor="middle" class="cell-text">a</text>
+<rect class="hold" x="470.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="504.0" y="137.0" text-anchor="middle" class="cell-text">a</text>
+<rect class="again" x="542.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="576.0" y="137.0" text-anchor="middle" class="cell-text dark-text">a</text>
+<text x="288.0" y="208.0" text-anchor="middle">66.7 ms</text>
+<text x="288.0" y="234.0" text-anchor="middle">66.7 ms</text>
+<text x="288.0" y="260.0" text-anchor="middle" class="zero">0 ms</text>
+<text x="288.0" y="286.0" text-anchor="middle" class="zero">0 ms</text>
+<text x="288.0" y="312.0" text-anchor="middle" class="zero">0 ms</text>
+<rect class="off" x="614.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="648.0" y="137.0" text-anchor="middle" class="cell-text">b</text>
+<rect class="hold" x="686.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="720.0" y="137.0" text-anchor="middle" class="cell-text">b</text>
+<rect class="hold" x="758.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="792.0" y="137.0" text-anchor="middle" class="cell-text">b</text>
+<rect class="hold" x="830.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="864.0" y="137.0" text-anchor="middle" class="cell-text">b</text>
+<text x="648.0" y="208.0" text-anchor="middle">66.7 ms</text>
+<text x="648.0" y="234.0" text-anchor="middle">83.3 ms</text>
+<text x="648.0" y="260.0" text-anchor="middle" class="err">−16.7 ms</text>
+<text x="648.0" y="286.0" text-anchor="middle" class="zero">0 ms</text>
+<rect class="err-pill" x="609.4" y="297.0" width="77.2" height="21" rx="10.5"/>
+<text x="648.0" y="312.0" text-anchor="middle" class="err">−16.7 ms</text>
+<rect class="ok" x="902.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="936.0" y="137.0" text-anchor="middle" class="cell-text">c</text>
+<rect class="hold" x="974.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1008.0" y="137.0" text-anchor="middle" class="cell-text">c</text>
+<rect class="hold" x="1046.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1080.0" y="137.0" text-anchor="middle" class="cell-text">c</text>
+<rect class="hold" x="1118.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1152.0" y="137.0" text-anchor="middle" class="cell-text">c</text>
+<text x="936.0" y="208.0" text-anchor="middle">83.3 ms</text>
+<text x="936.0" y="234.0" text-anchor="middle">66.7 ms</text>
+<text x="936.0" y="260.0" text-anchor="middle" class="zero">0 ms</text>
+<text x="936.0" y="286.0" text-anchor="middle" class="err">+16.7 ms</text>
+<rect class="err-pill" x="897.4" y="297.0" width="77.2" height="21" rx="10.5"/>
+<text x="936.0" y="312.0" text-anchor="middle" class="err">+16.7 ms</text>
+<rect class="ok" x="1190.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1224.0" y="137.0" text-anchor="middle" class="cell-text">d</text>
+<rect class="hold" x="1262.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1296.0" y="137.0" text-anchor="middle" class="cell-text">d</text>
+<rect class="hold" x="1334.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1368.0" y="137.0" text-anchor="middle" class="cell-text">d</text>
+<rect class="hold" x="1406.0" y="112.0" width="68.0" height="40" rx="6"/>
+<text x="1440.0" y="137.0" text-anchor="middle" class="cell-text">d</text>
+<text x="1224.0" y="208.0" text-anchor="middle">66.7 ms</text>
+<text x="1224.0" y="234.0" text-anchor="middle">66.7 ms</text>
+<text x="1224.0" y="260.0" text-anchor="middle" class="zero">0 ms</text>
+<text x="1224.0" y="286.0" text-anchor="middle" class="zero">0 ms</text>
+<text x="1224.0" y="312.0" text-anchor="middle" class="zero">0 ms</text>
+</g>
+</svg>

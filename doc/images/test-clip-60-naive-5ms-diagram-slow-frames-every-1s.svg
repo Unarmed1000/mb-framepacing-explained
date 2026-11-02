@@ -53,6 +53,12 @@
   .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
   .bar-range { fill: #e5534b; fill-opacity: 0.3; }
   .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
@@ -148,17 +154,17 @@
 <text x="898.0" y="162.0" text-anchor="start"><tspan class="tile-value warn">451</tspan><tspan class="vsync-n">  97.4 %</tspan></text>
 <rect class="tile" x="20.0" y="194" width="276.0" height="64" rx="10"/>
 <text x="34.0" y="214.0" text-anchor="start" class="label">ERROR P99</text>
-<text x="34.0" y="238.0" text-anchor="start"><tspan class="tile-value">21.0 ms</tspan></text>
+<text x="34.0" y="238.0" text-anchor="start"><tspan class="tile-value">18.5 ms</tspan></text>
 <rect class="tile" x="308.0" y="194" width="276.0" height="64" rx="10"/>
 <text x="322.0" y="214.0" text-anchor="start" class="label">ERROR P99.9</text>
 <text x="322.0" y="238.0" text-anchor="start"><tspan class="tile-value">-</tspan><tspan class="vsync-n">  needs 1,000 frames</tspan></text>
 <rect class="tile" x="596.0" y="194" width="276.0" height="64" rx="10"/>
 <text x="610.0" y="214.0" text-anchor="start" class="label">WORST ERROR</text>
-<text x="610.0" y="238.0" text-anchor="start"><tspan class="tile-value">26.7 ms</tspan><tspan class="vsync-n">  too late</tspan></text>
+<text x="610.0" y="238.0" text-anchor="start"><tspan class="tile-value">26.7 ms</tspan><tspan class="vsync-n">  too soon</tspan></text>
 <rect class="tile" x="884.0" y="194" width="276.0" height="64" rx="10"/>
 <text x="898.0" y="214.0" text-anchor="start" class="label">LATE FRAMES</text>
 <text x="898.0" y="238.0" text-anchor="start"><tspan class="tile-value warn">14</tspan><tspan class="vsync-n">  3.0 %</tspan></text>
-<text x="20.0" y="294.0" text-anchor="start" class="label">ANIMATION ERROR PER FRAME: + SHOWN TOO SOON, − SHOWN TOO LATE</text>
+<text x="20.0" y="280.0" text-anchor="start" class="label">ANIMATION ERROR PER FRAME: + SHOWN TOO SOON, − SHOWN TOO LATE</text>
 <rect class="band" x="110.0" y="382.6" width="1030.0" height="4.9"/>
 <line class="grid" x1="110" y1="365.4" x2="1140" y2="365.4"/>
 <text x="100.0" y="369.4" text-anchor="end" class="vsync-n">+8 ms</text>
@@ -202,10 +208,10 @@
 <rect class="bar-jitter" x="161.50" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="163.65" y="385.0" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="165.79" y="360.5" width="1.62" height="24.5"/>
-<rect class="bar" x="170.08" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="170.08" y="385.0" width="1.62" height="24.5"/>
 <rect class="bar" x="172.23" y="319.8" width="1.62" height="65.2"/>
 <rect class="bar-jitter" x="174.38" y="385.0" width="1.62" height="24.5"/>
-<rect class="bar" x="178.67" y="385.0" width="1.62" height="16.3"/>
+<rect class="bar" x="178.67" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar" x="180.81" y="368.7" width="1.62" height="16.3"/>
 <rect class="bar-jitter" x="182.96" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="185.10" y="385.0" width="1.62" height="24.5"/>
@@ -260,10 +266,10 @@
 <rect class="bar-jitter" x="290.25" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="292.40" y="385.0" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="294.54" y="360.5" width="1.62" height="24.5"/>
-<rect class="bar" x="298.83" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="298.83" y="385.0" width="1.62" height="24.5"/>
 <rect class="bar" x="300.98" y="319.8" width="1.62" height="65.2"/>
 <rect class="bar-jitter" x="303.12" y="385.0" width="1.62" height="24.5"/>
-<rect class="bar" x="307.42" y="385.0" width="1.62" height="16.3"/>
+<rect class="bar" x="307.42" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar" x="309.56" y="368.7" width="1.62" height="16.3"/>
 <rect class="bar-jitter" x="311.71" y="360.5" width="1.62" height="24.5"/>
 <rect class="bar-jitter" x="313.85" y="385.0" width="1.62" height="24.5"/>
@@ -318,10 +324,10 @@
 <rect class="bar-jitter" x="419.00" y="385.0" width="1.62" height="18.2"/>
 <rect class="bar-jitter" x="421.15" y="385.0" width="1.62" height="2.8"/>
 <rect class="bar-jitter" x="423.29" y="382.2" width="1.62" height="2.8"/>
-<rect class="bar" x="427.58" y="385.0" width="1.62" height="44.3"/>
+<rect class="bar" x="427.58" y="385.0" width="1.62" height="3.5"/>
 <rect class="bar" x="429.73" y="339.1" width="1.62" height="45.9"/>
 <rect class="bar-jitter" x="431.88" y="385.0" width="1.62" height="2.7"/>
-<rect class="bar" x="436.17" y="385.0" width="1.62" height="37.5"/>
+<rect class="bar" x="436.17" y="381.7" width="1.62" height="3.3"/>
 <rect class="bar" x="438.31" y="349.9" width="1.62" height="35.1"/>
 <rect class="bar-jitter" x="440.46" y="380.8" width="1.62" height="4.2"/>
 <rect class="bar-jitter" x="442.60" y="385.0" width="1.62" height="2.7"/>
@@ -376,10 +382,10 @@
 <rect class="bar-jitter" x="547.75" y="385.0" width="1.62" height="14.1"/>
 <rect class="bar-jitter" x="549.90" y="385.0" width="1.62" height="3.2"/>
 <rect class="bar-jitter" x="552.04" y="381.6" width="1.62" height="3.4"/>
-<rect class="bar" x="556.33" y="385.0" width="1.62" height="45.2"/>
+<rect class="bar" x="556.33" y="385.0" width="1.62" height="4.4"/>
 <rect class="bar" x="558.48" y="339.6" width="1.62" height="45.4"/>
 <rect class="bar-jitter" x="560.62" y="385.0" width="1.62" height="4.9"/>
-<rect class="bar" x="564.92" y="385.0" width="1.62" height="36.2"/>
+<rect class="bar" x="564.92" y="380.5" width="1.62" height="4.5"/>
 <rect class="bar" x="567.06" y="326.8" width="1.62" height="58.2"/>
 <rect class="bar-jitter" x="569.21" y="385.0" width="1.62" height="3.2"/>
 <rect class="bar-jitter" x="571.35" y="382.2" width="1.62" height="2.8"/>
@@ -434,10 +440,10 @@
 <rect class="bar-jitter" x="676.50" y="385.0" width="1.62" height="6.0"/>
 <rect class="bar-jitter" x="678.65" y="376.1" width="1.62" height="8.9"/>
 <rect class="bar-jitter" x="680.79" y="374.1" width="1.62" height="10.9"/>
-<rect class="bar" x="685.08" y="385.0" width="1.62" height="47.0"/>
+<rect class="bar" x="685.08" y="385.0" width="1.62" height="6.2"/>
 <rect class="bar" x="687.23" y="348.4" width="1.62" height="36.6"/>
 <rect class="bar-jitter" x="689.38" y="385.0" width="1.62" height="8.8"/>
-<rect class="bar" x="693.67" y="385.0" width="1.62" height="26.2"/>
+<rect class="bar" x="693.67" y="370.4" width="1.62" height="14.6"/>
 <rect class="bar" x="695.81" y="347.4" width="1.62" height="37.6"/>
 <rect class="bar-jitter" x="697.96" y="382.1" width="1.62" height="2.9"/>
 <rect class="bar-jitter" x="700.10" y="385.0" width="1.62" height="7.5"/>
@@ -492,10 +498,10 @@
 <rect class="bar-jitter" x="805.25" y="385.0" width="1.62" height="5.6"/>
 <rect class="bar-jitter" x="807.40" y="365.4" width="1.62" height="19.6"/>
 <rect class="bar-jitter" x="809.54" y="385.0" width="1.62" height="9.9"/>
-<rect class="bar" x="813.83" y="385.0" width="1.62" height="31.2"/>
+<rect class="bar" x="813.83" y="375.5" width="1.62" height="9.5"/>
 <rect class="bar" x="815.98" y="357.2" width="1.62" height="27.8"/>
 <rect class="bar-jitter" x="818.12" y="375.5" width="1.62" height="9.5"/>
-<rect class="bar" x="822.42" y="385.0" width="1.62" height="35.7"/>
+<rect class="bar" x="822.42" y="380.0" width="1.62" height="5.0"/>
 <rect class="bar" x="824.56" y="365.0" width="1.62" height="20.0"/>
 <rect class="bar-jitter" x="826.71" y="362.7" width="1.62" height="22.3"/>
 <rect class="bar-jitter" x="828.85" y="385.0" width="1.62" height="10.6"/>
@@ -550,10 +556,10 @@
 <rect class="bar-jitter" x="934.00" y="381.0" width="1.62" height="4.0"/>
 <rect class="bar-jitter" x="936.15" y="385.0" width="1.62" height="2.8"/>
 <rect class="bar-jitter" x="938.29" y="367.4" width="1.62" height="17.6"/>
-<rect class="bar" x="942.58" y="385.0" width="1.62" height="37.5"/>
+<rect class="bar" x="942.58" y="381.7" width="1.62" height="3.3"/>
 <rect class="bar" x="944.73" y="348.2" width="1.62" height="36.8"/>
 <rect class="bar-jitter" x="946.88" y="380.5" width="1.62" height="4.5"/>
-<rect class="bar" x="951.17" y="385.0" width="1.62" height="43.2"/>
+<rect class="bar" x="951.17" y="385.0" width="1.62" height="2.4"/>
 <rect class="bar" x="953.31" y="346.7" width="1.62" height="38.3"/>
 <rect class="bar-jitter" x="955.46" y="381.9" width="1.62" height="3.1"/>
 <rect class="bar-jitter" x="957.60" y="385.0" width="1.62" height="3.1"/>
@@ -608,10 +614,10 @@
 <rect class="bar-jitter" x="1062.75" y="385.0" width="1.62" height="2.6"/>
 <rect class="bar-jitter" x="1064.90" y="369.8" width="1.62" height="15.2"/>
 <rect class="bar" x="1067.04" y="382.6" width="1.62" height="2.4"/>
-<rect class="bar" x="1071.33" y="385.0" width="1.62" height="43.5"/>
+<rect class="bar" x="1071.33" y="385.0" width="1.62" height="2.7"/>
 <rect class="bar" x="1073.48" y="339.8" width="1.62" height="45.2"/>
 <rect class="bar-jitter" x="1075.62" y="385.0" width="1.62" height="17.9"/>
-<rect class="bar" x="1079.92" y="385.0" width="1.62" height="44.8"/>
+<rect class="bar" x="1079.92" y="385.0" width="1.62" height="4.0"/>
 <rect class="bar" x="1082.06" y="339.7" width="1.62" height="45.3"/>
 <rect class="bar-jitter" x="1084.21" y="385.0" width="1.62" height="3.1"/>
 <rect class="bar-jitter" x="1086.35" y="381.3" width="1.62" height="3.7"/>
@@ -639,6 +645,22 @@
 <rect class="bar-jitter" x="1133.56" y="385.0" width="1.62" height="18.3"/>
 <rect class="bar-jitter" x="1135.71" y="385.0" width="1.62" height="2.9"/>
 <rect class="bar-jitter" x="1137.85" y="382.3" width="1.62" height="2.7"/>
+<rect class="bar" x="167.94" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="176.52" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="296.69" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="305.27" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="425.44" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="434.02" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="554.19" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="562.77" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="682.94" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="691.52" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="811.69" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="820.27" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="940.44" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="949.02" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="1069.19" y="385.0" width="1.62" height="40.8"/>
+<rect class="bar" x="1077.77" y="385.0" width="1.62" height="40.8"/>
 <text x="1140.0" y="294.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-jitter">■</tspan> delta time jitter: off by less than the intended period  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="385" x2="1140" y2="385"/>
 <text x="100.0" y="389.0" text-anchor="end" class="vsync-n">0</text>

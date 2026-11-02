@@ -311,7 +311,8 @@ perfect storm with dropped frames and with frames out of order, the idle behavio
 rest with a paused clock, in hindsight, with a rest's frame or its wake-up frame dropped, and the drops that are no lost rest: in the motion, and after a
 stall): a folder per scenario, named after its mode,
 with `video.mp4` and its own `manifest.json`; and the stress clips (2 s to a minute, as long as their scripts), which nothing in this
-repository shows. `--only CLIP…` exports the clips named. These copies are licensed for
+repository shows whole but `40-stress` (`generate_measured_charts.py --stress-windows` draws single scenarios of them for the slides after
+the test clips). `--only CLIP…` exports the clips named. These copies are licensed for
 mb-framepacing under its PolyForm Perimeter License 1.0.1, like its other test data (the manifest's `license`); this repository's own
 videos stay CC BY-NC-SA 4.0.
 

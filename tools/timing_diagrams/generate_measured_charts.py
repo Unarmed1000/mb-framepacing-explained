@@ -42,6 +42,10 @@ each diagram's marked clip 60-diagram-<name>-every-1s, which plays the whole dia
 refreshes with render --timeline, titled, described and its frames named as the diagram (generate_diagrams.DIAGRAMS):
 doc/images/timing-<name>.svg, the image the docs and slides show.
 
+With --stress-windows (NAME ...: some windows; default all of STRESS_WINDOWS, and the whole cards of STRESS_CARDS) it draws single
+scenarios of the stress clips (export_test_clips.py) as mb-framepacing's compact frame timeline card, with the animation error's two
+parts on every card and the frames named by the scenario's letters: doc/images/stress-<name>.svg, for the slides after the test clips.
+
 With --web-verdicts it measures, for every clip the web page charts (trials.json and clips.json, as build_blind_test.py collects
 them: a mode in a motion), the marked single-box clip of the same frames (the page's timing arguments, TIMING_ARGUMENTS; the clips
 must agree frame by frame, or it stops), and writes one letter per frame of the clip from run-1-frames.csv's flags (VERDICTS):
@@ -75,6 +79,7 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from fractions import Fraction
+from math import ceil
 from pathlib import Path
 from typing import cast
 
@@ -85,6 +90,7 @@ import build_blind_test  # noqa: E402
 import diagram_replay  # noqa: E402
 import export_test_clips  # noqa: E402
 import generate_videos as gv  # noqa: E402
+import stress_script as stress  # noqa: E402
 from frame_timing import TimingParameters, describe, parse_mode, swap_interval  # noqa: E402
 from generate_diagrams import DEFAULT_OUTPUT_DIR, DIAGRAMS_BY_NAME  # noqa: E402
 
@@ -118,6 +124,62 @@ TIMELINE_STYLE = (
     "--no-threshold-in-key",
 )
 TIMELINE_ERROR_THRESHOLD_MS = "0.001"
+
+
+@dataclass(frozen=True)
+class StressWindow:
+    """A stress clip's scenario on a slide: its image's name, the clip and scenario, the card's title and the line under it, how wide
+    a refresh is drawn, and how many refreshes the card goes on after the scenario's last frame appears (None: two targets)."""
+
+    name: str
+    clip: str
+    scenario: str
+    title: str
+    description: str
+    refresh_pixels: int = 96
+    refreshes_after: int | None = None
+
+
+STRESS_WINDOWS = (
+    StressWindow("clock-right", "60-stress", "01-dropped", "Animated for its display time", "c shows the moment it appears: the stop and the jump cancel out."),
+    StressWindow(
+        "clock-behind", "60-stress", "03-dropped-clock-lost", "The clock lost the frame", "c shows the moment b did: one step of animation for two of display."
+    ),
+    StressWindow("clock-ahead", "60-stress", "24-dropped-overshoots", "The clock overshoots", "c jumps three steps of animation in two of display."),
+    StressWindow("back-realign", "15-stress", "31-realign-late-1", "The grid moves", "b is a refresh late, and every frame after it follows b.", 72, 1),
+    StressWindow("back-grid", "15-stress", "32-back-on-grid-late-1", "Back on the grid", "b is a refresh late, and c is held to the old grid.", 72, 1),
+    StressWindow(
+        "back-interval-1",
+        "15-stress",
+        "33-interval-1-late-1",
+        "One frame at swap interval 1",
+        "b is a refresh late, c follows at once, and d is on the old grid.",
+        72,
+        1,
+    ),
+    StressWindow("period-stretch", "60-stress-uneven", "42-stretch-25-ms-1", "A stretch at 25 ms", "60 Hz pacing with eight frames aimed 25 ms apart.", 72),
+    StressWindow(
+        "order-block",
+        "60-stress",
+        "36-block-of-3",
+        "A block of three",
+        "d, b, c in the refreshes of b, c, d: no frame keeps its place. Pink: b and c, by their frame index.",
+    ),
+    StressWindow("order-again", "60-stress", "37-older-frame-again", "An older frame again", "a comes back after b, then c follows."),
+    StressWindow(
+        "order-rest",
+        "60-stress",
+        "40-out-of-order-in-rest",
+        "Out of order at rest",
+        "Two frames swap while the box stands still. Pink: the older frame, by its frame index.",
+        96,
+    ),
+    StressWindow("display-50", "50-stress", "01-dropped", "50 Hz", "A refresh of 20 ms."),
+    StressWindow("display-120", "120-stress", "01-dropped", "120 Hz", "A refresh of 8.3 ms."),
+    StressWindow("display-144", "144-stress", "01-dropped", "144 Hz", "A refresh of 6.9 ms."),
+)
+# The stress clips drawn whole: one pattern from start marker to end marker reads on the default report card
+STRESS_CARDS = ("40-stress",)
 # The web page's charts' verdicts, and the letter of each (one per frame of a clip)
 WEB_VERDICTS = gv.REPO_ROOT / "web" / "src" / "charts" / "verdicts.json"
 VERDICTS = {
@@ -357,6 +419,65 @@ def measure_timelines(names: list[str], tool: Path, ffmpeg: Path, output_dir: Pa
     return written
 
 
+def stress_clip(mode: str) -> tuple[gv.Settings, gv.VideoJob]:
+    """The stress clip `mode`, as export_test_clips.py makes it."""
+    return next((settings, job) for settings, job in export_test_clips.planned_stress() if job.top.name == mode)
+
+
+def stress_section(settings: gv.Settings, job: gv.VideoJob, scenario: str, refreshes_after: int | None) -> tuple[Fraction, Fraction, list[str]]:
+    """The window of a stress clip's scenario, in seconds of the run: from its first frame to `refreshes_after` refreshes after its last
+    appears (None: two targets). And the letter of each presented frame in it, as the scenario's picture names them."""
+    script = stress.clip(job.top.name, settings.timing)
+    entry = next(item for item in script.scenarios if item.name == scenario)
+    schedule = gv.frame_schedule(settings, job.top, job.speed)
+    frames = range(entry.first, entry.first + entry.count)
+    shown = [cast(int, schedule.shown[frame]) for frame in frames if schedule.shown[frame] is not None]
+    end = max(shown) + (2 * ceil(script.frames.intervals[entry.first + entry.count - 1]) if refreshes_after is None else refreshes_after)
+    letters = [chr(ord("a") + frame - entry.first) for frame in schedule.presented if min(shown) <= cast(int, schedule.shown[frame]) < end]
+    # Half a refresh before each end: a time rounded for --from or --to must not fall on either side of a refresh by chance
+    return (min(shown) - Fraction(1, 2)) / settings.fps, (end - Fraction(1, 2)) / settings.fps, letters
+
+
+def measure_stress_windows(names: list[str], tool: Path, ffmpeg: Path, output_dir: Path, png: bool) -> list[Path]:
+    """Draw each window named (default: STRESS_WINDOWS) as mb-framepacing's compact frame timeline card: stress-<name>.svg in output_dir.
+    The clip is rendered once; a card's --parts draws the animation error's two parts on every window, so they all look alike."""
+    written: list[Path] = []
+    captures: dict[str, Path] = {}
+    selected = [window for window in STRESS_WINDOWS if not names or window.name in names]
+    for index, window in enumerate(selected, start=1):
+        print(f"[{index}/{len(selected)}] {window.name}", flush=True)
+        settings, job = stress_clip(window.clip)
+        if window.clip not in captures:
+            captures[window.clip] = import_clip(settings, job, tool, ffmpeg, WORK_DIR / window.clip)
+        start, end, letters = stress_section(settings, job, window.scenario, window.refreshes_after)
+        rendered = WORK_DIR / window.clip / "render" / window.name
+        if rendered.exists():
+            shutil.rmtree(rendered)
+        options = ["--timeline", "--compact", "--parts", "--from", seconds(start), "--to", seconds(end), "--no-title-range", "--no-threshold-in-key"]
+        options += ["--title", window.title, "--description", window.description, "--frame-labels", ",".join(letters)]
+        options += ["--refresh-pixels", str(window.refresh_pixels), *(["--png"] if png else [])]
+        run([str(tool), "render", str(captures[window.clip]), "-o", str(rendered), *options])
+        for suffix in (".svg", ".png") if png else (".svg",):
+            (source,) = rendered.glob(f"run-1-timeline-*{suffix}")
+            path = output_dir / f"stress-{window.name}{suffix}"
+            _ = shutil.copyfile(source, path)
+            print(path)
+            written.append(path)
+    if not names:
+        for mode in STRESS_CARDS:
+            print(mode, flush=True)
+            settings, job = stress_clip(mode)
+            capture = captures.get(mode) or import_clip(settings, job, tool, ffmpeg, WORK_DIR / mode)
+            rendered = WORK_DIR / mode / "render" / "card"
+            run([str(tool), "render", str(capture), "-o", str(rendered), *test_clip_render(mode, png)])
+            for suffix in (".svg", ".png") if png else (".svg",):
+                path = output_dir / f"stress-{mode}{suffix}"
+                _ = shutil.copyfile(rendered / f"run-1-report{suffix}", path)
+                print(path)
+                written.append(path)
+    return written
+
+
 def page_clips() -> list[tuple[str, str]]:
     """Every clip the web page charts, as (motion, mode): the blind test's and the explanation slides' (build_blind_test.py)."""
     definitions = cast(dict[str, object], json.loads(build_blind_test.TRIALS.read_text(encoding="utf-8")))
@@ -434,6 +555,12 @@ class Export:
 
 EXPORTS = (
     Export(
+        "stress-windows",
+        "draw the stress clips' scenarios (NAME: some windows; default all, and the whole cards) as mb-framepacing's compact frame timeline card, stress-<name>.svg",
+        True,
+        lambda names, tool, ffmpeg, output_dir, png: measure_stress_windows(names, tool, ffmpeg, output_dir, png),
+    ),
+    Export(
         "test-clips",
         "measure the test clips (MODE: some of them; default all) as test-clip-<mode>.svg, the default report card",
         True,
@@ -499,6 +626,10 @@ def main(argv: list[str] | None = None) -> int:
         unknown = [mode for mode in args.modes if mode not in export_test_clips.SCENARIOS]
         if unknown:
             parser.error(f"not a test clip: {', '.join(unknown)} (the test clips are export_test_clips.SCENARIOS)")
+    elif any(export.flag == "stress-windows" for export in named):
+        unknown = [name for name in args.modes if name not in {window.name for window in STRESS_WINDOWS}]
+        if unknown:
+            parser.error(f"not a stress window: {', '.join(unknown)} (see STRESS_WINDOWS)")
     elif any(export.flag == "timelines" for export in named):
         unknown = [name for name in args.modes if name not in TIMELINE_DIAGRAMS]
         if unknown:

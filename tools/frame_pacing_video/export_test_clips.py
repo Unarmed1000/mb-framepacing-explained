@@ -77,7 +77,7 @@ SCENARIOS = (
     "60-on-demand-paused-clock-hindsight-dropped-after-stall",
 )
 # The stress clips: fixed scripts of lost frames (stress_script), each as long as its script. Not among SCENARIOS, which the test
-# clips' report cards go through: nothing in this repository shows them
+# clips' report cards go through: the slides show single scenarios of them (generate_measured_charts.py --stress-windows)
 STRESS_CLIPS = tuple(stress.CLIPS)
 # The speed of each scenario: fast, unless it needs the idle speed's long rests
 DEFAULT_SPEED = "fast"

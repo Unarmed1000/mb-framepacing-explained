@@ -1113,6 +1113,12 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
   .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
   .bar-range { fill: #e5534b; fill-opacity: 0.3; }
   .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
@@ -1207,23 +1213,30 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
 <text x="1136.0" y="175.8" text-anchor="end" class="error-refresh-text">+1 refresh (16.7 ms)</text>
 <line class="error-refresh" x1="110" y1="310.2" x2="1140" y2="310.2"/>
 <text x="1136.0" y="322.2" text-anchor="end" class="error-refresh-text">−1 refresh (16.7 ms)</text>
-<rect class="bar" x="307.42" y="245.0" width="2.47" height="65.2"/>
 <rect class="bar" x="309.56" y="179.8" width="2.47" height="65.2"/>
-<rect class="bar" x="316.00" y="245.0" width="2.47" height="65.2"/>
-<rect class="bar" x="320.29" y="245.0" width="2.47" height="0.8"/>
-<rect class="bar" x="324.58" y="245.0" width="2.47" height="0.8"/>
-<rect class="bar" x="333.17" y="245.0" width="2.47" height="0.8"/>
+<rect class="bar" x="320.29" y="179.8" width="2.47" height="65.2"/>
+<rect class="bar" x="324.58" y="179.8" width="2.47" height="65.2"/>
+<rect class="bar" x="328.88" y="179.8" width="2.47" height="65.2"/>
+<rect class="bar" x="333.17" y="179.8" width="2.47" height="65.2"/>
 <rect class="bar" x="335.31" y="179.8" width="2.47" height="65.2"/>
-<rect class="bar" x="339.60" y="245.0" width="2.47" height="65.2"/>
 <rect class="bar" x="341.75" y="179.8" width="2.47" height="65.2"/>
-<rect class="bar" x="346.04" y="245.0" width="2.47" height="65.2"/>
 <rect class="bar" x="348.19" y="179.8" width="2.47" height="65.2"/>
-<rect class="bar" x="354.62" y="245.0" width="2.47" height="65.2"/>
-<rect class="bar" x="358.92" y="245.0" width="2.47" height="0.8"/>
+<rect class="bar" x="358.92" y="179.8" width="2.47" height="65.2"/>
 <rect class="bar" x="361.06" y="179.8" width="2.47" height="65.2"/>
-<rect class="bar" x="367.50" y="245.0" width="2.47" height="65.2"/>
-<rect class="bar" x="371.79" y="245.0" width="2.47" height="0.8"/>
+<rect class="bar" x="371.79" y="179.8" width="2.47" height="65.2"/>
 <rect class="bar" x="376.08" y="179.8" width="2.47" height="65.2"/>
+<rect class="bar" x="305.27" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="313.85" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="318.15" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="322.44" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="326.73" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="331.02" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="337.46" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="343.90" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="352.48" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="356.77" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="365.35" y="245.0" width="2.47" height="65.2"/>
+<rect class="bar" x="369.65" y="245.0" width="2.47" height="65.2"/>
 <text x="1140.0" y="154.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="245" x2="1140" y2="245"/>
 <text x="100.0" y="249.0" text-anchor="end" class="vsync-n">0</text>
@@ -1864,6 +1877,12 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
   .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
   .bar-range { fill: #e5534b; fill-opacity: 0.3; }
   .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
@@ -1960,23 +1979,30 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
 <text x="1136.0" y="322.2" text-anchor="end" class="error-refresh-text">−1 refresh (16.7 ms)</text>
 <clipPath id="pb-card-1-clip-0"><rect x="110.0" y="170.0" width="1030.0" height="150.0"/></clipPath>
 <g clip-path="url(#pb-card-1-clip-0)"><g class="scroll-layer">
-<rect class="bar" x="899.67" y="245.0" width="11.66" height="65.2"/>
 <rect class="bar" x="908.25" y="179.8" width="11.66" height="65.2"/>
-<rect class="bar" x="934.00" y="245.0" width="11.66" height="65.2"/>
-<rect class="bar" x="951.17" y="245.0" width="11.66" height="0.8"/>
-<rect class="bar" x="968.33" y="245.0" width="11.66" height="0.8"/>
-<rect class="bar" x="1002.67" y="245.0" width="11.66" height="0.8"/>
+<rect class="bar" x="951.17" y="179.8" width="11.66" height="65.2"/>
+<rect class="bar" x="968.33" y="179.8" width="11.66" height="65.2"/>
+<rect class="bar" x="985.50" y="179.8" width="11.66" height="65.2"/>
+<rect class="bar" x="1002.67" y="179.8" width="11.66" height="65.2"/>
 <rect class="bar" x="1011.25" y="179.8" width="11.66" height="65.2"/>
-<rect class="bar" x="1028.42" y="245.0" width="11.66" height="65.2"/>
 <rect class="bar" x="1037.00" y="179.8" width="11.66" height="65.2"/>
-<rect class="bar" x="1054.17" y="245.0" width="11.66" height="65.2"/>
 <rect class="bar" x="1062.75" y="179.8" width="11.66" height="65.2"/>
-<rect class="bar" x="1088.50" y="245.0" width="11.66" height="65.2"/>
-<rect class="bar" x="1105.67" y="245.0" width="11.66" height="0.8"/>
+<rect class="bar" x="1105.67" y="179.8" width="11.66" height="65.2"/>
 <rect class="bar" x="1114.25" y="179.8" width="11.66" height="65.2"/>
-<rect class="bar" x="1140.00" y="245.0" width="11.66" height="65.2"/>
-<rect class="bar" x="1157.17" y="245.0" width="11.66" height="0.8"/>
+<rect class="bar" x="1157.17" y="179.8" width="11.66" height="65.2"/>
 <rect class="bar" x="1174.33" y="179.8" width="11.66" height="65.2"/>
+<rect class="bar" x="891.08" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="925.42" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="942.58" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="959.75" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="976.92" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="994.08" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1019.83" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1045.58" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1079.92" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1097.08" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1131.42" y="245.0" width="11.66" height="65.2"/>
+<rect class="bar" x="1148.58" y="245.0" width="11.66" height="65.2"/>
 </g></g>
 <text x="1140.0" y="154.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="245" x2="1140" y2="245"/>
@@ -2820,7 +2846,7 @@ Required Notice: Copyright (c) 2026 Mana Battery ApS (https://github.com/Unarmed
       </dl>
     </div>
 
-    <script id="pb-data" type="application/json">{"formatVersion":4,"title":"Run 1  \u002760-busy-adaptive\u0027","toolVersion":"0.1.0-alpha.8","section":{"from":0,"to":8,"whole":true},"periodNs":16666667,"originNs":50000000,"captures":{"firstIndex":3,"firstNs":0,"lastIndex":482,"lastNs":7983333333},"refreshHz":59.99999880000002,"tiles":[{"caption":"Average fps","value":"42.0","detail":"23.83 ms \u00B7 336 frames","warning":false,"explanation":"Presented frames per second: the frames with a display time step over the time those steps cover (what the display showed); underneath, the mean display time step and the number of presented frames, or with static frames how many are left out. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"1 % low","value":"30.0","detail":"33.3 ms","warning":false,"explanation":"The frame rate at the 99th percentile display time step (nearest rank): 99 % of the frames stayed on screen no longer than the step underneath. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"0.1 % low","value":"-","detail":"needs 1,000 frames","warning":false,"explanation":"The frame rate at the 99.9th percentile display time step (nearest rank): 99.9 % of the frames stayed on screen no longer than the step underneath. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"Frames visibly off","value":"12","detail":"3.6 %","warning":true,"explanation":"Frames whose animation time is off by more than the error threshold (1 ms)."},{"caption":"Error p99","value":"16.7 ms","detail":"","warning":false,"explanation":"99 % of the frames have an |animation error| below this."},{"caption":"Error p99.9","value":"-","detail":"needs 1,000 frames","warning":false,"explanation":"99.9 % of the frames have an |animation error| below this."},{"caption":"Worst error","value":"16.7 ms","detail":"too late","warning":false,"explanation":"The largest animation error, and which way: shown too soon or too late."},{"caption":"Late frames","value":"6","detail":"1.8 %","warning":true,"explanation":"Frames the frame before stayed on screen for half a refresh or more longer than they were animated for and than their intended period."}],"cards":[{"secondsPerScreen":null,"width":1180,"height":1203,"plots":[{"id":"animation-error","left":110,"top":170,"right":1140,"bottom":320,"xFrom":0,"xTo":8},{"id":"display-time-step","left":110,"top":390,"right":1140,"bottom":520,"xFrom":0,"xTo":8},{"id":"frametime","left":110,"top":590,"right":1140,"bottom":720,"xFrom":0,"xTo":8},{"id":"late-share","left":110,"top":790,"right":1140,"bottom":870,"xFrom":0,"xTo":8},{"id":"refresh-strip","left":110,"top":940,"right":1140,"bottom":968,"xFrom":0,"xTo":8},{"id":"events","left":110,"top":1038,"right":1140,"bottom":1064,"xFrom":0,"xTo":8}]},{"secondsPerScreen":2,"width":1180,"height":1203,"plots":[{"id":"animation-error","left":110,"top":170,"right":1140,"bottom":320,"xFrom":0,"xTo":2},{"id":"display-time-step","left":110,"top":390,"right":1140,"bottom":520,"xFrom":0,"xTo":2},{"id":"frametime","left":110,"top":590,"right":1140,"bottom":720,"xFrom":0,"xTo":2},{"id":"late-share","left":110,"top":790,"right":1140,"bottom":870,"xFrom":0,"xTo":2},{"id":"refresh-strip","left":110,"top":940,"right":1140,"bottom":968,"xFrom":0,"xTo":2},{"id":"events","left":110,"top":1038,"right":1140,"bottom":1064,"xFrom":0,"xTo":2}]}],"video":{"url":"../../videos/box-single-marker/fast/single_fast_60-busy-adaptive.mp4","name":"single_fast_60-busy-adaptive.mp4","kind":"external","playable":true,"description":"a video named for the report"},"frames":{"capture":{"rle":[3,1,1,90,2,1,1,2,2,5,1,1,2,1,1,1,2,1,1,2,2,2,1,2,2,134,1,93]},"index":{"rle":[336,1,1,335]},"t":{"values":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,-1,0,0,-1,-1,0,-1,-1,0,-1,0,-1,0,0,-1,-1,0,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1]},"step":{"rle":[0,335,null,1]},"error":{"rle":[null,1,0,90,-16666666,1,16666666,1,0,1,-16666667,1,1,1,-1,1,0,1,1,1,16666666,1,-16666666,1,16666666,1,-16666666,1,16666666,1,0,1,-16666667,1,1,1,16666666,1,0,1,-16666667,1,1,1,16666666,1,0,224]},"hold":{"rle":[0,90,1,1,0,2,1,1,0,5,1,1,0,1,1,1,0,2,1,1,0,3,1,1,0,227]},"flags":{"rle":[0,91,8,1,0,2,8,1,0,5,8,1,0,1,8,1,0,2,8,1,0,3,8,1,0,226]}},"holdKinds":["asPlanned","late","olderFrameBack","presentFailed","framesDropped","unknown"],"flagBits":{"skippedBefore":1,"uncertainStart":2,"torn":4,"late":8,"staticAfter":16,"staticBefore":32,"uncertainStep":64,"staticAssumed":128,"deltaTimeJitter":256,"paced":512,"presentFailedBefore":1024},"videoFrames":{"firstIndex":2,"qr":{"values":[335,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]},"sync":{"rle":[null,483]},"status":{"rle":[0,483]}},"videoFrameStatuses":["decoded","undecodable","torn","notRecorded","noCapture"]}</script>
+    <script id="pb-data" type="application/json">{"formatVersion":4,"title":"Run 1  \u002760-busy-adaptive\u0027","toolVersion":"0.1.0-alpha.8","section":{"from":0,"to":8,"whole":true},"periodNs":16666667,"originNs":50000000,"captures":{"firstIndex":3,"firstNs":0,"lastIndex":482,"lastNs":7983333333},"refreshHz":59.99999880000002,"tiles":[{"caption":"Average fps","value":"42.0","detail":"23.83 ms \u00B7 336 frames","warning":false,"explanation":"Presented frames per second: the frames with a display time step over the time those steps cover (what the display showed); underneath, the mean display time step and the number of presented frames, or with static frames how many are left out. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"1 % low","value":"30.0","detail":"33.3 ms","warning":false,"explanation":"The frame rate at the 99th percentile display time step (nearest rank): 99 % of the frames stayed on screen no longer than the step underneath. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"0.1 % low","value":"-","detail":"needs 1,000 frames","warning":false,"explanation":"The frame rate at the 99.9th percentile display time step (nearest rank): 99.9 % of the frames stayed on screen no longer than the step underneath. A static frame\u0027s time on screen (the marker says nothing animates) is left out."},{"caption":"Frames visibly off","value":"18","detail":"5.4 %","warning":true,"explanation":"Frames whose animation time is off by more than the error threshold (1 ms)."},{"caption":"Error p99","value":"16.7 ms","detail":"","warning":false,"explanation":"99 % of the frames have an |animation error| below this."},{"caption":"Error p99.9","value":"-","detail":"needs 1,000 frames","warning":false,"explanation":"99.9 % of the frames have an |animation error| below this."},{"caption":"Worst error","value":"16.7 ms","detail":"too late","warning":false,"explanation":"The largest animation error, and which way: shown too soon or too late."},{"caption":"Late frames","value":"6","detail":"1.8 %","warning":true,"explanation":"Frames the frame before stayed on screen for half a refresh or more longer than they were animated for and than their intended period."}],"cards":[{"secondsPerScreen":null,"width":1180,"height":1203,"plots":[{"id":"animation-error","left":110,"top":170,"right":1140,"bottom":320,"xFrom":0,"xTo":8},{"id":"display-time-step","left":110,"top":390,"right":1140,"bottom":520,"xFrom":0,"xTo":8},{"id":"frametime","left":110,"top":590,"right":1140,"bottom":720,"xFrom":0,"xTo":8},{"id":"late-share","left":110,"top":790,"right":1140,"bottom":870,"xFrom":0,"xTo":8},{"id":"refresh-strip","left":110,"top":940,"right":1140,"bottom":968,"xFrom":0,"xTo":8},{"id":"events","left":110,"top":1038,"right":1140,"bottom":1064,"xFrom":0,"xTo":8}]},{"secondsPerScreen":2,"width":1180,"height":1203,"plots":[{"id":"animation-error","left":110,"top":170,"right":1140,"bottom":320,"xFrom":0,"xTo":2},{"id":"display-time-step","left":110,"top":390,"right":1140,"bottom":520,"xFrom":0,"xTo":2},{"id":"frametime","left":110,"top":590,"right":1140,"bottom":720,"xFrom":0,"xTo":2},{"id":"late-share","left":110,"top":790,"right":1140,"bottom":870,"xFrom":0,"xTo":2},{"id":"refresh-strip","left":110,"top":940,"right":1140,"bottom":968,"xFrom":0,"xTo":2},{"id":"events","left":110,"top":1038,"right":1140,"bottom":1064,"xFrom":0,"xTo":2}]}],"video":{"url":"../../videos/box-single-marker/fast/single_fast_60-busy-adaptive.mp4","name":"single_fast_60-busy-adaptive.mp4","kind":"external","playable":true,"description":"a video named for the report"},"frames":{"capture":{"rle":[3,1,1,90,2,1,1,2,2,5,1,1,2,1,1,1,2,1,1,2,2,2,1,2,2,134,1,93]},"index":{"rle":[336,1,1,335]},"t":{"values":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,-1,0,0,-1,-1,0,-1,-1,0,-1,0,-1,0,0,-1,-1,0,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,-1,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1]},"step":{"rle":[0,335,null,1]},"error":{"rle":[null,1,0,90,-16666666,1,16666666,1,0,1,-16666667,1,1,1,-1,1,0,1,1,1,16666666,1,-16666666,1,16666666,1,-16666666,1,16666666,1,0,1,-16666667,1,1,1,16666666,1,0,1,-16666667,1,1,1,16666666,1,0,224]},"hold":{"rle":[0,90,1,1,0,2,1,1,0,5,1,1,0,1,1,1,0,2,1,1,0,3,1,1,0,227]},"flags":{"rle":[0,91,8,1,0,2,8,1,0,5,8,1,0,1,8,1,0,2,8,1,0,3,8,1,0,226]}},"holdKinds":["asPlanned","late","olderFrameBack","presentFailed","framesDropped","unknown"],"flagBits":{"skippedBefore":1,"uncertainStart":2,"torn":4,"late":8,"staticAfter":16,"staticBefore":32,"uncertainStep":64,"staticAssumed":128,"deltaTimeJitter":256,"paced":512,"presentFailedBefore":1024},"videoFrames":{"firstIndex":2,"qr":{"values":[335,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]},"sync":{"rle":[null,483]},"status":{"rle":[0,483]}},"videoFrameStatuses":["decoded","undecodable","torn","notRecorded","noCapture"]}</script>
     <script>
       (() => {
         "use strict";

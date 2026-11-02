@@ -53,6 +53,12 @@
   .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
   .bar-range { fill: #e5534b; fill-opacity: 0.3; }
   .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
@@ -145,7 +151,7 @@
 <text x="610.0" y="162.0" text-anchor="start"><tspan class="tile-value">-</tspan><tspan class="vsync-n">  needs 1,000 frames</tspan></text>
 <rect class="tile" x="884.0" y="118" width="276.0" height="64" rx="10"/>
 <text x="898.0" y="138.0" text-anchor="start" class="label">FRAMES VISIBLY OFF</text>
-<text x="898.0" y="162.0" text-anchor="start"><tspan class="tile-value warn">12</tspan><tspan class="vsync-n">  3.6 %</tspan></text>
+<text x="898.0" y="162.0" text-anchor="start"><tspan class="tile-value warn">18</tspan><tspan class="vsync-n">  5.4 %</tspan></text>
 <rect class="tile" x="20.0" y="194" width="276.0" height="64" rx="10"/>
 <text x="34.0" y="214.0" text-anchor="start" class="label">ERROR P99</text>
 <text x="34.0" y="238.0" text-anchor="start"><tspan class="tile-value">16.7 ms</tspan></text>
@@ -172,23 +178,30 @@
 <text x="1136.0" y="315.8" text-anchor="end" class="error-refresh-text">+1 refresh (16.7 ms)</text>
 <line class="error-refresh" x1="110" y1="450.2" x2="1140" y2="450.2"/>
 <text x="1136.0" y="462.2" text-anchor="end" class="error-refresh-text">−1 refresh (16.7 ms)</text>
-<rect class="bar" x="307.42" y="385.0" width="2.47" height="65.2"/>
 <rect class="bar" x="309.56" y="319.8" width="2.47" height="65.2"/>
-<rect class="bar" x="316.00" y="385.0" width="2.47" height="65.2"/>
-<rect class="bar" x="320.29" y="385.0" width="2.47" height="0.8"/>
-<rect class="bar" x="324.58" y="385.0" width="2.47" height="0.8"/>
-<rect class="bar" x="333.17" y="385.0" width="2.47" height="0.8"/>
+<rect class="bar" x="320.29" y="319.8" width="2.47" height="65.2"/>
+<rect class="bar" x="324.58" y="319.8" width="2.47" height="65.2"/>
+<rect class="bar" x="328.88" y="319.8" width="2.47" height="65.2"/>
+<rect class="bar" x="333.17" y="319.8" width="2.47" height="65.2"/>
 <rect class="bar" x="335.31" y="319.8" width="2.47" height="65.2"/>
-<rect class="bar" x="339.60" y="385.0" width="2.47" height="65.2"/>
 <rect class="bar" x="341.75" y="319.8" width="2.47" height="65.2"/>
-<rect class="bar" x="346.04" y="385.0" width="2.47" height="65.2"/>
 <rect class="bar" x="348.19" y="319.8" width="2.47" height="65.2"/>
-<rect class="bar" x="354.62" y="385.0" width="2.47" height="65.2"/>
-<rect class="bar" x="358.92" y="385.0" width="2.47" height="0.8"/>
+<rect class="bar" x="358.92" y="319.8" width="2.47" height="65.2"/>
 <rect class="bar" x="361.06" y="319.8" width="2.47" height="65.2"/>
-<rect class="bar" x="367.50" y="385.0" width="2.47" height="65.2"/>
-<rect class="bar" x="371.79" y="385.0" width="2.47" height="0.8"/>
+<rect class="bar" x="371.79" y="319.8" width="2.47" height="65.2"/>
 <rect class="bar" x="376.08" y="319.8" width="2.47" height="65.2"/>
+<rect class="bar" x="305.27" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="313.85" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="318.15" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="322.44" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="326.73" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="331.02" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="337.46" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="343.90" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="352.48" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="356.77" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="365.35" y="385.0" width="2.47" height="65.2"/>
+<rect class="bar" x="369.65" y="385.0" width="2.47" height="65.2"/>
 <text x="1140.0" y="294.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="385" x2="1140" y2="385"/>
 <text x="100.0" y="389.0" text-anchor="end" class="vsync-n">0</text>

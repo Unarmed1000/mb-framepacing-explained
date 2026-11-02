@@ -53,6 +53,12 @@
   .held-late { stroke: #e5534b; stroke-width: 2.5; fill: none; }
   .bar-range { fill: #e5534b; fill-opacity: 0.3; }
   .static-band { fill: #a371f7; fill-opacity: 0.14; }
+  .invalid-band { fill: #8b949e; fill-opacity: 0.16; }
+  .invalid-hatch { stroke: #8b949e; stroke-opacity: 0.4; stroke-width: 1; fill: none; }
+  .invalid-text { font-size: 11px; fill: #adbac7; letter-spacing: 0.04em; }
+  .older-band { fill: #db61a2; fill-opacity: 0.22; }
+  .older-text { font-size: 11px; fill: #db61a2; letter-spacing: 0.04em; }
+  .cell-note { font-size: 10px; font-weight: 600; fill: #1c1f24; }
   .static-text { font-size: 11px; fill: #a371f7; letter-spacing: 0.04em; }
   .strip-static-a { fill: #a371f7; fill-opacity: 0.55; }
   .strip-static-b { fill: #a371f7; fill-opacity: 0.85; }
@@ -172,38 +178,38 @@
 <text x="1136.0" y="315.8" text-anchor="end" class="error-refresh-text">+1 refresh (16.7 ms)</text>
 <line class="error-refresh" x1="110" y1="450.2" x2="1140" y2="450.2"/>
 <text x="1136.0" y="462.2" text-anchor="end" class="error-refresh-text">−1 refresh (16.7 ms)</text>
-<rect class="bar" x="170.08" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="172.23" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="178.67" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="180.81" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="298.83" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="300.98" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="307.42" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="309.56" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="427.58" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="429.73" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="436.17" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="438.31" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="556.33" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="558.48" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="564.92" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="567.06" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="685.08" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="687.23" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="693.67" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="695.81" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="813.83" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="815.98" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="822.42" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="824.56" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="942.58" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="944.73" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="951.17" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="953.31" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="1071.33" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="1073.48" y="319.8" width="1.62" height="65.2"/>
-<rect class="bar" x="1079.92" y="385.0" width="1.62" height="65.2"/>
 <rect class="bar" x="1082.06" y="319.8" width="1.62" height="65.2"/>
+<rect class="bar" x="167.94" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="176.52" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="296.69" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="305.27" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="425.44" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="434.02" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="554.19" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="562.77" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="682.94" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="691.52" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="811.69" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="820.27" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="940.44" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="949.02" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="1069.19" y="385.0" width="1.62" height="65.2"/>
+<rect class="bar" x="1077.77" y="385.0" width="1.62" height="65.2"/>
 <text x="1140.0" y="294.0" text-anchor="end" class="vsync-n"><tspan class="key-faint">■</tspan> within the error threshold  <tspan class="key-amber">┅</tspan> a whole refresh early or late</text>
 <line class="zero-line" x1="110" y1="385" x2="1140" y2="385"/>
 <text x="100.0" y="389.0" text-anchor="end" class="vsync-n">0</text>
